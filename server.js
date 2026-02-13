@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const path = require("path");
 
 const authRoutes = require("./routes/auth");
 const adminProductsRoutes = require("./routes/admin.products");
@@ -17,17 +18,34 @@ app.use(cors());
 // Routes
 app.use("/auth", authRoutes);
 app.use("/admin", adminProductsRoutes);
-app.use("/", productsRoutes);
+
+// ❗ НЕ на "/" — иначе чупи сайта
+app.use("/products", productsRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ ok: true });
 });
 
+/* ✅ SERVE REACT BUILD (Render / production) */
+if (process.env.NODE_ENV === "production") {
+  const buildPath = path.join(__dirname, "client", "build");
+  app.use(express.static(buildPath));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(buildPath, "index.html"));
+  });
+} else {
+  // dev landing
+  app.get("/", (req, res) => {
+    res.send("API running (dev) ✅");
+  });
+}
+
 // Start server
 async function start() {
   try {
     if (!process.env.MONGO_URI) {
-      throw new Error("MONGO_URI липсва в .env");
+      throw new Error("MONGO_URI липсва (Render Env Vars)");
     }
 
     await mongoose.connect(process.env.MONGO_URI);
