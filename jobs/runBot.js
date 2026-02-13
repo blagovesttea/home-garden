@@ -2,7 +2,6 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const Product = require("../models/Product");
 
-// Ключови думи (Дом и градина)
 const KEYWORDS = [
   "solar garden lights",
   "garden hose expandable",
@@ -14,28 +13,12 @@ const KEYWORDS = [
   "tool organizer wall",
 ];
 
-// 🔗 affiliate tag (MVP — НЕ е истински AliExpress affiliate link)
-const AFF_TAG = process.env.AFF_TAG || "homegarden";
-
-// ✅ 10-мин тест контрол
-const MAX_MINUTES = Number(process.env.BOT_MAX_MINUTES || 10); // default 10
-const PER_KEYWORD = Number(process.env.BOT_PER_KEYWORD || 6);  // default 6 results/keyword
-const REQUEST_DELAY_MS = Number(process.env.BOT_DELAY_MS || 1200); // 1.2s
+const MAX_MINUTES = Number(process.env.BOT_MAX_MINUTES || 10);
+const PER_KEYWORD = Number(process.env.BOT_PER_KEYWORD || 8);
+const REQUEST_DELAY_MS = Number(process.env.BOT_DELAY_MS || 800);
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
-}
-
-/**
- * MVP affiliateUrl builder:
- * добавя ?ref=TAG или &ref=TAG (не е истински affiliate на AliExpress)
- */
-function buildAffiliateUrl(sourceUrl) {
-  const u = String(sourceUrl || "").trim();
-  if (!u) return "";
-  if (/[?&]ref=/.test(u)) return u;
-  const sep = u.includes("?") ? "&" : "?";
-  return `${u}${sep}ref=${encodeURIComponent(AFF_TAG)}`;
 }
 
 function guessCategory(keyword) {
@@ -51,12 +34,13 @@ function guessCategory(keyword) {
   return "other";
 }
 
-/**
- * Scoring rules (MVP)
- */
+function toSafeNumber(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 function computeScore(p) {
   let s = 0;
-
   if (p.shippingToBG) s += 3;
 
   if (Number.isFinite(p.price)) {
@@ -67,29 +51,16 @@ function computeScore(p) {
   if (p.category && p.category !== "other") s += 2;
 
   if (p.shippingDays != null && Number.isFinite(p.shippingDays) && p.shippingDays <= 10) s += 1;
-
   return s;
 }
 
 function computeProfitScore(p) {
   let ps = 0;
-
   ps += Number(p.score || 0);
-  if (p.affiliateUrl && String(p.affiliateUrl).trim()) ps += 2;
-
   if (Number.isFinite(p.price) && p.price <= 30) ps += 1;
   if (p.shippingDays != null && Number.isFinite(p.shippingDays) && p.shippingDays <= 10) ps += 1;
-
   if (p.shippingToBG === false) ps -= 1;
-
   return ps;
-}
-
-/**
- * Auto-approve (оставяме FALSE за тест, за да одобряваш ти)
- */
-function shouldAutoApprove(_p) {
-  return false;
 }
 
 function normalizeProduct(product) {
@@ -97,6 +68,8 @@ function normalizeProduct(product) {
     ...product,
     title: String(product.title || "").trim(),
     sourceUrl: String(product.sourceUrl || "").trim(),
+    imageUrl: String(product.imageUrl || "").trim(),
+    currency: String(product.currency || "EUR").trim(),
     price: Number(product.price),
     shippingPrice: Number(product.shippingPrice || 0),
     shippingDays: product.shippingDays == null ? null : Number(product.shippingDays),
@@ -111,193 +84,124 @@ function normalizeProduct(product) {
   return normalized;
 }
 
-/**
- * Deep find: намира първия масив от objects, които приличат на AliExpress items
- * (за да не сме зависими от точното runParams дърво)
- */
-function deepFindItems(obj, maxDepth = 9) {
-  const seen = new Set();
+// --- eBay RSS fetch (NO API KEY) ---
+function decodeHtml(s) {
+  return String(s || "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
 
-  function walk(node, depth) {
-    if (!node || depth > maxDepth) return null;
-    if (typeof node !== "object") return null;
-    if (seen.has(node)) return null;
-    seen.add(node);
+// опит да извадим цена от заглавие (често има “... - $12.34”)
+function extractPriceFromTitle(title) {
+  const t = String(title || "");
+  const m = t.match(/[\$€£]\s?(\d+(?:[.,]\d{1,2})?)/);
+  if (!m) return null;
+  const v = Number(m[1].replace(",", "."));
+  return Number.isFinite(v) ? v : null;
+}
 
-    if (Array.isArray(node)) {
-      // items масив? търсим productId + title/displayTitle + image/imgUrl
-      const ok = node.length > 0 && node.every((x) => x && typeof x === "object");
-      if (ok) {
-        const sample = node.find(Boolean);
-        const hasProductId = sample && (sample.productId || sample.product_id || sample.itemId);
-        const hasTitle =
-          sample &&
-          (sample.title?.displayTitle ||
-            sample.title?.display ||
-            sample.title ||
-            sample.productTitle ||
-            sample.displayTitle);
+function extractCurrency(title) {
+  const t = String(title || "");
+  if (t.includes("$")) return "USD";
+  if (t.includes("€")) return "EUR";
+  if (t.includes("£")) return "GBP";
+  return "EUR";
+}
 
-        if (hasProductId && hasTitle) return node;
-      }
-
-      for (const v of node) {
-        const r = walk(v, depth + 1);
-        if (r) return r;
-      }
-      return null;
-    }
-
-    // object
-    for (const k of Object.keys(node)) {
-      const r = walk(node[k], depth + 1);
-      if (r) return r;
-    }
-    return null;
+function stripTracking(url) {
+  try {
+    const u = new URL(url);
+    // махаме типични tracking параметри
+    ["_trkparms", "_trksid", "hash", "var", "campid", "mkcid", "mkevt", "mkrid", "siteid"].forEach((k) =>
+      u.searchParams.delete(k)
+    );
+    return u.toString();
+  } catch {
+    return url;
   }
-
-  return walk(obj, 0);
 }
 
-function toHttpsImg(u) {
-  const s = String(u || "").trim();
-  if (!s) return "";
-  if (s.startsWith("//")) return "https:" + s;
-  return s;
-}
-
-function pickPrice(item) {
-  const prices = item?.prices || item?.price || {};
-  const sale = prices?.salePrice || prices?.sale_price || {};
-  const orig = prices?.originalPrice || prices?.original_price || {};
-  const v =
-    sale?.minPrice ??
-    sale?.min_price ??
-    sale?.min ??
-    orig?.minPrice ??
-    orig?.min_price ??
-    orig?.min ??
-    item?.price ??
-    item?.salePrice ??
-    item?.minPrice;
-
-  const num = Number(v);
-  return Number.isFinite(num) ? num : null;
-}
-
-function pickCurrency(item) {
-  const prices = item?.prices || item?.price || {};
-  const sale = prices?.salePrice || {};
-  const orig = prices?.originalPrice || {};
-  return sale?.currencyCode || orig?.currencyCode || item?.currency || "USD";
-}
-
-/**
- * ✅ AliExpress search (scrape): взима HTML и вади window.runParams JSON
- */
-async function fetchAliExpressProducts(keyword, limit = 6) {
+async function fetchEbayRssProducts(keyword, limit = 8) {
   const q = String(keyword || "").trim();
   if (!q) return [];
 
-  // URL (варира, но това е стабилен старт)
-  const url = `https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(q)}`;
+  // eBay RSS за търсене
+  const rssUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=0&_rss=1`;
 
-  const res = await fetch(url, {
-    method: "GET",
+  const res = await fetch(rssUrl, {
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
-      "Accept-Language": "en-US,en;q=0.9",
-      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "User-Agent": "Mozilla/5.0",
+      "Accept": "application/rss+xml,application/xml;q=0.9,*/*;q=0.8",
     },
   });
 
-  const html = await res.text();
+  const xml = await res.text();
+  if (!res.ok) throw new Error(`eBay HTTP ${res.status}`);
 
-  if (!res.ok) {
-    throw new Error(`AliExpress HTTP ${res.status}`);
+  // много прост RSS parse (за тест)
+  const items = [];
+  const itemBlocks = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
+
+  for (const block of itemBlocks) {
+    const titleMatch = block.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>|<title>([\s\S]*?)<\/title>/i);
+    const linkMatch = block.match(/<link>([\s\S]*?)<\/link>/i);
+
+    // thumbnail е в media:thumbnail или в description като img
+    const thumbMatch =
+      block.match(/<media:thumbnail[^>]*url="([^"]+)"/i) ||
+      block.match(/<img[^>]*src="([^"]+)"/i);
+
+    const rawTitle = titleMatch ? (titleMatch[1] || titleMatch[2] || "") : "";
+    const title = decodeHtml(rawTitle).trim();
+
+    const link = linkMatch ? decodeHtml(linkMatch[1]).trim() : "";
+    const imageUrl = thumbMatch ? decodeHtml(thumbMatch[1]).trim() : "";
+
+    if (!title || !link) continue;
+
+    const price = extractPriceFromTitle(title) ?? 25; // fallback за schema required
+    const currency = extractCurrency(title);
+
+    items.push({
+      title,
+      category: guessCategory(q),
+      source: "ebay",
+      sourceUrl: stripTracking(link),
+      affiliateUrl: "", // за тест — после ще го направим affiliate
+      imageUrl,
+      price,
+      currency,
+      shippingPrice: 0,
+      shippingToBG: true, // за тест
+      shippingDays: 7, // за тест
+      notes: `eBay RSS keyword: ${q}`,
+      bg: { foundInBG: "unknown" },
+    });
+
+    if (items.length >= limit) break;
   }
 
-  // window.runParams = {...};
-  const m = html.match(/window\.runParams\s*=\s*(\{[\s\S]*?\});/);
-  if (!m) {
-    // понякога е minified / различно — логваме частично
-    throw new Error("AliExpress: runParams not found (blocked/changed layout)");
-  }
-
-  let runParams = null;
-  try {
-    runParams = JSON.parse(m[1]);
-  } catch {
-    throw new Error("AliExpress: runParams JSON parse failed");
-  }
-
-  const itemsRaw = deepFindItems(runParams) || [];
-  const items = Array.isArray(itemsRaw) ? itemsRaw.slice(0, Math.max(1, limit)) : [];
-
-  // map към нашия Product model
-  return items
-    .map((it) => {
-      const productId = it.productId || it.product_id || it.itemId || it.item_id;
-      const title =
-        it?.title?.displayTitle ||
-        it?.title?.display ||
-        it?.title ||
-        it?.displayTitle ||
-        it?.productTitle ||
-        "";
-
-      const img = toHttpsImg(it?.image?.imgUrl || it?.imageUrl || it?.imgUrl || "");
-      const price = pickPrice(it);
-      const currency = pickCurrency(it);
-
-      // canonical sourceUrl
-      const sourceUrl = productId
-        ? `https://www.aliexpress.com/item/${String(productId).trim()}.html`
-        : "";
-
-      return {
-        title: String(title || "").trim(),
-        category: guessCategory(q),
-        source: "aliexpress",
-        sourceUrl,
-        affiliateUrl: buildAffiliateUrl(sourceUrl),
-        imageUrl: img,
-        price: price ?? 0, // schema required — за safety
-        currency,
-        shippingPrice: 0,
-        shippingToBG: true, // за тест
-        shippingDays: 7,    // за тест
-        notes: `AE keyword: ${q}`,
-        bg: { foundInBG: "unknown" },
-      };
-    })
-    .filter((p) => p.title && p.sourceUrl);
+  return items;
 }
 
 async function addIfNotExists(product) {
   try {
     const normalized = normalizeProduct(product);
 
-    // ако по някаква причина price е null, прескачаме (schema price е required)
+    if (!normalized.title || !normalized.sourceUrl) return { action: "skip", reason: "missing fields" };
     if (normalized.price == null) return { action: "skip", reason: "no price" };
 
     const score = computeScore(normalized);
-
-    const affiliateUrl =
-      (normalized.affiliateUrl && String(normalized.affiliateUrl).trim()) ||
-      buildAffiliateUrl(normalized.sourceUrl);
-
     const enriched = {
       ...normalized,
       score,
-      affiliateUrl,
       status: "new",
     };
 
     enriched.profitScore = computeProfitScore(enriched);
-
-    if (shouldAutoApprove(enriched)) enriched.status = "approved";
 
     const created = await Product.create(enriched);
     return { action: "created", status: created.status };
@@ -317,8 +221,6 @@ async function runBot() {
   console.log("✅ Bot connected to MongoDB");
 
   let created = 0;
-  let approved = 0;
-  let asNew = 0;
   let duplicates = 0;
   let errors = 0;
   let skipped = 0;
@@ -327,10 +229,11 @@ async function runBot() {
     for (const keyword of KEYWORDS) {
       if (Date.now() > deadline) break;
 
-      console.log(`🔎 AliExpress search: "${keyword}"`);
+      console.log(`🔎 eBay RSS search: "${keyword}"`);
+
       let products = [];
       try {
-        products = await fetchAliExpressProducts(keyword, PER_KEYWORD);
+        products = await fetchEbayRssProducts(keyword, PER_KEYWORD);
       } catch (e) {
         errors++;
         console.log("❌ search error:", e.message);
@@ -342,16 +245,10 @@ async function runBot() {
         if (Date.now() > deadline) break;
 
         const r = await addIfNotExists(p);
-
-        if (r.action === "created") {
-          created++;
-          if (r.status === "approved") approved++;
-          else asNew++;
-        } else if (r.action === "duplicate") {
-          duplicates++;
-        } else if (r.action === "skip") {
-          skipped++;
-        } else {
+        if (r.action === "created") created++;
+        else if (r.action === "duplicate") duplicates++;
+        else if (r.action === "skip") skipped++;
+        else {
           errors++;
           console.log("❌ item error:", r.error);
         }
@@ -362,8 +259,6 @@ async function runBot() {
 
     console.log("✅ Done");
     console.log("Created:", created);
-    console.log("Approved:", approved);
-    console.log("New:", asNew);
     console.log("Duplicates:", duplicates);
     console.log("Skipped:", skipped);
     console.log("Errors:", errors);
