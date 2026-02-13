@@ -4,7 +4,7 @@ const Product = require("../models/Product");
 const router = express.Router();
 
 /**
- * ✅ TOP products (само approved + NOT in BG)
+ * ✅ TOP products
  * GET /products/top
  *
  * Query:
@@ -13,12 +13,12 @@ const router = express.Router();
  * ?by=profitScore
  * ?limit=20
  */
-router.get("/products/top", async (req, res) => {
+router.get("/top", async (req, res) => {
   try {
     const by = String(req.query.by || "clicks").toLowerCase();
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
 
-    // ✅ показваме само approved + bg.foundInBG = no
+    // показваме само approved + bg.foundInBG = no
     const baseMatch = { status: "approved", "bg.foundInBG": "no" };
 
     if (by === "ctr") {
@@ -37,7 +37,7 @@ router.get("/products/top", async (req, res) => {
       return res.json({ ok: true, by: "ctr", limit, items });
     }
 
-    if (by === "profitscore") {
+    if (by === "profitscore" || by === "profitScore") {
       const items = await Product.find(baseMatch)
         .sort({ profitScore: -1, score: -1, clicks: -1, views: -1, createdAt: -1 })
         .limit(limit);
@@ -56,7 +56,7 @@ router.get("/products/top", async (req, res) => {
 });
 
 /**
- * ✅ Public products (само approved + NOT in BG)
+ * ✅ Public products
  * GET /products
  *
  * Query params:
@@ -65,7 +65,7 @@ router.get("/products/top", async (req, res) => {
  * ?q=search text
  * ?category=garden
  */
-router.get("/products", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
@@ -73,11 +73,10 @@ router.get("/products", async (req, res) => {
 
     const { q, category } = req.query || {};
 
-    // ✅ само approved + bg.foundInBG=no
     const filter = { status: "approved", "bg.foundInBG": "no" };
 
     if (q) filter.title = { $regex: q, $options: "i" };
-    if (category) filter.category = category;
+    if (category && category !== "all") filter.category = category;
 
     const items = await Product.find(filter)
       .sort({ createdAt: -1 })
@@ -93,10 +92,10 @@ router.get("/products", async (req, res) => {
 });
 
 /**
- * ✅ Product details (approved + NOT in BG)
+ * ✅ Product details
  * GET /products/:id
  */
-router.get("/products/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const item = await Product.findOne({
       _id: req.params.id,
@@ -113,9 +112,8 @@ router.get("/products/:id", async (req, res) => {
 
 /**
  * GET /products/:id/view
- * increments views and returns ok
  */
-router.get("/products/:id/view", async (req, res) => {
+router.get("/:id/view", async (req, res) => {
   try {
     const item = await Product.findOneAndUpdate(
       { _id: req.params.id, status: "approved", "bg.foundInBG": "no" },
@@ -132,9 +130,8 @@ router.get("/products/:id/view", async (req, res) => {
 
 /**
  * GET /products/:id/click
- * increments clicks and redirects to affiliateUrl else sourceUrl
  */
-router.get("/products/:id/click", async (req, res) => {
+router.get("/:id/click", async (req, res) => {
   try {
     const item = await Product.findOneAndUpdate(
       { _id: req.params.id, status: "approved", "bg.foundInBG": "no" },
