@@ -16,7 +16,8 @@ const app = express();
 ========================= */
 app.use(express.json());
 
-// Render-friendly CORS
+// Ако фронта се сервира от същия домейн (Render), CORS реално не е нужен.
+// Но го оставяме "Render-friendly".
 app.use(
   cors({
     origin: true,
@@ -31,32 +32,25 @@ app.use("/auth", authRoutes);
 app.use("/admin", adminProductsRoutes);
 app.use("/products", productsRoutes);
 
-app.get("/health", (req, res) => {
-  res.json({ ok: true });
-});
+app.get("/health", (req, res) => res.json({ ok: true }));
 
 /* =========================
-   Serve React (production)
+   Serve React build (production)
 ========================= */
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "client", "build");
-
-  // Static files
   app.use(express.static(buildPath));
 
-  // Express 5 compatible wildcard (FIX for your error)
+  // Express 5 compatible catch-all (НЕ "*")
   app.get("/*", (req, res) => {
     res.sendFile(path.join(buildPath, "index.html"));
   });
 } else {
-  // Dev test
-  app.get("/", (req, res) => {
-    res.send("API running (dev) ✅");
-  });
+  app.get("/", (req, res) => res.send("API running (dev) ✅"));
 }
 
 /* =========================
-   Start Server
+   Start server
 ========================= */
 async function start() {
   try {
@@ -68,9 +62,7 @@ async function start() {
     console.log("✅ MongoDB connected");
 
     const PORT = process.env.PORT || 8000;
-    app.listen(PORT, () => {
-      console.log("✅ Server running on port " + PORT);
-    });
+    app.listen(PORT, () => console.log("✅ Server running on port " + PORT));
   } catch (err) {
     console.error("❌ Boot error:", err.message);
     process.exit(1);
