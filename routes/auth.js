@@ -15,6 +15,17 @@ const router = express.Router();
  */
 const PASS_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
+function signToken(user) {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET липсва в .env");
+  }
+  return jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+}
+
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body || {};
@@ -70,15 +81,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Грешен email или парола." });
     }
 
-    if (!process.env.JWT_SECRET) {
-      return res.status(500).json({ message: "JWT_SECRET липсва в .env" });
-    }
-
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = signToken(user);
 
     return res.json({
       message: "Login OK",
@@ -92,22 +95,52 @@ router.post("/login", async (req, res) => {
 
 /** current user by token */
 router.get("/me", auth, async (req, res) => {
+  // auth middleware ти слага req.user (обикновено от JWT payload)
   return res.json({ ok: true, user: req.user }); // { id, role, iat, exp }
 });
 
 /**
- * ✅ TEMP: make current user admin (use once, then delete this route)
- * Requires Bearer token.
+ * ✅ Make current user admin (safe)
+ * Requires:
+ * - Bearer token
+ * - ADMIN_MAKE_KEY in env
+ * - header: x-admin-make-key: <ADMIN_MAKE_KEY>
+ *
+ * Returns:
+ * - new token with role=admin (важно!)
  */
 router.post("/make-admin", auth, async (req, res) => {
   try {
+    // ✅ lock route with secret key
+    const expected = process.env.ADMIN_MAKE_KEY;
+    if (!expected) {
+      return res.status(500).json({
+        message: "ADMIN_MAKE_KEY липсва в env (за да е безопасна тази функция).",
+      });
+    }
+
+    const provided = req.header("x-admin-make-key");
+    if (!provided || provided !== expected) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     const me = await User.findById(req.user.id);
     if (!me) return res.status(404).json({ message: "User not found" });
 
-    me.role = "admin";
-    await me.save();
+    if (me.role !== "admin") {
+      me.role = "admin";
+      await me.save();
+    }
 
-    return res.json({ ok: true, message: "You are admin now" });
+    // ✅ IMPORTANT: issue new token with updated role
+    const token = signToken(me);
+
+    return res.json({
+      ok: true,
+      message: "You are admin now",
+      token,
+      user: { id: me._id, email: me.email, role: me.role },
+    });
   } catch (err) {
     return res.status(500).json({ message: "Server error", error: err.message });
   }

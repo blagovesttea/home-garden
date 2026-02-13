@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
-// ✅ API base (local + optional env for later deploy)
+// ✅ API base (local + production same-origin)
 const API =
   process.env.NODE_ENV === "production"
     ? window.location.origin
     : "http://localhost:8000";
-
 
 const CATEGORIES = [
   "all",
@@ -25,7 +24,7 @@ const ADMIN_STATUSES = ["all", "new", "approved", "rejected", "blacklisted"];
 const SORTS = [
   { value: "popular", label: "Most popular" }, // clicks desc
   { value: "profit", label: "Best profit" }, // profitScore desc
-  { value: "newest", label: "Newest" }, // createdAt desc (if exists) else no-op
+  { value: "newest", label: "Newest" }, // createdAt desc
   { value: "priceAsc", label: "Price (low → high)" },
   { value: "priceDesc", label: "Price (high → low)" },
 ];
@@ -40,6 +39,7 @@ function App() {
      AUTH (login + admin)
   ========================== */
   const [view, setView] = useState("public"); // public | admin
+
   const [token, setToken] = useState(() => {
     try {
       return localStorage.getItem("token") || "";
@@ -47,7 +47,9 @@ function App() {
       return "";
     }
   });
+
   const [me, setMe] = useState(null); // { id, role, email? }
+  const [meLoading, setMeLoading] = useState(false);
   const isAdmin = me?.role === "admin";
 
   // login form
@@ -59,7 +61,6 @@ function App() {
   // ✅ admin-only: show stats in public (for you only)
   const [showStats, setShowStats] = useState(false);
   useEffect(() => {
-    // default ON for admin (so you see clicks/views while testing)
     if (token && isAdmin) setShowStats(true);
     else setShowStats(false);
   }, [token, isAdmin]);
@@ -68,29 +69,47 @@ function App() {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [token]);
 
+  /**
+   * ✅ robust fetch:
+   * - чете text
+   * - опитва JSON parse
+   * - ако получи HTML (doctype) -> дава ясна грешка
+   * - добавя Authorization автоматично ако има token
+   */
   async function apiFetch(path, opts = {}) {
     const res = await fetch(`${API}${path}`, {
       ...opts,
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders,
         ...(opts.headers || {}),
       },
     });
 
+    const text = await res.text();
+
     let data = null;
     try {
-      data = await res.json();
+      data = text ? JSON.parse(text) : null;
     } catch {
       data = null;
     }
 
     if (!res.ok) {
-      const msg = data?.message || `HTTP ${res.status}`;
+      const msg =
+        data?.message ||
+        data?.error ||
+        (text?.includes("<!doctype") || text?.includes("<html")
+          ? "Server returned HTML (wrong endpoint or React page)."
+          : `HTTP ${res.status}`);
+
       const err = new Error(msg);
       err.status = res.status;
       err.data = data;
+      err.raw = text;
       throw err;
     }
+
     return data;
   }
 
@@ -103,20 +122,19 @@ function App() {
 
       if (!token) {
         setMe(null);
-        if (view === "admin") setView("public");
+        setMeLoading(false);
         return;
       }
 
+      setMeLoading(true);
       try {
-        const data = await apiFetch("/auth/me", {
-          method: "GET",
-          headers: { ...authHeaders },
-        });
-
+        const data = await apiFetch("/auth/me", { method: "GET" });
         if (aborted) return;
+
         setMe(data?.user || null);
       } catch {
         if (aborted) return;
+
         setMe(null);
         setToken("");
         try {
@@ -124,6 +142,8 @@ function App() {
         } catch {}
         setAuthMsg("Token invalid/expired. Please login again.");
         setView("public");
+      } finally {
+        if (!aborted) setMeLoading(false);
       }
     }
 
@@ -134,10 +154,25 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  // hard guard: never allow admin view if not admin
+  /**
+   * ✅ Admin view guard (FIXED):
+   * - ако view=admin и няма token -> оставяме те в admin (да видиш login form)
+   * - ако има token, но /auth/me още се зарежда -> НЕ връщаме към public
+   * - ако /auth/me е заредено и не си admin -> връщаме към public
+   */
   useEffect(() => {
-    if (view === "admin" && (!token || !isAdmin)) setView("public");
-  }, [view, token, isAdmin]);
+    if (view !== "admin") return;
+
+    if (!token) return; // show login form
+
+    if (meLoading) return; // wait for /auth/me
+
+    if (!isAdmin) {
+      // token има, но user не е admin
+      setAuthMsg("You are logged in, but not admin.");
+      setView("public");
+    }
+  }, [view, token, meLoading, isAdmin]);
 
   async function doLogin(e) {
     e?.preventDefault?.();
@@ -150,7 +185,7 @@ function App() {
         body: JSON.stringify({ email: loginEmail, password: loginPass }),
       });
 
-      const t = data?.token || "";
+      const t = data?.token || data?.accessToken || data?.data?.token || "";
       if (!t) throw new Error("No token returned");
 
       setToken(t);
@@ -158,8 +193,10 @@ function App() {
         localStorage.setItem("token", t);
       } catch {}
 
-      setAuthMsg("Login OK");
+      // Оставаме в admin view – гардът вече няма да те рита,
+      // докато чака /auth/me (meLoading=true).
       setView("admin");
+      setAuthMsg("Login OK");
     } catch (e2) {
       setAuthMsg(e2?.message || "Login error");
     } finally {
@@ -171,6 +208,7 @@ function App() {
     setMe(null);
     setToken("");
     setAuthMsg("");
+    setMeLoading(false);
     setView("public");
     try {
       localStorage.removeItem("token");
@@ -238,18 +276,32 @@ function App() {
         else url = `${API}/products?${queryStringForLatest}`;
 
         const res = await fetch(url);
-        const data = await res.json();
+        const text = await res.text();
+
+        let data = null;
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch {
+          data = null;
+        }
 
         if (aborted) return;
 
-        const items = Array.isArray(data.items) ? data.items : [];
+        if (!res.ok) {
+          const msg =
+            data?.message ||
+            (text?.includes("<!doctype") ? "Server returned HTML (not JSON)." : `HTTP ${res.status}`);
+          throw new Error(msg);
+        }
+
+        const items = Array.isArray(data?.items) ? data.items : [];
         setProducts(items);
 
         if (mode === "latest") {
           setMeta({
-            total: Number(data.total || 0),
-            page: Number(data.page || page),
-            limit: Number(data.limit || limit),
+            total: Number(data?.total || 0),
+            page: Number(data?.page || page),
+            limit: Number(data?.limit || limit),
           });
         } else {
           setMeta({ total: items.length, page: 1, limit: items.length });
@@ -277,18 +329,23 @@ function App() {
     let items = Array.isArray(products) ? [...products] : [];
 
     if (category && category !== "all") {
-      items = items.filter((p) => String(p.category || "").toLowerCase() === category);
+      items = items.filter(
+        (p) => String(p.category || "").toLowerCase() === category
+      );
     }
 
     if (qDebounced) {
       const qq = qDebounced.toLowerCase();
-      items = items.filter((p) => String(p.title || "").toLowerCase().includes(qq));
+      items = items.filter((p) =>
+        String(p.title || "").toLowerCase().includes(qq)
+      );
     }
 
     if (onlyBG) items = items.filter((p) => !!p.shippingToBG);
-    if (fastShip) items = items.filter(
-      (p) => toNum(p.shippingDays) > 0 && toNum(p.shippingDays) <= 5
-    );
+    if (fastShip)
+      items = items.filter(
+        (p) => toNum(p.shippingDays) > 0 && toNum(p.shippingDays) <= 5
+      );
 
     items.sort((a, b) => {
       if (sort === "popular") return toNum(b.clicks) - toNum(a.clicks);
@@ -335,10 +392,9 @@ function App() {
 
       const data = await apiFetch(`/admin/products?${qs.toString()}`, {
         method: "GET",
-        headers: { ...authHeaders },
       });
 
-      setAdminItems(Array.isArray(data.items) ? data.items : []);
+      setAdminItems(Array.isArray(data?.items) ? data.items : []);
     } catch (e) {
       setAdminMsg(e?.message || "Admin load error");
       setAdminItems([]);
@@ -349,16 +405,19 @@ function App() {
 
   useEffect(() => {
     if (view !== "admin") return;
+    if (!token) return; // login screen
+    if (meLoading) return; // wait
+    if (!isAdmin) return; // will be redirected by guard
+
     loadAdmin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, adminStatus, token, me?.role]);
+  }, [view, adminStatus, token, me?.role, meLoading, isAdmin]);
 
   async function setStatus(id, status) {
     setAdminMsg("");
     try {
       await apiFetch(`/admin/products/${id}/status`, {
         method: "PATCH",
-        headers: { ...authHeaders },
         body: JSON.stringify({ status }),
       });
       await loadAdmin();
@@ -372,7 +431,6 @@ function App() {
     try {
       await apiFetch(`/admin/products/${id}`, {
         method: "DELETE",
-        headers: { ...authHeaders },
       });
       await loadAdmin();
     } catch (e) {
@@ -386,17 +444,17 @@ function App() {
       try {
         const r1 = await apiFetch(`/admin/products/approve-existing`, {
           method: "POST",
-          headers: { ...authHeaders },
         });
         setAdminMsg(
-          `Approved existing: matched ${r1.matched ?? "-"} / modified ${r1.modified ?? "-"}`
+          `Approved existing: matched ${r1?.matched ?? "-"} / modified ${r1?.modified ?? "-"}`
         );
       } catch {
         const r2 = await apiFetch(`/admin/products/backfill`, {
           method: "POST",
-          headers: { ...authHeaders },
         });
-        setAdminMsg(`Backfill OK: scanned ${r2.scanned ?? "-"} / updated ${r2.updated ?? "-"}`);
+        setAdminMsg(
+          `Backfill OK: scanned ${r2?.scanned ?? "-"} / updated ${r2?.updated ?? "-"}`
+        );
       }
 
       await loadAdmin();
@@ -429,7 +487,9 @@ function App() {
               ) : (
                 <>
                   Admin panel{" "}
-                  {isAdmin ? (
+                  {meLoading ? (
+                    <b className="hg-pill">checking…</b>
+                  ) : isAdmin ? (
                     <b className="hg-pill hg-pill--ok">admin</b>
                   ) : (
                     <b className="hg-pill hg-pill--bad">no admin</b>
@@ -450,21 +510,21 @@ function App() {
               Shop
             </button>
 
-            {token && isAdmin ? (
-              <button
-                className={`hg-switchBtn ${view === "admin" ? "is-active" : ""}`}
-                onClick={() => setView("admin")}
-                disabled={view === "admin"}
-              >
-                Admin
-              </button>
-            ) : null}
+            {/* ✅ FIX: Admin tab is always accessible to reach login */}
+            <button
+              className={`hg-switchBtn ${view === "admin" ? "is-active" : ""}`}
+              onClick={() => setView("admin")}
+              disabled={view === "admin"}
+              title={!token ? "Open admin login" : isAdmin ? "Open admin panel" : "Not admin"}
+            >
+              Admin{!token ? " (login)" : ""}
+            </button>
           </div>
 
-          {view === "admin" && token ? (
+          {token ? (
             <>
               <div className="hg-userChip">
-                role: <b>{me?.role || "unknown"}</b>
+                role: <b>{me?.role || (meLoading ? "checking…" : "unknown")}</b>
               </div>
               <button className="hg-btn" onClick={doLogout}>
                 Logout
@@ -474,7 +534,7 @@ function App() {
         </div>
       </div>
 
-      {/* ✅ Login only in ADMIN view */}
+      {/* ✅ Login in ADMIN view */}
       {view === "admin" && !token && (
         <form className="hg-panel" onSubmit={doLogin}>
           <div className="hg-panelTitle">Admin Login</div>
@@ -504,13 +564,20 @@ function App() {
         </form>
       )}
 
-      {view === "admin" && token && authMsg && <div className="hg-panel">{authMsg}</div>}
+      {/* ✅ Logged in but waiting /auth/me */}
+      {view === "admin" && token && meLoading && (
+        <div className="hg-panel">Checking your role…</div>
+      )}
+
+      {view === "admin" && token && authMsg && !meLoading && (
+        <div className="hg-panel">{authMsg}</div>
+      )}
 
       {view === "admin" && (
         <div>
           {!token ? (
             <div className="hg-panel hg-panel--bad">Login first.</div>
-          ) : !isAdmin ? (
+          ) : meLoading ? null : !isAdmin ? (
             <div className="hg-panel hg-panel--bad">
               You are not admin (role: {me?.role || "unknown"}).
             </div>
@@ -669,7 +736,6 @@ function App() {
                 Fast delivery
               </button>
 
-              {/* ✅ admin-only toggle for stats in public */}
               {token && isAdmin ? (
                 <button
                   type="button"
@@ -756,7 +822,6 @@ function App() {
                     )}
                   </div>
 
-                  {/* ✅ admin-only stats (in public, only if you toggle it) */}
                   {token && isAdmin && showStats ? (
                     <div className="hg-kpis">
                       Views: <b>{p.views ?? 0}</b> • Clicks: <b>{p.clicks ?? 0}</b> • ProfitScore:{" "}
