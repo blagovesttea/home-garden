@@ -11,27 +11,42 @@ const productsRoutes = require("./routes/products");
 
 const app = express();
 
-// Middlewares
+/* =========================
+   Middlewares
+========================= */
 app.use(express.json());
-app.use(cors());
 
-// Routes
+// ✅ CORS (Render-friendly)
+// Ако искаш по-строго, после ще го ограничим по домейн.
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
+
+/* =========================
+   API Routes
+========================= */
 app.use("/auth", authRoutes);
 app.use("/admin", adminProductsRoutes);
 
-// ❗ НЕ на "/" — иначе чупи сайта
+// ✅ API under /products (не на "/")
 app.use("/products", productsRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ ok: true });
 });
 
-/* ✅ SERVE REACT BUILD (Render / production) */
+/* =========================
+   Serve React build (production)
+========================= */
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "client", "build");
   app.use(express.static(buildPath));
 
-  app.get("*", (req, res) => {
+  // ✅ Express 5 compatible wildcard (НЕ "*")
+  app.get("/*", (req, res) => {
     res.sendFile(path.join(buildPath, "index.html"));
   });
 } else {
@@ -41,7 +56,9 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// Start server
+/* =========================
+   Start server
+========================= */
 async function start() {
   try {
     if (!process.env.MONGO_URI) {
