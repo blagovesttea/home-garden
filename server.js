@@ -42,9 +42,10 @@ if (process.env.NODE_ENV === "production") {
   app.use(express.static(buildPath));
 
   // Express 5 compatible catch-all (НЕ "*")
-  app.get("/*", (req, res) => {
-    res.sendFile(path.join(buildPath, "index.html"));
-  });
+  app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(buildPath, "index.html"));
+});
+
 } else {
   app.get("/", (req, res) => res.send("API running (dev) ✅"));
 }
