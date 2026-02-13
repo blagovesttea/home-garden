@@ -36,7 +36,8 @@ app.use(
 );
 
 // Optional: handle preflight explicitly
-app.options("*", cors({ origin: true, credentials: true }));
+app.options(/.*/, cors({ origin: true, credentials: true }));
+
 
 /* =========================
    Health
