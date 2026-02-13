@@ -4,8 +4,9 @@ import "./App.css";
 // ✅ API base (local + optional env for later deploy)
 const API =
   process.env.NODE_ENV === "production"
-    ? process.env.REACT_APP_API_URL || ""
+    ? window.location.origin
     : "http://localhost:8000";
+
 
 const CATEGORIES = [
   "all",
