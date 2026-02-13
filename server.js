@@ -16,8 +16,7 @@ const app = express();
 ========================= */
 app.use(express.json());
 
-// ✅ CORS (Render-friendly)
-// Ако искаш по-строго, после ще го ограничим по домейн.
+// Render-friendly CORS
 app.use(
   cors({
     origin: true,
@@ -30,8 +29,6 @@ app.use(
 ========================= */
 app.use("/auth", authRoutes);
 app.use("/admin", adminProductsRoutes);
-
-// ✅ API under /products (не на "/")
 app.use("/products", productsRoutes);
 
 app.get("/health", (req, res) => {
@@ -39,25 +36,27 @@ app.get("/health", (req, res) => {
 });
 
 /* =========================
-   Serve React build (production)
+   Serve React (production)
 ========================= */
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "client", "build");
+
+  // Static files
   app.use(express.static(buildPath));
 
-  // ✅ Express 5 compatible wildcard (НЕ "*")
+  // Express 5 compatible wildcard (FIX for your error)
   app.get("/*", (req, res) => {
     res.sendFile(path.join(buildPath, "index.html"));
   });
 } else {
-  // dev landing
+  // Dev test
   app.get("/", (req, res) => {
     res.send("API running (dev) ✅");
   });
 }
 
 /* =========================
-   Start server
+   Start Server
 ========================= */
 async function start() {
   try {
