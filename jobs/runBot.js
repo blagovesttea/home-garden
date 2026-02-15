@@ -4,14 +4,15 @@ require("dotenv").config();
 const Product = require("../models/Product");
 
 /* =========================
-   Profitshare Feed Bot (CSV) — schema-safe
+   Profitshare Feed Bot (CSV) — FIXED delimiter/header
    - Uses PROFITSHARE_FEED_URL (Render Env Var)
+   - Auto-detects delimiter (; , \t)
+   - If header is "1 column with commas" => reparses correctly
    - Upsert by sourceUrl (unique)
    - Does NOT connect/disconnect Mongo (server.js already connects)
    - Exports a function
    - Does NOT downgrade approved -> new
-   - Works with Profitshare EN columns (and BG too)
-   - Keeps your Product schema happy (required fields + source enum)
+   - Schema-safe for your Product.js (required fields + source enum)
 ========================= */
 
 const FEED_URL = process.env.PROFITSHARE_FEED_URL;
@@ -26,8 +27,6 @@ function toNumber(val) {
   if (val == null) return null;
   const s = String(val).trim();
   if (!s) return null;
-
-  // "1 234,56" or "1234.56"
   const normalized = s.replace(/\s+/g, "").replace(",", ".");
   const n = Number(normalized);
   return Number.isFinite(n) ? n : null;
@@ -40,7 +39,6 @@ function guessCategoryFromText(text) {
     t.includes("градин") ||
     t.includes("garden") ||
     t.includes("полив") ||
-    t.includes("ириг") ||
     t.includes("маркуч") ||
     t.includes("hose") ||
     t.includes("солар") ||
@@ -75,12 +73,10 @@ function guessCategoryFromText(text) {
 function computeScore(p) {
   let s = 0;
   if (p.category && p.category !== "other") s += 2;
-
   if (typeof p.price === "number") {
     if (p.price <= 50) s += 2;
     else if (p.price <= 120) s += 1;
   }
-
   if (p.imageUrl) s += 1;
   return s;
 }
@@ -91,8 +87,8 @@ function computeProfitScore(p) {
   return ps;
 }
 
-/** Small CSV parser (supports delimiter ; and quotes) */
-function parseCSV(text, delimiter = ";") {
+/** CSV parser (delimiter + quotes) */
+function parseCSV(text, delimiter) {
   const rows = [];
   const lines = String(text || "")
     .split(/\r?\n/)
@@ -130,7 +126,7 @@ function parseCSV(text, delimiter = ";") {
     return out.map((v) => v.trim());
   }
 
-  const header = parseLine(lines[0]).map((h) => h.replace(/^\uFEFF/, "")); // strip BOM
+  const header = parseLine(lines[0]).map((h) => h.replace(/^\uFEFF/, ""));
   for (let i = 1; i < lines.length; i++) {
     const cols = parseLine(lines[i]);
     if (!cols.length) continue;
@@ -141,6 +137,27 @@ function parseCSV(text, delimiter = ";") {
   }
 
   return rows;
+}
+
+/** Detect delimiter from header line */
+function detectDelimiter(csvText) {
+  const firstLine =
+    String(csvText || "")
+      .split(/\r?\n/)
+      .find((l) => l.trim() !== "") || "";
+
+  const candidates = [";", ",", "\t", "|"];
+  let best = ";";
+  let bestCount = -1;
+
+  for (const d of candidates) {
+    const count = (firstLine.match(new RegExp(`\\${d}`, "g")) || []).length;
+    if (count > bestCount) {
+      bestCount = count;
+      best = d;
+    }
+  }
+  return best;
 }
 
 async function fetchFeed(url) {
@@ -159,16 +176,13 @@ async function fetchFeed(url) {
     });
 
     const text = await res.text();
-    if (!res.ok) {
-      throw new Error(`Feed HTTP ${res.status} | head: ${text.slice(0, 140)}`);
-    }
+    if (!res.ok) throw new Error(`Feed HTTP ${res.status} | head: ${text.slice(0, 140)}`);
     return text;
   } finally {
     clearTimeout(t);
   }
 }
 
-// Pick by known keys (fast path)
 function pick(row, keys) {
   for (const k of keys) {
     if (row[k] != null && String(row[k]).trim() !== "") return row[k];
@@ -176,7 +190,6 @@ function pick(row, keys) {
   return "";
 }
 
-// Fallback: find first URL in row values
 function findFirstUrlInRow(row) {
   for (const v of Object.values(row || {})) {
     const s = normStr(v);
@@ -186,53 +199,29 @@ function findFirstUrlInRow(row) {
   return "";
 }
 
-// Fallback: find first image-like url
 function findFirstImageUrl(row) {
   for (const v of Object.values(row || {})) {
     const s = normStr(v);
     if (!s) continue;
-
     if (/^https?:\/\/\S+\.(jpg|jpeg|png|webp)(\?.*)?$/i.test(s)) return s;
     if (/^https?:\/\/\S+/i.test(s) && /image|img|cdn|media|static/i.test(s)) return s;
   }
   return "";
 }
 
-// Detect price from known columns + scan
 function findPrice(row) {
-  // Prefer price with VAT
+  // prefer VAT price
   const pVat = toNumber(
-    pick(row, [
-      // EN from your logs:
-      "Price with VAT",
-      // BG variants:
-      "Цена с ДДС",
-      // generic:
-      "Price VAT",
-      "price_vat",
-      "Price",
-      "Цена",
-    ])
+    pick(row, ["Price with VAT", "Цена с ДДС", "Price VAT", "Price", "Цена"])
   );
   if (pVat != null) return pVat;
 
-  // Discount price with VAT
   const pDiscVat = toNumber(
-    pick(row, [
-      // EN from your logs:
-      "Price with discount, with VAT",
-      // BG variants:
-      "Цена с намаление, с ДДС",
-      // generic:
-      "Sale price",
-      "Discount price",
-      "sale_price",
-      "discount_price",
-    ])
+    pick(row, ["Price with discount, with VAT", "Цена с намаление, с ДДС", "Sale price", "Discount price"])
   );
   if (pDiscVat != null) return pDiscVat;
 
-  // As last resort: scan headers containing "price" / "цена"
+  // scan
   for (const [k, v] of Object.entries(row || {})) {
     const key = String(k).toLowerCase();
     if (key.includes("price") || key.includes("цена")) {
@@ -240,28 +229,17 @@ function findPrice(row) {
       if (n != null) return n;
     }
   }
-
   return null;
 }
 
-// Detect sale price (optional)
 function findSalePrice(row) {
   const pDiscVat = toNumber(
-    pick(row, [
-      "Price with discount, with VAT",
-      "Цена с намаление, с ДДС",
-      "Sale price",
-      "Discount price",
-    ])
+    pick(row, ["Price with discount, with VAT", "Цена с намаление, с ДДС", "Sale price", "Discount price"])
   );
   if (pDiscVat != null) return pDiscVat;
 
   const pDiscNoVat = toNumber(
-    pick(row, [
-      "Price with discount, without VAT",
-      "Цена с намаление без ДДС",
-      "Discount price without VAT",
-    ])
+    pick(row, ["Price with discount, without VAT", "Цена с намаление без ДДС"])
   );
   if (pDiscNoVat != null) return pDiscNoVat;
 
@@ -279,14 +257,33 @@ async function runBot() {
 
   const csvText = await fetchFeed(FEED_URL);
 
-  // Profitshare often uses ";"
-  let rows = parseCSV(csvText, ";");
-  if (rows.length <= 1) rows = parseCSV(csvText, ",");
+  // 1) detect delimiter
+  let delim = detectDelimiter(csvText);
+  let rows = parseCSV(csvText, delim);
+
+  // 2) FIX: if header became 1 key containing commas -> reparse with comma
+  if (rows.length > 0) {
+    const keys = Object.keys(rows[0] || {});
+    if (keys.length === 1 && keys[0].includes(",") && delim !== ",") {
+      console.log("⚠️ Header detected as single column with commas. Reparsing with ',' ...");
+      delim = ",";
+      rows = parseCSV(csvText, ",");
+    }
+  }
 
   console.log("🤖 Feed rows parsed:", rows.length);
 
   if (rows.length > 0) {
-    console.log("🧾 Feed columns (first row):", Object.keys(rows[0]));
+    const keys = Object.keys(rows[0]);
+    console.log("🧾 Feed columns count:", keys.length);
+    console.log("🧾 Feed columns (first row):", keys);
+    // show sample values for sanity
+    console.log("🔍 Sample row (first):", {
+      title: rows[0]["Product name"] || rows[0]["Наименование на продукта"] || "",
+      link: rows[0]["Product affiliate link"] || rows[0]["Текстов линк на продукта"] || "",
+      img: rows[0]["Product picture"] || rows[0]["Профилна снимка"] || "",
+      price: rows[0]["Price with VAT"] || rows[0]["Цена с ДДС"] || "",
+    });
   }
 
   let upserted = 0;
@@ -298,15 +295,8 @@ async function runBot() {
 
   for (const row of limited) {
     try {
-      // ✅ These match your EN feed columns (from logs) + BG fallbacks
       const advertiser = normStr(
-        pick(row, [
-          "Advertiser name",
-          "Име рекламодател",
-          "Advertiser",
-          "Merchant",
-          "Рекламодател",
-        ])
+        pick(row, ["Advertiser name", "Име рекламодател", "Advertiser", "Merchant", "Рекламодател"])
       );
 
       const categoryText = normStr(pick(row, ["Category", "Категория"]));
@@ -314,24 +304,13 @@ async function runBot() {
       const productCode = normStr(pick(row, ["Product code", "Код продукт", "SKU"]));
 
       const title = normStr(
-        pick(row, [
-          "Product name",
-          "Наименование на продукта",
-          "Name",
-          "Title",
-          "Product Name",
-        ])
+        pick(row, ["Product name", "Наименование на продукта", "Name", "Title", "Product Name"])
       );
 
       const description = normStr(
-        pick(row, [
-          "Product description",
-          "Описание на продукта",
-          "Description",
-        ])
+        pick(row, ["Product description", "Описание на продукта", "Description"])
       );
 
-      // ✅ affiliate link (from your EN feed column name)
       let affiliateUrl = normStr(
         pick(row, [
           "Product affiliate link",
@@ -347,26 +326,16 @@ async function runBot() {
       );
       if (!affiliateUrl) affiliateUrl = findFirstUrlInRow(row);
 
-      // ✅ image (from your EN feed column name)
       let imageUrl = normStr(
-        pick(row, [
-          "Product picture",
-          "Профилна снимка",
-          "Image",
-          "Image URL",
-          "ImageUrl",
-        ])
+        pick(row, ["Product picture", "Профилна снимка", "Image", "Image URL", "ImageUrl"])
       );
       if (!imageUrl) imageUrl = findFirstImageUrl(row);
 
-      // ✅ required by your schema
       const price = findPrice(row);
       const salePrice = findSalePrice(row);
 
       const currency = normStr(pick(row, ["Currency", "Валута"])) || "EUR";
 
-      // ✅ sourceUrl must be unique+required; pick best stable key
-      // For Profitshare we usually only have affiliate link; that's fine as unique.
       const sourceUrl = affiliateUrl || productCode;
 
       if (!title || !affiliateUrl || !sourceUrl || typeof price !== "number" || price <= 0) {
@@ -376,17 +345,14 @@ async function runBot() {
 
       const category = guessCategoryFromText(`${categoryText} ${title}`);
 
-      // ✅ keep approved if it was already approved
       const existing = await Product.findOne({ sourceUrl }).select("status").lean();
       const keepApproved = existing?.status === "approved";
 
-      // ✅ schema-safe product doc (your Product.js requires: title, category, source, sourceUrl, price)
       const doc = {
         title,
         category,
 
-        // Your schema source enum is: ["amazon_de","aliexpress","temu","ebay","other"]
-        // Profitshare isn't listed, so we must store "other"
+        // schema enum: amazon_de/aliexpress/temu/ebay/other
         source: "other",
 
         sourceUrl,
@@ -396,14 +362,10 @@ async function runBot() {
         price,
         currency,
 
-        // schema fields (safe defaults)
         shippingPrice: 0,
         shippingToBG: true,
         shippingDays: null,
 
-        // analytics fields default in schema, no need to set
-
-        // optional schema fields
         notes: advertiser
           ? `advertiser: ${advertiser}${manufacturer ? ` | brand: ${manufacturer}` : ""}${
               productCode ? ` | code: ${productCode}` : ""
@@ -422,13 +384,9 @@ async function runBot() {
       const res = await Product.updateOne(
         { sourceUrl: doc.sourceUrl },
         {
-          $set: {
-            ...doc,
-            updatedAt: new Date(),
-          },
+          $set: { ...doc, updatedAt: new Date() },
           $setOnInsert: {
             createdAt: new Date(),
-            // not in schema now, but OK in Mongo; you can add later if you want
             productCode: productCode || undefined,
           },
         },
