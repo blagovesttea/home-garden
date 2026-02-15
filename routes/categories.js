@@ -23,7 +23,6 @@ function slugify(input) {
  */
 router.post("/seed", auth, adminOnly, async (req, res) => {
   try {
-    // Big, realistic Home & Garden catalog (can extend later)
     const seed = [
       {
         name: "Home",
@@ -157,15 +156,17 @@ router.post("/seed", auth, adminOnly, async (req, res) => {
 
     async function upsertNode(node, parentDoc, order) {
       const name = String(node.name || "").trim();
-      const slug = slugify(name) || slugify(String(order)) || "cat";
+      const slug = slugify(name) || `cat-${order || 0}`;
 
       const parentId = parentDoc ? parentDoc._id : null;
       const level = parentDoc ? Number(parentDoc.level || 0) + 1 : 0;
+
       const parentPath = parentDoc
         ? Array.isArray(parentDoc.path)
           ? parentDoc.path
           : []
         : [];
+
       const path = [...parentPath, slug];
 
       const doc = await Category.findOneAndUpdate(
@@ -204,10 +205,7 @@ router.post("/seed", auth, adminOnly, async (req, res) => {
 
 /**
  * GET /categories
- * Tree structure for menu:
- * [
- *   { name, slug, path, children:[...] }
- * ]
+ * Tree structure for menu
  */
 router.get("/", async (req, res) => {
   try {
@@ -264,16 +262,15 @@ router.get("/flat", async (req, res) => {
 });
 
 /**
- * ✅ Express-safe wildcard param (works on newer Express)
- * GET /categories/by-path/*
- * Example: /categories/by-path/home/kitchen/cookware
+ * ✅ SAFE on Express 5 (NO wildcard routes)
+ * GET /categories/by-path?path=home/kitchen/cookware
  */
-router.get("/by-path/*", async (req, res) => {
+router.get("/by-path", async (req, res) => {
   try {
-    const pathStr = req.params[0];
-    if (!pathStr) return res.status(400).json({ message: "Path required" });
+    const pathStr = String(req.query.path || "").trim();
+    if (!pathStr) return res.status(400).json({ message: "path query required" });
 
-    const pathArr = String(pathStr)
+    const pathArr = pathStr
       .split("/")
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean);
