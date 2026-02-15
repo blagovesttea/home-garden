@@ -10,22 +10,26 @@ const authRoutes = require("./routes/auth");
 const adminProductsRoutes = require("./routes/admin.products");
 const productsRoutes = require("./routes/products");
 
+// ✅ Profitshare bot (your file is in /jobs/runBot.js)
+let runProfitshareBot = null;
+try {
+  runProfitshareBot = require("./jobs/runBot");
+} catch (e) {
+  console.log("ℹ️ jobs/runBot.js not found (bot disabled).");
+}
+
 const app = express();
 
 /* =========================
    App settings
 ========================= */
-// Render / reverse proxy friendly (secure cookies, req.ip, etc.)
 app.set("trust proxy", 1);
 
 /* =========================
    Middlewares
 ========================= */
-// Increase JSON limit a bit (useful for product descriptions, base64 not recommended)
 app.use(express.json({ limit: "2mb" }));
 
-// CORS: ако фронта е на същия домейн, пак е ок.
-// Ако утре отделиш домейн за client, може да сложиш конкретен origin.
 app.use(
   cors({
     origin: true,
@@ -35,9 +39,7 @@ app.use(
   })
 );
 
-// Optional: handle preflight explicitly
 app.options(/.*/, cors({ origin: true, credentials: true }));
-
 
 /* =========================
    Health
@@ -58,12 +60,35 @@ if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "client", "build");
   app.use(express.static(buildPath));
 
-  // Express 5 compatible catch-all (НЕ "*")
   app.get(/.*/, (req, res) => {
     res.sendFile(path.join(buildPath, "index.html"));
   });
 } else {
   app.get("/", (req, res) => res.send("API running (dev) ✅"));
+}
+
+/* =========================
+   Bot runner (safe, non-blocking)
+========================= */
+function startBotOnceAfterBoot() {
+  if (!runProfitshareBot) return;
+
+  const feedUrl = process.env.PROFITSHARE_FEED_URL;
+  if (!feedUrl) {
+    console.log("ℹ️ PROFITSHARE_FEED_URL missing (bot disabled).");
+    return;
+  }
+
+  // ✅ run after server is up (doesn't block boot)
+  setTimeout(async () => {
+    try {
+      console.log("🤖 Profitshare bot starting...");
+      await runProfitshareBot(); // MUST export a function from jobs/runBot.js
+      console.log("✅ Profitshare bot finished.");
+    } catch (err) {
+      console.error("❌ Profitshare bot error:", err?.message || err);
+    }
+  }, 15_000);
 }
 
 /* =========================
@@ -79,7 +104,10 @@ async function start() {
     console.log("✅ MongoDB connected");
 
     const PORT = process.env.PORT || 8000;
-    app.listen(PORT, () => console.log("✅ Server running on port " + PORT));
+    app.listen(PORT, () => {
+      console.log("✅ Server running on port " + PORT);
+      startBotOnceAfterBoot();
+    });
   } catch (err) {
     console.error("❌ Boot error:", err);
     process.exit(1);
