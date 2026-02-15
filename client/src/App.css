@@ -1,5 +1,5 @@
 /* =========================================================
-   JYSK-LIKE CATALOG (CLEAN WHITE + AIRY)
+   JYSK-LIKE CATALOG (CLEAN WHITE + AIRY) + ALWAYS-VISIBLE CATEGORIES
    Uses your existing class names (.hg-*)
    Wrapper: .hg hg--public / hg--admin
 ========================================================= */
@@ -22,6 +22,12 @@
   --r-6: 6px;
   --r-8: 8px;
   --r-10: 10px;
+
+  /* PUBLIC accents */
+  --p-soft:#f7f7f8;
+  --p-soft2:#f3f4f6;
+  --p-ink:#111827;
+  --p-ink2: rgba(17,24,39,.78);
 
   /* ADMIN */
   --a-bg1:#0b1020;
@@ -129,6 +135,103 @@ body{
 }
 
 /* =========================
+   ✅ PUBLIC LAYOUT (SIDEBAR + CONTENT)
+   Put your toolbar + grid inside .hg-main (App.js will add wrapper)
+========================= */
+.hg--public .hg-main{
+  display:grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 18px;
+  align-items:start;
+}
+
+/* Sidebar panel */
+.hg--public .hg-side{
+  position: sticky;
+  top: 14px;
+  align-self: start;
+
+  border: 1px solid rgba(17,24,39,.08);
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+/* Sidebar title row */
+.hg--public .hg-sideTitle{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.hg--public .hg-sideTitle h3{
+  margin:0;
+  font-size: 13px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: rgba(17,24,39,.72);
+}
+.hg--public .hg-sideHint{
+  font-size: 12px;
+  color: rgba(17,24,39,.46);
+}
+
+/* Category list */
+.hg--public .hg-catList{
+  display:flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: calc(100vh - 170px);
+  overflow: auto;
+}
+
+/* Category button */
+.hg--public .hg-catBtn{
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(17,24,39,.84);
+  border-radius: 10px;
+  padding: 9px 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.hg--public .hg-catBtn:hover{
+  background: #f6f7f9;
+}
+.hg--public .hg-catBtn.is-active{
+  background: rgba(17,24,39,.06);
+  border-color: rgba(17,24,39,.12);
+}
+
+/* level indent */
+.hg--public .hg-catIndent{
+  opacity: .55;
+  font-weight: 800;
+}
+
+/* little dot bullet */
+.hg--public .hg-catDot{
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(17,24,39,.22);
+  flex: 0 0 6px;
+}
+.hg--public .hg-catBtn.is-active .hg-catDot{
+  background: rgba(17,24,39,.62);
+}
+
+/* =========================
    TOOLBAR (one clean strip)
 ========================= */
 .hg--public .hg-toolbar{
@@ -181,14 +284,16 @@ body{
   border: 1px solid var(--line2);
   background: #fff;
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--fs-13);
   cursor:pointer;
 }
+
+/* ✅ make “on” state NOT black (so it’s not “черен инструмент”) */
 .hg--public .hg-chip.is-on{
-  background: #111827;
-  color: #fff;
-  border-color: #111827;
+  background: rgba(17,24,39,.08);
+  color: #111827;
+  border-color: rgba(17,24,39,.18);
 }
 
 /* =========================
@@ -210,12 +315,14 @@ body{
   background: #fff;
   color: var(--text);
   cursor:pointer;
-  font-weight: 600;
+  font-weight: 700;
 }
 .hg--public .hg-btn:hover{ border-color: rgba(17,24,39,.22); }
+
+/* ✅ primary for tabs = soft dark, not pure black */
 .hg--public .hg-btn--primary{
-  background: #111827;
-  border-color: #111827;
+  background: rgba(17,24,39,.90);
+  border-color: rgba(17,24,39,.90);
   color: #fff;
 }
 
@@ -309,7 +416,7 @@ body{
   padding: 0;
   border-radius: 0;
   font-size: var(--fs-12);
-  font-weight: 600;
+  font-weight: 700;
   color: rgba(17,24,39,.62);
 }
 
@@ -342,14 +449,13 @@ body{
 }
 
 /* IMPORTANT:
-   Override the black .hg-btn--primary (from mode tabs)
-   so the offer button is WHITE like JYSK.
+   Offer button is WHITE like JYSK.
 */
 .hg--public a.hg-btn.hg-btn--primary{
   height: 38px;
   padding: 0 16px;
   border-radius: var(--r-8);
-  font-weight: 600;
+  font-weight: 700;
   text-decoration:none;
   display:inline-flex;
   align-items:center;
@@ -366,9 +472,7 @@ body{
   border-color: rgba(17,24,39,0.35);
   transform: translateY(-1px);
 }
-.hg--public a.hg-btn.hg-btn--primary:active{
-  transform: translateY(0);
-}
+.hg--public a.hg-btn.hg-btn--primary:active{ transform: translateY(0); }
 
 /* details link */
 .hg--public .hg-mini{
@@ -377,6 +481,53 @@ body{
   text-decoration: none;
 }
 .hg--public .hg-mini:hover{ text-decoration: underline; }
+
+/* =========================
+   ✅ MOBILE CATEGORY DRAWER (CSS only)
+   In App.js you will toggle: .hg-drawer.is-open + .hg-backdrop.is-open
+========================= */
+.hg--public .hg-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+  z-index: 60;
+}
+.hg--public .hg-backdrop.is-open{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hg--public .hg-drawer{
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: min(86vw, 340px);
+  background: #fff;
+  border-right: 1px solid rgba(17,24,39,.12);
+  transform: translateX(-102%);
+  transition: transform .22s ease;
+  z-index: 61;
+  padding: 12px;
+}
+.hg--public .hg-drawer.is-open{
+  transform: translateX(0);
+}
+
+.hg--public .hg-catOpenBtn{
+  display:none; /* shown on mobile */
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(17,24,39,.14);
+  background: #fff;
+  color: #111827;
+  font-weight: 800;
+  cursor: pointer;
+}
 
 /* =========================
    ADMIN (unchanged dark)
@@ -452,8 +603,15 @@ body{
 ========================= */
 @media (max-width: 1180px){
   .hg--public .hg-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hg--public .hg-main{ grid-template-columns: 240px minmax(0, 1fr); }
 }
-@media (max-width: 860px){
+
+@media (max-width: 980px){
+  /* ✅ hide sidebar & show open button */
+  .hg--public .hg-main{ grid-template-columns: 1fr; }
+  .hg--public .hg-side{ display:none; }
+  .hg--public .hg-catOpenBtn{ display:inline-flex; align-items:center; gap:8px; }
+
   .hg--public{ padding: 18px 14px 60px; }
   .hg--public .hg-topbar{ flex-direction: column; gap: 10px; }
   .hg--public .hg-chips{ margin-left: 0; }
@@ -461,21 +619,19 @@ body{
   .hg--public .hg-input{ flex-basis: 100%; }
   .hg--public .hg-select{ flex: 1 1 220px; }
 }
+
 @media (max-width: 680px){
   .hg--public .hg-grid{ grid-template-columns: 1fr; }
   .hg--public .hg-thumb{ height: 220px; }
 }
-/* ===== JYSK text style (brand + small chip + title) ===== */
 
-/* редът горе: TINDRA + Basic */
+/* ===== Optional JYSK text style helpers (kept) ===== */
 .hg--public .hg-brandLine{
   display:flex;
   align-items:center;
   gap: 10px;
   margin-top: 2px;
 }
-
-/* TINDRA */
 .hg--public .hg-brandName{
   font-size: 16px;
   font-weight: 800;
@@ -484,38 +640,13 @@ body{
   color: #111827;
   line-height: 1.2;
 }
-
-/* "Basic" chip */
 .hg--public .hg-badgeOk{
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
-  color: #1d4ed8;                 /* синьо като JYSK */
+  color: #1d4ed8;
   background: rgba(29,78,216,0.10);
   border: 1px solid rgba(29,78,216,0.25);
   padding: 4px 8px;
-  border-radius: 4px;              /* малко правоъгълно */
-}
-
-/* описанието под него */
-.hg--public .hg-cardTitle{
-  margin: 2px 0 0;
-  font-size: 14px;
-  font-weight: 400;                /* важно: НЕ дебел */
-  line-height: 1.45;
-  color: #111827;
-
-  /* clamp 2 lines (ако браузъра го поддържа) */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-
-  /* fallback ако clamp не работи */
-  max-height: calc(1.45em * 2);
-}
-
-/* ако искаш да е още по-леко като JYSK */
-.hg--public .hg-cardBody{
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  border-radius: 4px;
 }

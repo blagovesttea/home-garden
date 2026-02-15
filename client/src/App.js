@@ -237,6 +237,9 @@ function App() {
   // selected category as path string e.g. "home/kitchen/cookware"
   const [category, setCategory] = useState("all");
 
+  // ✅ NEW: mobile drawer for categories
+  const [catsOpen, setCatsOpen] = useState(false);
+
   async function loadCategories() {
     setCategoriesLoading(true);
     try {
@@ -263,7 +266,7 @@ function App() {
       const p = joinPath(c.path || []);
       const indent = "— ".repeat(Math.max(0, Number(c.level || 0)));
       const label = `${indent}${c.name}`;
-      return { value: p || c.slug, label, level: Number(c.level || 0) };
+      return { value: p || c.slug, label, level: Number(c.level || 0), raw: c };
     });
 
     // Deduplicate values
@@ -276,10 +279,22 @@ function App() {
     }
 
     return [
-      { value: "all", label: categoriesLoading ? "Loading..." : "All categories" },
+      { value: "all", label: categoriesLoading ? "Loading..." : "All categories", level: 0 },
       ...unique,
     ];
   }, [categoriesFlat, categoriesLoading]);
+
+  // ✅ For sidebar list (same values, but keep levels)
+  const categoryList = categoryOptions;
+
+  function selectCategory(v) {
+    setCategory(v);
+    setCatsOpen(false);
+    // nice UX: scroll to top of content area
+    try {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {}
+  }
 
   /* =========================
      PUBLIC LIST
@@ -573,7 +588,7 @@ function App() {
     }
   }
 
-  // ✅ NEW: Seed categories (admin only)
+  // ✅ Seed categories (admin only)
   async function seedCategories() {
     setAdminMsg("");
     if (!token) {
@@ -587,19 +602,16 @@ function App() {
 
     setSeedCatsLoading(true);
     try {
-      const r = await apiFetch(`/admin/categories/seed`, { method: "POST" });
+      // ✅ IMPORTANT: your server exposes POST /categories/seed (NOT /admin/categories/seed)
+      const r = await apiFetch(`/categories/seed`, { method: "POST" });
 
-      // show result
       const msg =
         r?.message ||
-        (r?.created != null
-          ? `Categories seeded: created ${r.created}`
-          : "Categories seed OK");
+        (r?.count != null ? `Categories seeded. Total: ${r.count}` : "Categories seed OK");
       setAdminMsg(msg);
 
       // refresh categories in UI
       await loadCategories();
-      // optional: reset selection to all so user sees everything
       setCategory("all");
     } catch (e) {
       setAdminMsg(e?.message || "Seed categories error");
@@ -768,7 +780,7 @@ function App() {
                   Approve existing NEW
                 </button>
 
-                {/* ✅ NEW: Seed categories */}
+                {/* ✅ Seed categories */}
                 <button
                   className="hg-btn"
                   onClick={seedCategories}
@@ -792,7 +804,9 @@ function App() {
 
               <div className="hg-grid">
                 {!adminLoading && adminItems.length === 0 && (
-                  <div className="hg-panel">No admin products for this filter.</div>
+                  <div className="hg-panel">
+                    No admin products for this filter.
+                  </div>
                 )}
 
                 {adminItems.map((p) => (
@@ -876,193 +890,283 @@ function App() {
         </div>
       )}
 
+      {/* =========================
+         ✅ PUBLIC (with always-visible categories)
+      ========================== */}
       {view === "public" && (
-        <div>
-          <div className="hg-toolbar">
-            <input
-              className="hg-input"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search products..."
-            />
+        <>
+          {/* ✅ Mobile drawer for categories */}
+          <div
+            className={`hg-backdrop ${catsOpen ? "is-open" : ""}`}
+            onClick={() => setCatsOpen(false)}
+            aria-hidden={!catsOpen}
+          />
+          <aside className={`hg-drawer ${catsOpen ? "is-open" : ""}`}>
+            <div className="hg-sideTitle">
+              <h3>Categories</h3>
+              <span className="hg-sideHint">
+                {categoriesLoading ? "Loading…" : `${Math.max(0, categoryOptions.length - 1)} items`}
+              </span>
+            </div>
 
-            {/* ✅ Dynamic categories from DB */}
-            <select
-              className="hg-select"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              {categoryOptions.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
+            <ul className="hg-catList">
+              {categoryList.map((c) => (
+                <li key={c.value}>
+                  <button
+                    type="button"
+                    className={`hg-catBtn ${category === c.value ? "is-active" : ""}`}
+                    onClick={() => selectCategory(c.value)}
+                  >
+                    <span className="hg-catDot" />
+                    {c.level ? (
+                      <span className="hg-catIndent">
+                        {"— ".repeat(Math.max(0, Number(c.level || 0)))}
+                      </span>
+                    ) : null}
+                    <span>{c.label.replace(/^(-\s)+/, "").trim()}</span>
+                  </button>
+                </li>
               ))}
-            </select>
+            </ul>
+          </aside>
 
-            <select
-              className="hg-select"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              {SORTS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+          <div className="hg-main">
+            {/* ✅ Desktop sidebar */}
+            <aside className="hg-side">
+              <div className="hg-sideTitle">
+                <h3>Categories</h3>
+                <span className="hg-sideHint">
+                  {categoriesLoading ? "Loading…" : `${Math.max(0, categoryOptions.length - 1)} items`}
+                </span>
+              </div>
 
-            <div className="hg-chips">
-              <button
-                type="button"
-                className={`hg-chip ${onlyBG ? "is-on" : ""}`}
-                onClick={() => setOnlyBG((v) => !v)}
-              >
-                Shipping to BG
-              </button>
-              <button
-                type="button"
-                className={`hg-chip ${fastShip ? "is-on" : ""}`}
-                onClick={() => setFastShip((v) => !v)}
-              >
-                Fast delivery
-              </button>
+              <ul className="hg-catList">
+                {categoryList.map((c) => (
+                  <li key={c.value}>
+                    <button
+                      type="button"
+                      className={`hg-catBtn ${category === c.value ? "is-active" : ""}`}
+                      onClick={() => selectCategory(c.value)}
+                    >
+                      <span className="hg-catDot" />
+                      {c.level ? (
+                        <span className="hg-catIndent">
+                          {"— ".repeat(Math.max(0, Number(c.level || 0)))}
+                        </span>
+                      ) : null}
+                      <span>{c.label.replace(/^(-\s)+/, "").trim()}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </aside>
 
-              {token && isAdmin ? (
+            {/* ✅ Content */}
+            <div>
+              <div className="hg-toolbar">
+                {/* ✅ Mobile open categories */}
                 <button
                   type="button"
-                  className={`hg-chip ${showStats ? "is-on" : ""}`}
-                  onClick={() => setShowStats((v) => !v)}
-                  title="Show clicks/views/profit score (admin only)"
+                  className="hg-catOpenBtn"
+                  onClick={() => setCatsOpen(true)}
                 >
-                  Show stats
+                  Categories
                 </button>
-              ) : null}
-            </div>
-          </div>
 
-          <div className="hg-modes">
-            <button
-              className={`hg-btn ${mode === "topProfit" ? "hg-btn--primary" : ""}`}
-              onClick={() => setMode("topProfit")}
-            >
-              Top Profit
-            </button>
-            <button
-              className={`hg-btn ${mode === "topClicks" ? "hg-btn--primary" : ""}`}
-              onClick={() => setMode("topClicks")}
-            >
-              Top Clicks
-            </button>
-            <button
-              className={`hg-btn ${mode === "latest" ? "hg-btn--primary" : ""}`}
-              onClick={() => setMode("latest")}
-            >
-              Latest
-            </button>
-          </div>
-
-          {loading && <div className="hg-panel">Loading…</div>}
-          {!loading && errMsg && <div className="hg-panel hg-panel--bad">{errMsg}</div>}
-
-          {!loading && mode === "latest" && (
-            <div className="hg-pager">
-              <button
-                className="hg-btn"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-              >
-                Prev
-              </button>
-              <div className="hg-counter">
-                Page <b>{page}</b> / <b>{totalPages}</b> — Total: <b>{meta.total}</b>
-              </div>
-              <button
-                className="hg-btn"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-              >
-                Next
-              </button>
-            </div>
-          )}
-
-          <div className="hg-grid">
-            {!loading && publicItems.length === 0 && <div className="hg-panel">No products.</div>}
-
-            {publicItems.map((p) => (
-              <div className="hg-card" key={p._id}>
-                <div
-                  className="hg-thumb"
-                  aria-hidden="true"
-                  style={{
-                    backgroundImage: p.imageUrl
-                      ? `url("${p.imageUrl}")`
-                      : "linear-gradient(135deg,#eee,#f7f7f7)",
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundRepeat: "no-repeat",
-                  }}
+                <input
+                  className="hg-input"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search products..."
                 />
 
-                <div className="hg-cardBody">
-                  <h3 className="hg-cardTitle">{p.title}</h3>
+                {/* keep dropdown too (optional, helpful) */}
+                <select
+                  className="hg-select"
+                  value={category}
+                  onChange={(e) => selectCategory(e.target.value)}
+                >
+                  {categoryOptions.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
 
-                  <div className="hg-meta">
-                    <span className="hg-pill">
-                      {Array.isArray(p.categoryPath) && p.categoryPath.length
-                        ? p.categoryPath.join(" / ")
-                        : p.category}
-                    </span>
-                    <span className="hg-pill">{p.source}</span>
+                <select
+                  className="hg-select"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                >
+                  {SORTS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
 
-                    {p.shippingToBG ? (
-                      <span className="hg-pill hg-pill--ok">Ships to BG</span>
-                    ) : (
-                      <span className="hg-pill">No BG shipping</span>
-                    )}
+                <div className="hg-chips">
+                  <button
+                    type="button"
+                    className={`hg-chip ${onlyBG ? "is-on" : ""}`}
+                    onClick={() => setOnlyBG((v) => !v)}
+                  >
+                    Shipping to BG
+                  </button>
+                  <button
+                    type="button"
+                    className={`hg-chip ${fastShip ? "is-on" : ""}`}
+                    onClick={() => setFastShip((v) => !v)}
+                  >
+                    Fast delivery
+                  </button>
 
-                    {toNum(p.shippingDays) > 0 && (
-                      <span className="hg-pill">
-                        {toNum(p.shippingDays)} day{toNum(p.shippingDays) === 1 ? "" : "s"}
-                      </span>
-                    )}
-                  </div>
-
-                  {token && isAdmin && showStats ? (
-                    <div className="hg-kpis">
-                      Views: <b>{p.views ?? 0}</b> • Clicks: <b>{p.clicks ?? 0}</b> •
-                      ProfitScore: <b>{p.profitScore ?? 0}</b> • Score: <b>{p.score ?? 0}</b>
-                    </div>
+                  {token && isAdmin ? (
+                    <button
+                      type="button"
+                      className={`hg-chip ${showStats ? "is-on" : ""}`}
+                      onClick={() => setShowStats((v) => !v)}
+                      title="Show clicks/views/profit score (admin only)"
+                    >
+                      Show stats
+                    </button>
                   ) : null}
-
-                  <div className="hg-price">
-                    {p.price} {p.currency}
-                  </div>
-
-                  <div className="hg-actions">
-                    <a
-                      className="hg-btn hg-btn--primary"
-                      href={`${API}/products/${p._id}/click`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      View offer →
-                    </a>
-
-                    <a
-                      className="hg-mini"
-                      href={`${API}/products/${p._id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Details
-                    </a>
-                  </div>
                 </div>
               </div>
-            ))}
+
+              <div className="hg-modes">
+                <button
+                  className={`hg-btn ${mode === "topProfit" ? "hg-btn--primary" : ""}`}
+                  onClick={() => setMode("topProfit")}
+                >
+                  Top Profit
+                </button>
+                <button
+                  className={`hg-btn ${mode === "topClicks" ? "hg-btn--primary" : ""}`}
+                  onClick={() => setMode("topClicks")}
+                >
+                  Top Clicks
+                </button>
+                <button
+                  className={`hg-btn ${mode === "latest" ? "hg-btn--primary" : ""}`}
+                  onClick={() => setMode("latest")}
+                >
+                  Latest
+                </button>
+              </div>
+
+              {loading && <div className="hg-panel">Loading…</div>}
+              {!loading && errMsg && (
+                <div className="hg-panel hg-panel--bad">{errMsg}</div>
+              )}
+
+              {!loading && mode === "latest" && (
+                <div className="hg-pager">
+                  <button
+                    className="hg-btn"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                  >
+                    Prev
+                  </button>
+                  <div className="hg-counter">
+                    Page <b>{page}</b> / <b>{totalPages}</b> — Total:{" "}
+                    <b>{meta.total}</b>
+                  </div>
+                  <button
+                    className="hg-btn"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+
+              <div className="hg-grid">
+                {!loading && publicItems.length === 0 && (
+                  <div className="hg-panel">No products.</div>
+                )}
+
+                {publicItems.map((p) => (
+                  <div className="hg-card" key={p._id}>
+                    <div
+                      className="hg-thumb"
+                      aria-hidden="true"
+                      style={{
+                        backgroundImage: p.imageUrl
+                          ? `url("${p.imageUrl}")`
+                          : "linear-gradient(135deg,#eee,#f7f7f7)",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        backgroundRepeat: "no-repeat",
+                      }}
+                    />
+
+                    <div className="hg-cardBody">
+                      <h3 className="hg-cardTitle">{p.title}</h3>
+
+                      <div className="hg-meta">
+                        <span className="hg-pill">
+                          {Array.isArray(p.categoryPath) && p.categoryPath.length
+                            ? p.categoryPath.join(" / ")
+                            : p.category}
+                        </span>
+                        <span className="hg-pill">{p.source}</span>
+
+                        {p.shippingToBG ? (
+                          <span className="hg-pill hg-pill--ok">Ships to BG</span>
+                        ) : (
+                          <span className="hg-pill">No BG shipping</span>
+                        )}
+
+                        {toNum(p.shippingDays) > 0 && (
+                          <span className="hg-pill">
+                            {toNum(p.shippingDays)} day
+                            {toNum(p.shippingDays) === 1 ? "" : "s"}
+                          </span>
+                        )}
+                      </div>
+
+                      {token && isAdmin && showStats ? (
+                        <div className="hg-kpis">
+                          Views: <b>{p.views ?? 0}</b> • Clicks:{" "}
+                          <b>{p.clicks ?? 0}</b> • ProfitScore:{" "}
+                          <b>{p.profitScore ?? 0}</b> • Score:{" "}
+                          <b>{p.score ?? 0}</b>
+                        </div>
+                      ) : null}
+
+                      <div className="hg-price">
+                        {p.price} {p.currency}
+                      </div>
+
+                      <div className="hg-actions">
+                        <a
+                          className="hg-btn hg-btn--primary"
+                          href={`${API}/products/${p._id}/click`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          View offer →
+                        </a>
+
+                        <a
+                          className="hg-mini"
+                          href={`${API}/products/${p._id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Details
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
