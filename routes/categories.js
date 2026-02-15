@@ -161,7 +161,11 @@ router.post("/seed", auth, adminOnly, async (req, res) => {
 
       const parentId = parentDoc ? parentDoc._id : null;
       const level = parentDoc ? Number(parentDoc.level || 0) + 1 : 0;
-      const parentPath = parentDoc ? Array.isArray(parentDoc.path) ? parentDoc.path : [] : [];
+      const parentPath = parentDoc
+        ? Array.isArray(parentDoc.path)
+          ? parentDoc.path
+          : []
+        : [];
       const path = [...parentPath, slug];
 
       const doc = await Category.findOneAndUpdate(
@@ -260,16 +264,16 @@ router.get("/flat", async (req, res) => {
 });
 
 /**
- * ✅ Express 5 safe wildcard param
- * GET /categories/by-path/:path(*)
+ * ✅ Express-safe wildcard param (works on newer Express)
+ * GET /categories/by-path/*
  * Example: /categories/by-path/home/kitchen/cookware
  */
-router.get("/by-path/:path(*)", async (req, res) => {
+router.get("/by-path/*", async (req, res) => {
   try {
-    const pathStr = req.params.path;
+    const pathStr = req.params[0];
     if (!pathStr) return res.status(400).json({ message: "Path required" });
 
-    const pathArr = pathStr
+    const pathArr = String(pathStr)
       .split("/")
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean);
