@@ -270,8 +270,10 @@ function App() {
         let url = "";
 
         // ✅ add status=approved to top endpoints too
-        if (mode === "topClicks") url = `${API}/products/top?by=clicks&limit=60&status=approved`;
-        else if (mode === "topProfit") url = `${API}/products/top?by=profitScore&limit=60&status=approved`;
+        if (mode === "topClicks")
+          url = `${API}/products/top?by=clicks&limit=60&status=approved`;
+        else if (mode === "topProfit")
+          url = `${API}/products/top?by=profitScore&limit=60&status=approved`;
         else url = `${API}/products?${queryStringForLatest}`;
 
         const res = await fetch(url);
@@ -289,20 +291,24 @@ function App() {
         if (!res.ok) {
           const msg =
             data?.message ||
-            (text?.includes("<!doctype") ? "Server returned HTML (not JSON)." : `HTTP ${res.status}`);
+            (text?.includes("<!doctype")
+              ? "Server returned HTML (not JSON)."
+              : `HTTP ${res.status}`);
           throw new Error(msg);
         }
 
         // ✅ IMPORTANT FIX:
         // - /products returns {items:[...]}
-        // - /products/top may return an array directly OR {items:[...]}
+        // - /products/top returns {items:[...]}
         let items = [];
         if (Array.isArray(data)) items = data;
         else if (Array.isArray(data?.items)) items = data.items;
         else items = [];
 
         // ✅ hard safety: public shows only approved
-        items = items.filter((p) => String(p?.status || "").toLowerCase() === "approved");
+        items = items.filter(
+          (p) => String(p?.status || "").toLowerCase() === "approved"
+        );
 
         setProducts(items);
 
@@ -338,20 +344,28 @@ function App() {
     let items = Array.isArray(products) ? [...products] : [];
 
     // ✅ safety: approved only
-    items = items.filter((p) => String(p?.status || "").toLowerCase() === "approved");
+    items = items.filter(
+      (p) => String(p?.status || "").toLowerCase() === "approved"
+    );
 
     if (category && category !== "all") {
-      items = items.filter((p) => String(p.category || "").toLowerCase() === category);
+      items = items.filter(
+        (p) => String(p.category || "").toLowerCase() === category
+      );
     }
 
     if (qDebounced) {
       const qq = qDebounced.toLowerCase();
-      items = items.filter((p) => String(p.title || "").toLowerCase().includes(qq));
+      items = items.filter((p) =>
+        String(p.title || "").toLowerCase().includes(qq)
+      );
     }
 
     if (onlyBG) items = items.filter((p) => !!p.shippingToBG);
     if (fastShip)
-      items = items.filter((p) => toNum(p.shippingDays) > 0 && toNum(p.shippingDays) <= 5);
+      items = items.filter(
+        (p) => toNum(p.shippingDays) > 0 && toNum(p.shippingDays) <= 5
+      );
 
     items.sort((a, b) => {
       if (sort === "popular") return toNum(b.clicks) - toNum(a.clicks);
@@ -452,14 +466,18 @@ function App() {
           method: "POST",
         });
         setAdminMsg(
-          `Approved existing: matched ${r1?.matched ?? "-"} / modified ${r1?.modified ?? "-"}`
+          `Approved existing: matched ${r1?.matched ?? "-"} / modified ${
+            r1?.modified ?? "-"
+          }`
         );
       } catch {
         const r2 = await apiFetch(`/admin/products/backfill`, {
           method: "POST",
         });
         setAdminMsg(
-          `Backfill OK: scanned ${r2?.scanned ?? "-"} / updated ${r2?.updated ?? "-"}`
+          `Backfill OK: scanned ${r2?.scanned ?? "-"} / updated ${
+            r2?.updated ?? "-"
+          }`
         );
       }
 
@@ -509,7 +527,9 @@ function App() {
         <div className="hg-topActions">
           <div className="hg-switch">
             <button
-              className={`hg-switchBtn ${view === "public" ? "is-active" : ""}`}
+              className={`hg-switchBtn ${
+                view === "public" ? "is-active" : ""
+              }`}
               onClick={() => setView("public")}
               disabled={view === "public"}
             >
@@ -521,7 +541,13 @@ function App() {
               className={`hg-switchBtn ${view === "admin" ? "is-active" : ""}`}
               onClick={() => setView("admin")}
               disabled={view === "admin"}
-              title={!token ? "Open admin login" : isAdmin ? "Open admin panel" : "Not admin"}
+              title={
+                !token
+                  ? "Open admin login"
+                  : isAdmin
+                  ? "Open admin panel"
+                  : "Not admin"
+              }
             >
               Admin{!token ? " (login)" : ""}
             </button>
@@ -530,7 +556,8 @@ function App() {
           {token ? (
             <>
               <div className="hg-userChip">
-                role: <b>{me?.role || (meLoading ? "checking…" : "unknown")}</b>
+                role:{" "}
+                <b>{me?.role || (meLoading ? "checking…" : "unknown")}</b>
               </div>
               <button className="hg-btn" onClick={doLogout}>
                 Logout
@@ -561,7 +588,11 @@ function App() {
               type="password"
               autoComplete="current-password"
             />
-            <button className="hg-btn hg-btn--primary" type="submit" disabled={authLoading}>
+            <button
+              className="hg-btn hg-btn--primary"
+              type="submit"
+              disabled={authLoading}
+            >
               {authLoading ? "..." : "Login"}
             </button>
           </div>
@@ -602,11 +633,19 @@ function App() {
                   ))}
                 </select>
 
-                <button className="hg-btn" onClick={loadAdmin} disabled={adminLoading}>
+                <button
+                  className="hg-btn"
+                  onClick={loadAdmin}
+                  disabled={adminLoading}
+                >
                   Refresh
                 </button>
 
-                <button className="hg-btn" onClick={approveExistingNew} disabled={adminLoading}>
+                <button
+                  className="hg-btn"
+                  onClick={approveExistingNew}
+                  disabled={adminLoading}
+                >
                   Approve existing NEW
                 </button>
 
@@ -624,7 +663,9 @@ function App() {
 
               <div className="hg-grid">
                 {!adminLoading && adminItems.length === 0 && (
-                  <div className="hg-panel">No admin products for this filter.</div>
+                  <div className="hg-panel">
+                    No admin products for this filter.
+                  </div>
                 )}
 
                 {adminItems.map((p) => (
@@ -634,7 +675,9 @@ function App() {
                       <div className="hg-meta">
                         <span className="hg-pill">{p.category}</span>
                         <span className="hg-pill">{p.source}</span>
-                        <span className="hg-pill hg-pill--status">status: {p.status}</span>
+                        <span className="hg-pill hg-pill--status">
+                          status: {p.status}
+                        </span>
                       </div>
                     </div>
 
@@ -643,8 +686,9 @@ function App() {
                     </div>
 
                     <div className="hg-kpis">
-                      Score: <b>{p.score ?? 0}</b> • ProfitScore: <b>{p.profitScore ?? 0}</b> •
-                      Views: <b>{p.views ?? 0}</b> • Clicks: <b>{p.clicks ?? 0}</b>
+                      Score: <b>{p.score ?? 0}</b> • ProfitScore:{" "}
+                      <b>{p.profitScore ?? 0}</b> • Views:{" "}
+                      <b>{p.views ?? 0}</b> • Clicks: <b>{p.clicks ?? 0}</b>
                     </div>
 
                     <div className="hg-url">{p.sourceUrl}</div>
@@ -718,7 +762,11 @@ function App() {
               ))}
             </select>
 
-            <select className="hg-select" value={sort} onChange={(e) => setSort(e.target.value)}>
+            <select
+              className="hg-select"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+            >
               {SORTS.map((s) => (
                 <option key={s.value} value={s.value}>
                   {s.label}
@@ -757,19 +805,25 @@ function App() {
 
           <div className="hg-modes">
             <button
-              className={`hg-btn ${mode === "topProfit" ? "hg-btn--primary" : ""}`}
+              className={`hg-btn ${
+                mode === "topProfit" ? "hg-btn--primary" : ""
+              }`}
               onClick={() => setMode("topProfit")}
             >
               Top Profit
             </button>
             <button
-              className={`hg-btn ${mode === "topClicks" ? "hg-btn--primary" : ""}`}
+              className={`hg-btn ${
+                mode === "topClicks" ? "hg-btn--primary" : ""
+              }`}
               onClick={() => setMode("topClicks")}
             >
               Top Clicks
             </button>
             <button
-              className={`hg-btn ${mode === "latest" ? "hg-btn--primary" : ""}`}
+              className={`hg-btn ${
+                mode === "latest" ? "hg-btn--primary" : ""
+              }`}
               onClick={() => setMode("latest")}
             >
               Latest
@@ -777,7 +831,9 @@ function App() {
           </div>
 
           {loading && <div className="hg-panel">Loading…</div>}
-          {!loading && errMsg && <div className="hg-panel hg-panel--bad">{errMsg}</div>}
+          {!loading && errMsg && (
+            <div className="hg-panel hg-panel--bad">{errMsg}</div>
+          )}
 
           {!loading && mode === "latest" && (
             <div className="hg-pager">
@@ -789,7 +845,8 @@ function App() {
                 Prev
               </button>
               <div className="hg-counter">
-                Page <b>{page}</b> / <b>{totalPages}</b> — Total: <b>{meta.total}</b>
+                Page <b>{page}</b> / <b>{totalPages}</b> — Total:{" "}
+                <b>{meta.total}</b>
               </div>
               <button
                 className="hg-btn"
@@ -802,11 +859,25 @@ function App() {
           )}
 
           <div className="hg-grid">
-            {!loading && publicItems.length === 0 && <div className="hg-panel">No products.</div>}
+            {!loading && publicItems.length === 0 && (
+              <div className="hg-panel">No products.</div>
+            )}
 
             {publicItems.map((p) => (
               <div className="hg-card" key={p._id}>
-                <div className="hg-thumb" aria-hidden="true" />
+                {/* ✅ FIX: show image from p.imageUrl (background cover) */}
+                <div
+                  className="hg-thumb"
+                  aria-hidden="true"
+                  style={{
+                    backgroundImage: p.imageUrl
+                      ? `url("${p.imageUrl}")`
+                      : "linear-gradient(135deg,#eee,#f7f7f7)",
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                  }}
+                />
 
                 <div className="hg-cardBody">
                   <h3 className="hg-cardTitle">{p.title}</h3>
@@ -823,15 +894,18 @@ function App() {
 
                     {toNum(p.shippingDays) > 0 && (
                       <span className="hg-pill">
-                        {toNum(p.shippingDays)} day{toNum(p.shippingDays) === 1 ? "" : "s"}
+                        {toNum(p.shippingDays)} day
+                        {toNum(p.shippingDays) === 1 ? "" : "s"}
                       </span>
                     )}
                   </div>
 
                   {token && isAdmin && showStats ? (
                     <div className="hg-kpis">
-                      Views: <b>{p.views ?? 0}</b> • Clicks: <b>{p.clicks ?? 0}</b> • ProfitScore:{" "}
-                      <b>{p.profitScore ?? 0}</b> • Score: <b>{p.score ?? 0}</b>
+                      Views: <b>{p.views ?? 0}</b> • Clicks:{" "}
+                      <b>{p.clicks ?? 0}</b> • ProfitScore:{" "}
+                      <b>{p.profitScore ?? 0}</b> • Score:{" "}
+                      <b>{p.score ?? 0}</b>
                     </div>
                   ) : null}
 
@@ -869,3 +943,4 @@ function App() {
 }
 
 export default App;
+
