@@ -10,13 +10,8 @@ const authRoutes = require("./routes/auth");
 const adminProductsRoutes = require("./routes/admin.products");
 const productsRoutes = require("./routes/products");
 
-// ✅ NEW: categories routes (we'll add routes/categories.js next)
-let categoriesRoutes = null;
-try {
-  categoriesRoutes = require("./routes/categories");
-} catch (e) {
-  console.log("ℹ️ routes/categories.js not found (categories API disabled).");
-}
+// ✅ Categories routes (must exist in production)
+const categoriesRoutes = require("./routes/categories");
 
 // ✅ Profitshare bot (your file is in /jobs/runBot.js)
 let runProfitshareBot = null;
@@ -55,16 +50,12 @@ app.options(/.*/, cors({ origin: true, credentials: true }));
 app.get("/health", (req, res) => res.json({ ok: true }));
 
 /* =========================
-   API Routes
+   API Routes (MUST be before React catch-all)
 ========================= */
 app.use("/auth", authRoutes);
 app.use("/admin", adminProductsRoutes);
 app.use("/products", productsRoutes);
-
-// ✅ Categories (menu + filters)
-if (categoriesRoutes) {
-  app.use("/categories", categoriesRoutes);
-}
+app.use("/categories", categoriesRoutes);
 
 /* =========================
    Serve React build (production)
@@ -73,6 +64,7 @@ if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "client", "build");
   app.use(express.static(buildPath));
 
+  // ✅ keep catch-all LAST
   app.get(/.*/, (req, res) => {
     res.sendFile(path.join(buildPath, "index.html"));
   });
@@ -92,11 +84,10 @@ function startBotOnceAfterBoot() {
     return;
   }
 
-  // ✅ run after server is up (doesn't block boot)
   setTimeout(async () => {
     try {
       console.log("🤖 Profitshare bot starting...");
-      await runProfitshareBot(); // MUST export a function from jobs/runBot.js
+      await runProfitshareBot();
       console.log("✅ Profitshare bot finished.");
     } catch (err) {
       console.error("❌ Profitshare bot error:", err?.message || err);
