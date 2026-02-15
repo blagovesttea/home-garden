@@ -385,6 +385,46 @@ router.post("/products/backfill", auth, adminOnly, async (req, res) => {
 });
 
 /**
+ * ✅ PATCH /admin/products/:id/category
+ * Admin sets catalog category + (optional) legacy category + lock
+ *
+ * Body:
+ * {
+ *   "categoryId": "ObjectId or null",
+ *   "categoryPath": ["home","kitchen","cookware"],
+ *   "legacyCategory": "kitchen",   // optional
+ *   "lock": true                  // default true
+ * }
+ */
+router.patch("/products/:id/category", auth, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      categoryId = null,
+      categoryPath = [],
+      legacyCategory = null,
+      lock = true,
+    } = req.body || {};
+
+    const update = {
+      categoryId: categoryId || null,
+      categoryPath: Array.isArray(categoryPath) ? categoryPath : [],
+      categoryLocked: !!lock,
+    };
+
+    // optional: keep current UI working (legacy)
+    if (legacyCategory) update.category = String(legacyCategory).trim();
+
+    const product = await Product.findByIdAndUpdate(id, update, { new: true });
+    if (!product) return res.status(404).json({ message: "Not found" });
+
+    return res.json({ ok: true, product });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+/**
  * ✅ DELETE /admin/products/purge-example
  * Delete only example.com products (safe cleanup)
  */

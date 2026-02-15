@@ -19,6 +19,76 @@ function publicMatch() {
 }
 
 /**
+ * ✅ Map legacy single category -> catalog path
+ * (докато мигрираме всички продукти да имат categoryPath)
+ */
+function legacyToCatalogPath(cat) {
+  const c = String(cat || "").trim().toLowerCase();
+  if (!c || c === "all") return null;
+
+  // allow "home/kitchen/cookware"
+  if (c.includes("/")) return c.split("/").filter(Boolean);
+
+  // legacy buckets
+  if (["home", "garden", "tools", "outdoor", "kitchen", "storage"].includes(c)) return [c];
+
+  // unknown
+  return [c];
+}
+
+/**
+ * Build category filter:
+ * - If we have categoryPath in products: use it
+ * - Fallback: legacy category
+ *
+ * Supports:
+ * ?category=home
+ * ?category=home/kitchen/cookware
+ * ?category=kitchen
+ */
+function applyCategoryFilter(filter, category) {
+  const path = legacyToCatalogPath(category);
+  if (!path || !path.length) return;
+
+  // Mongo: match by "all elements present" (prefix-like)
+  // For prefix semantics: we want categoryPath starting with path.
+  // We can use $expr + $slice, but to keep it simple & fast:
+  // - for root: categoryPath contains root slug
+  // - for deeper: categoryPath contains all slugs in path (works ok), plus prefer exact prefix later.
+  //
+  // We'll do a pragmatic approach:
+  // 1) Try to match by prefix using $expr (works on Mongo 4.0+).
+  // 2) Fallback to $all if needed (but we keep both in $or).
+  const prefixExpr = {
+    $expr: {
+      $eq: [
+        { $slice: ["$categoryPath", path.length] },
+        path,
+      ],
+    },
+  };
+
+  const allMatch = { categoryPath: { $all: path } };
+
+  // Legacy fallback: if products still have no categoryPath
+  const legacyFallback =
+    path.length === 1
+      ? { category: path[0] }
+      : null;
+
+  filter.$and = filter.$and || [];
+  filter.$and.push({
+    $or: [
+      // catalog match
+      prefixExpr,
+      allMatch,
+      // legacy match
+      ...(legacyFallback ? [legacyFallback] : []),
+    ],
+  });
+}
+
+/**
  * ✅ TOP products
  * GET /products/top
  *
@@ -51,47 +121,11 @@ router.get("/top", async (req, res) => {
       return res.json({ ok: true, by: "ctr", limit, items });
     }
 
-    // normalize: accept profitscore / profitScore
-    if (by === "profitscore" || by === "profitscore" || by === "profitscore" || by === "profitscore") {
-      // (left intentionally simple — the next block handles real)
-    }
-
-    if (by === "profitscore" || by === "profitscore".toLowerCase() || by === "profitscore") {
-      // no-op
-    }
-
-    if (by === "profitscore" || by === "profitscore" || by === "profitscore") {
-      // no-op
-    }
-
-    if (by === "profitscore" || by === "profitscore") {
-      // no-op
-    }
-
-    if (by === "profitscore" || by === "profitscore") {
-      // no-op
-    }
-
-    if (by === "profitscore" || by === "profitscore") {
-      // no-op
-    }
-
-    if (by === "profitscore" || by === "profitscore") {
-      // no-op
-    }
-
-    if (by === "profitscore" || by === "profitscore") {
-      // no-op
-    }
-
-    if (by === "profitscore" || by === "profitscore" || by === "profitscore" || by === "profitscore") {
-      // no-op
-    }
-
-    if (by === "profitscore" || by === "profitscore" || by === "profitScore".toLowerCase()) {
+    if (by === "profitscore" || by === "profitScore".toLowerCase()) {
       const items = await Product.find(baseMatch)
         .sort({ profitScore: -1, score: -1, clicks: -1, views: -1, createdAt: -1 })
         .limit(limit);
+
       return res.json({ ok: true, by: "profitScore", limit, items });
     }
 
@@ -114,7 +148,8 @@ router.get("/top", async (req, res) => {
  * ?page=1
  * ?limit=20
  * ?q=search text
- * ?category=garden
+ * ?category=home
+ * ?category=home/kitchen/cookware
  */
 router.get("/", async (req, res) => {
   try {
@@ -127,7 +162,9 @@ router.get("/", async (req, res) => {
     const filter = publicMatch();
 
     if (q) filter.title = { $regex: q, $options: "i" };
-    if (category && category !== "all") filter.category = category;
+
+    // ✅ Catalog category support + legacy fallback
+    if (category && category !== "all") applyCategoryFilter(filter, category);
 
     const items = await Product.find(filter)
       .sort({ createdAt: -1 })
@@ -204,4 +241,3 @@ router.get("/:id/click", async (req, res) => {
 });
 
 module.exports = router;
-

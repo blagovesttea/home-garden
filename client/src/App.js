@@ -7,17 +7,6 @@ const API =
     ? window.location.origin
     : "http://localhost:8000";
 
-const CATEGORIES = [
-  "all",
-  "home",
-  "garden",
-  "tools",
-  "outdoor",
-  "kitchen",
-  "storage",
-  "other",
-];
-
 const ADMIN_STATUSES = ["all", "new", "approved", "rejected", "blacklisted"];
 
 // Public sort (client-side fallback)
@@ -32,6 +21,34 @@ const SORTS = [
 function toNum(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
+}
+
+function joinPath(pathArr) {
+  if (!Array.isArray(pathArr)) return "";
+  return pathArr.filter(Boolean).join("/");
+}
+
+function pathPrefixMatch(productPath, selectedPath) {
+  // selectedPath is string like "home/kitchen"
+  if (!selectedPath || selectedPath === "all") return true;
+
+  const sel = String(selectedPath).trim().toLowerCase();
+  if (!sel) return true;
+
+  const pArr = Array.isArray(productPath) ? productPath : [];
+  const p = pArr.join("/").toLowerCase();
+
+  // exact prefix match: p starts with sel
+  return p === sel || p.startsWith(sel + "/");
+}
+
+// fallback mapping when product has only legacy "category"
+function legacyToRootPath(legacy) {
+  const c = String(legacy || "").toLowerCase();
+  if (!c || c === "all") return "";
+  if (["home", "kitchen", "storage"].includes(c)) return "home";
+  if (["garden", "outdoor", "tools"].includes(c)) return "garden";
+  return "";
 }
 
 function App() {
@@ -212,11 +229,60 @@ function App() {
   }
 
   /* =========================
+     CATEGORIES (Catalog)
+  ========================== */
+  const [categoriesFlat, setCategoriesFlat] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+
+  // selected category as path string e.g. "home/kitchen/cookware"
+  const [category, setCategory] = useState("all");
+
+  async function loadCategories() {
+    setCategoriesLoading(true);
+    try {
+      const data = await apiFetch("/categories/flat", { method: "GET" });
+      setCategoriesFlat(Array.isArray(data?.items) ? data.items : []);
+    } catch {
+      setCategoriesFlat([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (view !== "public") return;
+    loadCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+
+  const categoryOptions = useMemo(() => {
+    const items = Array.isArray(categoriesFlat) ? categoriesFlat : [];
+
+    // only show active + sorted already by backend
+    const opts = items.map((c) => {
+      const p = joinPath(c.path || []);
+      const indent = "— ".repeat(Math.max(0, Number(c.level || 0)));
+      const label = `${indent}${c.name}`;
+      return { value: p || c.slug, label, level: Number(c.level || 0) };
+    });
+
+    // Deduplicate values
+    const seen = new Set();
+    const unique = [];
+    for (const o of opts) {
+      if (!o.value || seen.has(o.value)) continue;
+      seen.add(o.value);
+      unique.push(o);
+    }
+
+    return [{ value: "all", label: categoriesLoading ? "Loading..." : "All categories" }, ...unique];
+  }, [categoriesFlat, categoriesLoading]);
+
+  /* =========================
      PUBLIC LIST
   ========================== */
   const [mode, setMode] = useState("topProfit"); // latest | topClicks | topProfit
   const [q, setQ] = useState("");
-  const [category, setCategory] = useState("all");
 
   // shop-like controls
   const [sort, setSort] = useState("profit");
@@ -246,6 +312,8 @@ function App() {
     params.set("page", String(page));
     params.set("limit", String(limit));
     if (qDebounced) params.set("q", qDebounced);
+
+    // ✅ send catalog path
     if (category && category !== "all") params.set("category", category);
 
     if (onlyBG) params.set("shippingToBG", "true");
@@ -348,10 +416,17 @@ function App() {
       (p) => String(p?.status || "").toLowerCase() === "approved"
     );
 
+    // ✅ Category filtering (catalog first, then legacy fallback)
     if (category && category !== "all") {
-      items = items.filter(
-        (p) => String(p.category || "").toLowerCase() === category
-      );
+      items = items.filter((p) => {
+        const okCatalog = pathPrefixMatch(p.categoryPath, category);
+        if (okCatalog && Array.isArray(p.categoryPath) && p.categoryPath.length) return true;
+
+        // fallback: legacy bucket root match (home/garden)
+        const root = legacyToRootPath(p.category);
+        if (!root) return false;
+        return category === root || category.startsWith(root + "/");
+      });
     }
 
     if (qDebounced) {
@@ -663,9 +738,7 @@ function App() {
 
               <div className="hg-grid">
                 {!adminLoading && adminItems.length === 0 && (
-                  <div className="hg-panel">
-                    No admin products for this filter.
-                  </div>
+                  <div className="hg-panel">No admin products for this filter.</div>
                 )}
 
                 {adminItems.map((p) => (
@@ -679,6 +752,11 @@ function App() {
                           status: {p.status}
                         </span>
                       </div>
+                    </div>
+
+                    <div className="hg-kpis">
+                      Catalog:{" "}
+                      <b>{Array.isArray(p.categoryPath) && p.categoryPath.length ? p.categoryPath.join(" / ") : "-"}</b>
                     </div>
 
                     <div className="hg-price">
@@ -750,14 +828,15 @@ function App() {
               placeholder="Search products..."
             />
 
+            {/* ✅ Dynamic categories from DB */}
             <select
               className="hg-select"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c === "all" ? "All categories" : c}
+              {categoryOptions.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
                 </option>
               ))}
             </select>
@@ -865,7 +944,6 @@ function App() {
 
             {publicItems.map((p) => (
               <div className="hg-card" key={p._id}>
-                {/* ✅ FIX: show image from p.imageUrl (background cover) */}
                 <div
                   className="hg-thumb"
                   aria-hidden="true"
@@ -883,7 +961,11 @@ function App() {
                   <h3 className="hg-cardTitle">{p.title}</h3>
 
                   <div className="hg-meta">
-                    <span className="hg-pill">{p.category}</span>
+                    <span className="hg-pill">
+                      {Array.isArray(p.categoryPath) && p.categoryPath.length
+                        ? p.categoryPath.join(" / ")
+                        : p.category}
+                    </span>
                     <span className="hg-pill">{p.source}</span>
 
                     {p.shippingToBG ? (
@@ -943,4 +1025,3 @@ function App() {
 }
 
 export default App;
-

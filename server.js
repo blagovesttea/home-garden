@@ -10,6 +10,14 @@ const authRoutes = require("./routes/auth");
 const adminProductsRoutes = require("./routes/admin.products");
 const productsRoutes = require("./routes/products");
 
+// ✅ NEW: categories routes (we'll add routes/categories.js next)
+let categoriesRoutes = null;
+try {
+  categoriesRoutes = require("./routes/categories");
+} catch (e) {
+  console.log("ℹ️ routes/categories.js not found (categories API disabled).");
+}
+
 // ✅ Profitshare bot (your file is in /jobs/runBot.js)
 let runProfitshareBot = null;
 try {
@@ -52,6 +60,11 @@ app.get("/health", (req, res) => res.json({ ok: true }));
 app.use("/auth", authRoutes);
 app.use("/admin", adminProductsRoutes);
 app.use("/products", productsRoutes);
+
+// ✅ Categories (menu + filters)
+if (categoriesRoutes) {
+  app.use("/categories", categoriesRoutes);
+}
 
 /* =========================
    Serve React build (production)

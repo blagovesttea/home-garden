@@ -5,6 +5,7 @@ const Product = require("../models/Product");
 
 /* =========================
    Profitshare Feed Bot (CSV) — FIXED delimiter/header + PRICE FIX + schema-safe
+   + Catalog categorization (categoryId/categoryPath) with admin lock support
    - Uses PROFITSHARE_FEED_URL (Render Env Var)
    - Auto-detects delimiter (; , \t |)
    - If header is "1 column with commas" => reparses correctly
@@ -13,12 +14,21 @@ const Product = require("../models/Product");
    - Does NOT connect/disconnect Mongo (server.js already connects)
    - Exports a function
    - Does NOT downgrade approved -> new
-   - Schema-safe for your Product.js (required fields + source enum)
+   - If product has categoryLocked=true -> bot DOES NOT change category fields
 ========================= */
 
 const FEED_URL = process.env.PROFITSHARE_FEED_URL;
 const MAX_ROWS = Number(process.env.BOT_MAX_ROWS || 2000);
 const REQUEST_TIMEOUT_MS = Number(process.env.BOT_TIMEOUT_MS || 60000);
+
+// ✅ Optional categorizer (we'll add it next steps)
+let categorizeProduct = null;
+try {
+  // from jobs/ -> ../services/
+  ({ categorizeProduct } = require("../services/categorizer"));
+} catch (e) {
+  categorizeProduct = null;
+}
 
 function normStr(s) {
   return (s == null ? "" : String(s)).trim();
@@ -322,25 +332,6 @@ async function runBot() {
 
   console.log("🤖 Feed rows parsed:", rows.length);
 
-  if (rows.length > 0) {
-    const keys = Object.keys(rows[0]);
-    console.log("🧾 Feed columns count:", keys.length);
-    console.log("🧾 Feed columns (first row):", keys);
-    console.log("🔍 Sample row (first):", {
-      title: rows[0]["Product name"] || rows[0]["Наименование на продукта"] || "",
-      link:
-        rows[0]["Product affiliate link"] ||
-        rows[0]["Текстов линк на продукта"] ||
-        "",
-      img: rows[0]["Product picture"] || rows[0]["Профилна снимка"] || "",
-      price:
-        rows[0]["Price with VAT"] ||
-        rows[0]["Цена с ДДС"] ||
-        rows[0]["Price without VAT"] ||
-        "",
-    });
-  }
-
   let upserted = 0;
   let updated = 0;
   let skipped = 0;
@@ -362,8 +353,9 @@ async function runBot() {
         pick(row, ["Product name", "Наименование на продукта", "Name", "Title", "Product Name"])
       );
 
-      // NOTE: your Product schema doesn't have description/brand fields, so we keep them in notes only
-      const description = normStr(pick(row, ["Product description", "Описание на продукта", "Description"]));
+      const description = normStr(
+        pick(row, ["Product description", "Описание на продукта", "Description"])
+      );
 
       let affiliateUrl = normStr(
         pick(row, [
@@ -387,23 +379,51 @@ async function runBot() {
 
       const price = findPrice(row);
       const salePrice = findSalePrice(row);
-
       const currency = normStr(pick(row, ["Currency", "Валута"])) || "EUR";
 
       // unique key in your schema
       const sourceUrl = affiliateUrl || productCode;
 
-      // schema required fields: title, category, source, sourceUrl, price
-      if (!title || !affiliateUrl || !sourceUrl || typeof price !== "number" || price <= 0) {
+      // минимални изисквания
+      if (!title || !sourceUrl || typeof price !== "number" || price <= 0) {
         skipped++;
         continue;
       }
 
-      const category = guessCategoryFromText(`${categoryText} ${title}`);
+      // ✅ existing продукт (за approved + lock)
+      const existing = await Product.findOne({ sourceUrl })
+        .select("status categoryLocked categoryId categoryPath category")
+        .lean();
 
-      // keep approved if already approved
-      const existing = await Product.findOne({ sourceUrl }).select("status").lean();
       const keepApproved = existing?.status === "approved";
+      const isLocked = existing?.categoryLocked === true;
+
+      // ✅ Catalog categorization (ако НЕ е заключено)
+      let legacyCategory = existing?.category || "other";
+      let catalogCategoryId = existing?.categoryId || null;
+      let catalogCategoryPath = Array.isArray(existing?.categoryPath) ? existing.categoryPath : [];
+
+      if (!isLocked) {
+        if (typeof categorizeProduct === "function") {
+          const catRes = await categorizeProduct({
+            title,
+            categoryText,
+            description,
+            brand: manufacturer,
+            sourceUrl,
+            affiliateUrl,
+          });
+
+          if (catRes?.legacyCategory) legacyCategory = catRes.legacyCategory;
+          if (catRes?.categoryId) catalogCategoryId = catRes.categoryId;
+          if (Array.isArray(catRes?.categoryPath)) catalogCategoryPath = catRes.categoryPath;
+        } else {
+          // fallback към стария guess
+          legacyCategory = guessCategoryFromText(`${categoryText} ${title} ${description}`);
+          catalogCategoryId = null;
+          catalogCategoryPath = legacyCategory && legacyCategory !== "other" ? [legacyCategory] : [];
+        }
+      }
 
       const notesParts = [];
       if (advertiser) notesParts.push(`advertiser: ${advertiser}`);
@@ -413,16 +433,20 @@ async function runBot() {
 
       const doc = {
         title,
-        category,
 
-        // schema enum: amazon_de/aliexpress/temu/ebay/other
-        source: "other",
+        // legacy category (за текущия UI)
+        category: legacyCategory,
+
+        // ✅ source
+        source: "profitshare",
 
         sourceUrl,
         affiliateUrl,
         imageUrl,
 
+        // pricing
         price,
+        basePrice: price, // ✅ ecommerce-ready (по-късно ще смятаме finalPrice)
         currency,
 
         shippingPrice: 0,
@@ -436,13 +460,27 @@ async function runBot() {
         status: keepApproved ? "approved" : "new",
       };
 
+      // ✅ добавяме catalog полетата само ако НЕ е заключено
+      if (!isLocked) {
+        doc.categoryId = catalogCategoryId;
+        doc.categoryPath = catalogCategoryPath;
+      }
+
       doc.score = computeScore(doc);
       doc.profitScore = computeProfitScore({ ...doc, salePrice });
+
+      // ✅ Ако е locked, НЕ пипаме category/categoryId/categoryPath
+      const setDoc = { ...doc, updatedAt: new Date() };
+      if (isLocked) {
+        delete setDoc.category;
+        delete setDoc.categoryId;
+        delete setDoc.categoryPath;
+      }
 
       const res = await Product.updateOne(
         { sourceUrl: doc.sourceUrl },
         {
-          $set: { ...doc, updatedAt: new Date() },
+          $set: setDoc,
           $setOnInsert: { createdAt: new Date() },
         },
         { upsert: true, runValidators: true }
@@ -461,7 +499,6 @@ async function runBot() {
   console.log("Updated:", updated);
   console.log("Skipped:", skipped);
   console.log("Errors:", errors);
-  console.log("✅ Profitshare bot finished.");
 
   return { ok: true, upserted, updated, skipped, errors, total: limited.length };
 }

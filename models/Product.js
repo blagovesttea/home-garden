@@ -4,6 +4,10 @@ const ProductSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
 
+    /**
+     * ✅ Legacy simple category (оставяме го да не чупим текущия код)
+     * По-нататък ще го държим като fallback или ще го махнем, когато минем изцяло на Catalog.
+     */
     category: {
       type: String,
       required: true,
@@ -12,10 +16,34 @@ const ProductSchema = new mongoose.Schema(
       index: true,
     },
 
+    /**
+     * ✅ NEW: Catalog category (истински ecommerce)
+     * categoryId -> сочи към Category (подкатегория)
+     * categoryPath -> slug path за бързо филтриране: ["home","kitchen","cookware"]
+     * categoryLocked -> ако admin я фиксира, ботът НЕ я променя
+     */
+    categoryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null,
+      index: true,
+    },
+    categoryPath: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+    categoryLocked: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
     // source info
     source: {
       type: String,
       default: "other", // ✅ махаме enum, за да приема profitshare, alleop и т.н.
+      index: true,
     },
 
     sourceUrl: {
@@ -39,6 +67,32 @@ const ProductSchema = new mongoose.Schema(
     shippingPrice: { type: Number, default: 0 },
     shippingToBG: { type: Boolean, default: true },
     shippingDays: { type: Number, default: null },
+
+    /**
+     * ✅ Ecommerce-ready pricing (за истински магазин)
+     * basePrice = цена от source (ако искаш да я пазиш отделно)
+     * markupType/value = надценка
+     * finalPrice = сметната крайна цена (за по-късно)
+     */
+    basePrice: { type: Number, default: null },
+    markupType: {
+      type: String,
+      enum: ["none", "percent", "fixed"],
+      default: "none",
+    },
+    markupValue: { type: Number, default: 0 },
+    finalPrice: { type: Number, default: null },
+
+    /**
+     * ✅ Ecommerce-ready stock (за по-късно)
+     */
+    stockStatus: {
+      type: String,
+      enum: ["unknown", "in_stock", "out_of_stock"],
+      default: "unknown",
+      index: true,
+    },
+    stockQty: { type: Number, default: null },
 
     // analytics
     views: { type: Number, default: 0 },
@@ -80,5 +134,9 @@ const ProductSchema = new mongoose.Schema(
 ProductSchema.index({ createdAt: -1 });
 ProductSchema.index({ score: -1 });
 ProductSchema.index({ profitScore: -1 });
+
+// ✅ по-бързо филтриране по каталог
+ProductSchema.index({ categoryPath: 1 });
+ProductSchema.index({ status: 1, categoryPath: 1 });
 
 module.exports = mongoose.model("Product", ProductSchema);
