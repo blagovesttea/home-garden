@@ -9,17 +9,17 @@ const Product = require("../models/Product");
    - Upsert by sourceUrl (no duplicates)
    - Does NOT connect/disconnect Mongo (server.js already connects)
    - Exports a function (so server.js can call it)
+   - IMPORTANT: does NOT downgrade approved products back to new
 ========================= */
 
 const FEED_URL = process.env.PROFITSHARE_FEED_URL;
-const MAX_ROWS = Number(process.env.BOT_MAX_ROWS || 2000); // safety cap
+const MAX_ROWS = Number(process.env.BOT_MAX_ROWS || 2000);
 const REQUEST_TIMEOUT_MS = Number(process.env.BOT_TIMEOUT_MS || 60000);
 
 function toNumber(val) {
   if (val == null) return null;
   const s = String(val).trim();
   if (!s) return null;
-  // handles "1 234,56" or "1234.56"
   const normalized = s.replace(/\s+/g, "").replace(",", ".");
   const n = Number(normalized);
   return Number.isFinite(n) ? n : null;
@@ -60,7 +60,6 @@ function guessCategoryFromText(text) {
   return "other";
 }
 
-// Simple scoring (tweak later)
 function computeScore(p) {
   let s = 0;
   if (p.category && p.category !== "other") s += 2;
@@ -75,28 +74,15 @@ function computeScore(p) {
 
 function computeProfitScore(p) {
   let ps = p.score || 0;
-  // Prefer discounted items a bit
   if (p.salePrice && p.price && p.salePrice < p.price) ps += 1;
   return ps;
 }
 
-function autoStatus(p) {
-  const okTitle = normStr(p.title).length >= 4;
-  const okLink = /^https?:\/\//i.test(normStr(p.affiliateUrl));
-  const okImg = /^https?:\/\//i.test(normStr(p.imageUrl));
-  const okPrice = typeof p.price === "number" && p.price > 0;
-
-  if (okTitle && okLink && okImg && okPrice) return "approved";
-  return "new";
-}
-
-/**
- * Small CSV parser (supports delimiter ; and quotes)
- * Returns array of objects (columns from header)
- */
 function parseCSV(text, delimiter = ";") {
   const rows = [];
-  const lines = String(text || "").split(/\r?\n/).filter((l) => l.trim() !== "");
+  const lines = String(text || "")
+    .split(/\r?\n/)
+    .filter((l) => l.trim() !== "");
   if (!lines.length) return rows;
 
   function parseLine(line) {
@@ -108,7 +94,6 @@ function parseCSV(text, delimiter = ";") {
       const ch = line[i];
 
       if (ch === '"') {
-        // handle escaped quote ""
         if (inQuotes && line[i + 1] === '"') {
           cur += '"';
           i++;
@@ -126,19 +111,18 @@ function parseCSV(text, delimiter = ";") {
 
       cur += ch;
     }
+
     out.push(cur);
     return out.map((v) => v.trim());
   }
 
-  const header = parseLine(lines[0]).map((h) => h.replace(/^\uFEFF/, "")); // strip BOM
+  const header = parseLine(lines[0]).map((h) => h.replace(/^\uFEFF/, ""));
   for (let i = 1; i < lines.length; i++) {
     const cols = parseLine(lines[i]);
     if (!cols.length) continue;
 
     const obj = {};
-    for (let c = 0; c < header.length; c++) {
-      obj[header[c]] = cols[c] ?? "";
-    }
+    for (let c = 0; c < header.length; c++) obj[header[c]] = cols[c] ?? "";
     rows.push(obj);
   }
 
@@ -161,9 +145,7 @@ async function fetchFeed(url) {
     });
 
     const text = await res.text();
-    if (!res.ok) {
-      throw new Error(`Feed HTTP ${res.status} | head: ${text.slice(0, 120)}`);
-    }
+    if (!res.ok) throw new Error(`Feed HTTP ${res.status} | head: ${text.slice(0, 120)}`);
     return text;
   } finally {
     clearTimeout(t);
@@ -186,13 +168,8 @@ async function runBot() {
   console.log("🤖 Profitshare bot: fetching feed...");
   const csvText = await fetchFeed(FEED_URL);
 
-  // Profitshare almost always uses ";"
   let rows = parseCSV(csvText, ";");
-
-  // fallback if the feed is comma-separated
-  if (rows.length <= 1) {
-    rows = parseCSV(csvText, ",");
-  }
+  if (rows.length <= 1) rows = parseCSV(csvText, ",");
 
   console.log("🤖 Feed rows parsed:", rows.length);
 
@@ -205,7 +182,6 @@ async function runBot() {
 
   for (const row of limited) {
     try {
-      // Bulgarian column names from your selection
       const advertiser = normStr(pick(row, ["Име рекламодател", "Advertiser", "Merchant"]));
       const categoryText = normStr(pick(row, ["Категория", "Category"]));
       const manufacturer = normStr(pick(row, ["Производител", "Manufacturer", "Brand"]));
@@ -213,12 +189,21 @@ async function runBot() {
 
       const title = normStr(pick(row, ["Наименование на продукта", "Product name", "Name", "Title"]));
       const description = normStr(pick(row, ["Описание на продукта", "Description"]));
-      const affiliateUrl = normStr(pick(row, ["Текстов линк на продукта", "Product URL", "URL", "Link"]));
+
+      // ✅ affiliate link
+      const affiliateUrl = normStr(
+        pick(row, ["Текстов линк на продукта", "Affiliate URL", "Product URL", "URL", "Link"])
+      );
+
+      // ✅ if feed provides a clean product link (optional)
+      const cleanProductUrl = normStr(
+        pick(row, ["Линк към продукта", "Продуктов линк", "Product link", "Product Link"])
+      );
+
       const imageUrl = normStr(pick(row, ["Профилна снимка", "Image", "Image URL", "ImageUrl"]));
 
       const priceVat = toNumber(pick(row, ["Цена с ДДС", "Price", "Price VAT"]));
       const salePriceVat = toNumber(pick(row, ["Цена с намаление, с ДДС", "Sale price", "Discount price"]));
-
       const currency = normStr(pick(row, ["Валута", "Currency"])) || "EUR";
 
       const freeShippingRaw = normStr(pick(row, ["Безплатна доставка", "Free shipping", "FreeShipping"]));
@@ -234,17 +219,20 @@ async function runBot() {
         giftRaw.toLowerCase() === "yes" ||
         giftRaw === "1";
 
-      // Use affiliateUrl as sourceUrl too (we don't have separate clean product url)
-      const sourceUrl = affiliateUrl;
+      // ✅ Use cleanProductUrl if exists, else affiliateUrl.
+      const sourceUrl = cleanProductUrl || affiliateUrl;
 
-      if (!title || !affiliateUrl) {
+      if (!title || !affiliateUrl || !sourceUrl) {
         skipped++;
         continue;
       }
 
       const category = guessCategoryFromText(`${categoryText} ${title}`);
-
       const price = priceVat ?? salePriceVat ?? null;
+
+      // ✅ if product already exists and is approved, keep it approved
+      const existing = await Product.findOne({ sourceUrl }).select("status").lean();
+      const keepStatus = existing?.status === "approved";
 
       const doc = {
         title,
@@ -264,20 +252,16 @@ async function runBot() {
         freeShipping,
         hasGift,
 
-        // scoring
         score: 0,
         profitScore: 0,
 
-        // status
-        status: "new",
+        // ✅ admin approves manually
+        status: keepStatus ? "approved" : "new",
       };
 
       doc.score = computeScore(doc);
       doc.profitScore = computeProfitScore({ ...doc, salePrice: salePriceVat });
 
-      doc.status = autoStatus(doc);
-
-      // ✅ Upsert by sourceUrl (prevents duplicates without needing schema changes)
       const res = await Product.updateOne(
         { sourceUrl: doc.sourceUrl },
         {
@@ -287,7 +271,6 @@ async function runBot() {
           },
           $setOnInsert: {
             createdAt: new Date(),
-            // keep productCode if you want it in schema
             productCode: productCode || undefined,
           },
         },
@@ -298,7 +281,6 @@ async function runBot() {
       else if (res.modifiedCount) updated++;
     } catch (e) {
       errors++;
-      // keep logs short
       console.log("❌ Row error:", e?.message || e);
     }
   }
@@ -312,5 +294,4 @@ async function runBot() {
   return { ok: true, upserted, updated, skipped, errors, total: limited.length };
 }
 
-// ✅ IMPORTANT: export function (server.js will call it)
 module.exports = runBot;
