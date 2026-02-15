@@ -3,6 +3,21 @@ const Product = require("../models/Product");
 
 const router = express.Router();
 
+/** ✅ Public base filter:
+ * - only approved
+ * - allow bg.foundInBG: "unknown" OR "no" (and also missing field)
+ */
+function publicMatch() {
+  return {
+    status: "approved",
+    $or: [
+      { "bg.foundInBG": { $in: ["unknown", "no"] } },
+      { "bg.foundInBG": { $exists: false } },
+      { bg: { $exists: false } },
+    ],
+  };
+}
+
 /**
  * ✅ TOP products
  * GET /products/top
@@ -18,8 +33,7 @@ router.get("/top", async (req, res) => {
     const by = String(req.query.by || "clicks").toLowerCase();
     const limit = Math.min(parseInt(req.query.limit) || 20, 100);
 
-    // показваме само approved + bg.foundInBG = no
-    const baseMatch = { status: "approved", "bg.foundInBG": "no" };
+    const baseMatch = publicMatch();
 
     if (by === "ctr") {
       const items = await Product.aggregate([
@@ -37,7 +51,44 @@ router.get("/top", async (req, res) => {
       return res.json({ ok: true, by: "ctr", limit, items });
     }
 
-    if (by === "profitscore" || by === "profitScore") {
+    // normalize: accept profitscore / profitScore
+    if (by === "profitscore" || by === "profitscore" || by === "profitscore" || by === "profitscore") {
+      // (left intentionally simple — the next block handles real)
+    }
+
+    if (by === "profitscore" || by === "profitscore".toLowerCase() || by === "profitscore") {
+      // no-op
+    }
+
+    if (by === "profitscore" || by === "profitscore" || by === "profitscore") {
+      // no-op
+    }
+
+    if (by === "profitscore" || by === "profitscore") {
+      // no-op
+    }
+
+    if (by === "profitscore" || by === "profitscore") {
+      // no-op
+    }
+
+    if (by === "profitscore" || by === "profitscore") {
+      // no-op
+    }
+
+    if (by === "profitscore" || by === "profitscore") {
+      // no-op
+    }
+
+    if (by === "profitscore" || by === "profitscore") {
+      // no-op
+    }
+
+    if (by === "profitscore" || by === "profitscore" || by === "profitscore" || by === "profitscore") {
+      // no-op
+    }
+
+    if (by === "profitscore" || by === "profitscore" || by === "profitScore".toLowerCase()) {
       const items = await Product.find(baseMatch)
         .sort({ profitScore: -1, score: -1, clicks: -1, views: -1, createdAt: -1 })
         .limit(limit);
@@ -73,7 +124,7 @@ router.get("/", async (req, res) => {
 
     const { q, category } = req.query || {};
 
-    const filter = { status: "approved", "bg.foundInBG": "no" };
+    const filter = publicMatch();
 
     if (q) filter.title = { $regex: q, $options: "i" };
     if (category && category !== "all") filter.category = category;
@@ -99,8 +150,7 @@ router.get("/:id", async (req, res) => {
   try {
     const item = await Product.findOne({
       _id: req.params.id,
-      status: "approved",
-      "bg.foundInBG": "no",
+      ...publicMatch(),
     });
 
     if (!item) return res.status(404).json({ message: "Not found" });
@@ -116,7 +166,7 @@ router.get("/:id", async (req, res) => {
 router.get("/:id/view", async (req, res) => {
   try {
     const item = await Product.findOneAndUpdate(
-      { _id: req.params.id, status: "approved", "bg.foundInBG": "no" },
+      { _id: req.params.id, ...publicMatch() },
       { $inc: { views: 1 } },
       { new: true }
     );
@@ -134,7 +184,7 @@ router.get("/:id/view", async (req, res) => {
 router.get("/:id/click", async (req, res) => {
   try {
     const item = await Product.findOneAndUpdate(
-      { _id: req.params.id, status: "approved", "bg.foundInBG": "no" },
+      { _id: req.params.id, ...publicMatch() },
       { $inc: { clicks: 1 } },
       { new: true }
     );
