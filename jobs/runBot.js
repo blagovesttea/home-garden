@@ -4,10 +4,11 @@ require("dotenv").config();
 const Product = require("../models/Product");
 
 /* =========================
-   Profitshare Feed Bot (CSV) — FIXED delimiter/header
+   Profitshare Feed Bot (CSV) — FIXED delimiter/header + PRICE FIX + schema-safe
    - Uses PROFITSHARE_FEED_URL (Render Env Var)
-   - Auto-detects delimiter (; , \t)
+   - Auto-detects delimiter (; , \t |)
    - If header is "1 column with commas" => reparses correctly
+   - Handles Profitshare EN headers (your logs show EN)
    - Upsert by sourceUrl (unique)
    - Does NOT connect/disconnect Mongo (server.js already connects)
    - Exports a function
@@ -27,6 +28,8 @@ function toNumber(val) {
   if (val == null) return null;
   const s = String(val).trim();
   if (!s) return null;
+
+  // supports: "1 234,56" | "1234.56" | "1234,56"
   const normalized = s.replace(/\s+/g, "").replace(",", ".");
   const n = Number(normalized);
   return Number.isFinite(n) ? n : null;
@@ -39,6 +42,7 @@ function guessCategoryFromText(text) {
     t.includes("градин") ||
     t.includes("garden") ||
     t.includes("полив") ||
+    t.includes("irrig") ||
     t.includes("маркуч") ||
     t.includes("hose") ||
     t.includes("солар") ||
@@ -126,7 +130,7 @@ function parseCSV(text, delimiter) {
     return out.map((v) => v.trim());
   }
 
-  const header = parseLine(lines[0]).map((h) => h.replace(/^\uFEFF/, ""));
+  const header = parseLine(lines[0]).map((h) => h.replace(/^\uFEFF/, "")); // strip BOM
   for (let i = 1; i < lines.length; i++) {
     const cols = parseLine(lines[i]);
     if (!cols.length) continue;
@@ -151,10 +155,11 @@ function detectDelimiter(csvText) {
   let bestCount = -1;
 
   for (const d of candidates) {
-    const count = (firstLine.match(new RegExp(`\\${d}`, "g")) || []).length;
+    const escaped = d === "\t" ? "\\t" : `\\${d}`;
+    const count = (firstLine.match(new RegExp(escaped, "g")) || []).length;
     if (count > bestCount) {
       bestCount = count;
-      best = d;
+      best = d === "\t" ? "\t" : d;
     }
   }
   return best;
@@ -209,39 +214,83 @@ function findFirstImageUrl(row) {
   return "";
 }
 
+/**
+ * ✅ PRICE FIX (matches your real Profitshare EN headers from logs)
+ * Columns in your logs:
+ * - Price without VAT
+ * - Price with VAT
+ * - Price with discount, with VAT
+ * - Price with discount, without VAT
+ */
 function findPrice(row) {
-  // prefer VAT price
+  // Prefer VAT price first
   const pVat = toNumber(
-    pick(row, ["Price with VAT", "Цена с ДДС", "Price VAT", "Price", "Цена"])
+    pick(row, [
+      "Price with VAT",
+      "Цена с ДДС",
+      "Price VAT",
+      "Price",
+      "Цена",
+    ])
   );
-  if (pVat != null) return pVat;
+  if (pVat != null && pVat > 0) return pVat;
 
   const pDiscVat = toNumber(
-    pick(row, ["Price with discount, with VAT", "Цена с намаление, с ДДС", "Sale price", "Discount price"])
+    pick(row, [
+      "Price with discount, with VAT",
+      "Цена с намаление, с ДДС",
+      "Sale price",
+      "Discount price",
+    ])
   );
-  if (pDiscVat != null) return pDiscVat;
+  if (pDiscVat != null && pDiscVat > 0) return pDiscVat;
 
-  // scan
+  const pNoVat = toNumber(
+    pick(row, [
+      "Price without VAT",
+      "Цена без ДДС",
+    ])
+  );
+  if (pNoVat != null && pNoVat > 0) return pNoVat;
+
+  const pDiscNoVat = toNumber(
+    pick(row, [
+      "Price with discount, without VAT",
+      "Цена с намаление без ДДС",
+    ])
+  );
+  if (pDiscNoVat != null && pDiscNoVat > 0) return pDiscNoVat;
+
+  // scan any price-like header
   for (const [k, v] of Object.entries(row || {})) {
     const key = String(k).toLowerCase();
     if (key.includes("price") || key.includes("цена")) {
       const n = toNumber(v);
-      if (n != null) return n;
+      if (n != null && n > 0) return n;
     }
   }
+
   return null;
 }
 
 function findSalePrice(row) {
   const pDiscVat = toNumber(
-    pick(row, ["Price with discount, with VAT", "Цена с намаление, с ДДС", "Sale price", "Discount price"])
+    pick(row, [
+      "Price with discount, with VAT",
+      "Цена с намаление, с ДДС",
+      "Sale price",
+      "Discount price",
+    ])
   );
-  if (pDiscVat != null) return pDiscVat;
+  if (pDiscVat != null && pDiscVat > 0) return pDiscVat;
 
   const pDiscNoVat = toNumber(
-    pick(row, ["Price with discount, without VAT", "Цена с намаление без ДДС"])
+    pick(row, [
+      "Price with discount, without VAT",
+      "Цена с намаление без ДДС",
+    ])
   );
-  if (pDiscNoVat != null) return pDiscNoVat;
+  if (pDiscNoVat != null && pDiscNoVat > 0) return pDiscNoVat;
 
   return null;
 }
@@ -277,12 +326,18 @@ async function runBot() {
     const keys = Object.keys(rows[0]);
     console.log("🧾 Feed columns count:", keys.length);
     console.log("🧾 Feed columns (first row):", keys);
-    // show sample values for sanity
     console.log("🔍 Sample row (first):", {
       title: rows[0]["Product name"] || rows[0]["Наименование на продукта"] || "",
-      link: rows[0]["Product affiliate link"] || rows[0]["Текстов линк на продукта"] || "",
+      link:
+        rows[0]["Product affiliate link"] ||
+        rows[0]["Текстов линк на продукта"] ||
+        "",
       img: rows[0]["Product picture"] || rows[0]["Профилна снимка"] || "",
-      price: rows[0]["Price with VAT"] || rows[0]["Цена с ДДС"] || "",
+      price:
+        rows[0]["Price with VAT"] ||
+        rows[0]["Цена с ДДС"] ||
+        rows[0]["Price without VAT"] ||
+        "",
     });
   }
 
@@ -307,9 +362,8 @@ async function runBot() {
         pick(row, ["Product name", "Наименование на продукта", "Name", "Title", "Product Name"])
       );
 
-      const description = normStr(
-        pick(row, ["Product description", "Описание на продукта", "Description"])
-      );
+      // NOTE: your Product schema doesn't have description/brand fields, so we keep them in notes only
+      const description = normStr(pick(row, ["Product description", "Описание на продукта", "Description"]));
 
       let affiliateUrl = normStr(
         pick(row, [
@@ -336,8 +390,10 @@ async function runBot() {
 
       const currency = normStr(pick(row, ["Currency", "Валута"])) || "EUR";
 
+      // unique key in your schema
       const sourceUrl = affiliateUrl || productCode;
 
+      // schema required fields: title, category, source, sourceUrl, price
       if (!title || !affiliateUrl || !sourceUrl || typeof price !== "number" || price <= 0) {
         skipped++;
         continue;
@@ -345,8 +401,15 @@ async function runBot() {
 
       const category = guessCategoryFromText(`${categoryText} ${title}`);
 
+      // keep approved if already approved
       const existing = await Product.findOne({ sourceUrl }).select("status").lean();
       const keepApproved = existing?.status === "approved";
+
+      const notesParts = [];
+      if (advertiser) notesParts.push(`advertiser: ${advertiser}`);
+      if (manufacturer) notesParts.push(`brand: ${manufacturer}`);
+      if (productCode) notesParts.push(`code: ${productCode}`);
+      if (description) notesParts.push(`desc: ${description.slice(0, 180)}`);
 
       const doc = {
         title,
@@ -366,12 +429,7 @@ async function runBot() {
         shippingToBG: true,
         shippingDays: null,
 
-        notes: advertiser
-          ? `advertiser: ${advertiser}${manufacturer ? ` | brand: ${manufacturer}` : ""}${
-              productCode ? ` | code: ${productCode}` : ""
-            }`
-          : "",
-
+        notes: notesParts.join(" | "),
         score: 0,
         profitScore: 0,
 
@@ -385,10 +443,7 @@ async function runBot() {
         { sourceUrl: doc.sourceUrl },
         {
           $set: { ...doc, updatedAt: new Date() },
-          $setOnInsert: {
-            createdAt: new Date(),
-            productCode: productCode || undefined,
-          },
+          $setOnInsert: { createdAt: new Date() },
         },
         { upsert: true, runValidators: true }
       );
