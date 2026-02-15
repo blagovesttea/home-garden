@@ -10,16 +10,19 @@ const authRoutes = require("./routes/auth");
 const adminProductsRoutes = require("./routes/admin.products");
 const productsRoutes = require("./routes/products");
 
-// ✅ Categories routes (safe require)
+// ✅ Categories routes (safe require + show real error)
 let categoriesRoutes = null;
+let categoriesLoadError = null;
+
 try {
   categoriesRoutes = require("./routes/categories");
   console.log("✅ Categories routes loaded");
 } catch (e) {
-  console.log("ℹ️ routes/categories.js not found (categories API disabled).");
+  categoriesLoadError = e;
+  console.error("❌ Categories routes failed to load:");
+  console.error(e && (e.stack || e.message || e));
 }
 
-// ✅ Profitshare bot (your file is in /jobs/runBot.js)
 let runProfitshareBot = null;
 try {
   runProfitshareBot = require("./jobs/runBot");
@@ -62,8 +65,35 @@ app.use("/auth", authRoutes);
 app.use("/admin", adminProductsRoutes);
 app.use("/products", productsRoutes);
 
+// ✅ Categories
 if (categoriesRoutes) {
   app.use("/categories", categoriesRoutes);
+} else {
+  // IMPORTANT: don't let React catch-all eat these endpoints
+  app.get("/categories", (req, res) =>
+    res.status(503).json({
+      ok: false,
+      message: "Categories API disabled (failed to load routes/categories.js)",
+      error: categoriesLoadError ? (categoriesLoadError.message || String(categoriesLoadError)) : "unknown",
+    })
+  );
+
+  app.get("/categories/flat", (req, res) =>
+    res.status(503).json({
+      ok: false,
+      message: "Categories API disabled (failed to load routes/categories.js)",
+      error: categoriesLoadError ? (categoriesLoadError.message || String(categoriesLoadError)) : "unknown",
+    })
+  );
+
+  // matches /categories/by-path/anything
+  app.get("/categories/by-path/*", (req, res) =>
+    res.status(503).json({
+      ok: false,
+      message: "Categories API disabled (failed to load routes/categories.js)",
+      error: categoriesLoadError ? (categoriesLoadError.message || String(categoriesLoadError)) : "unknown",
+    })
+  );
 }
 
 /* =========================
@@ -99,7 +129,7 @@ function startBotOnceAfterBoot() {
       await runProfitshareBot();
       console.log("✅ Profitshare bot finished.");
     } catch (err) {
-      console.error("❌ Profitshare bot error:", err?.message || err);
+      console.error("❌ Profitshare bot error:", err?.stack || err?.message || err);
     }
   }, 15_000);
 }
@@ -122,7 +152,7 @@ async function start() {
       startBotOnceAfterBoot();
     });
   } catch (err) {
-    console.error("❌ Boot error:", err);
+    console.error("❌ Boot error:", err?.stack || err?.message || err);
     process.exit(1);
   }
 }
