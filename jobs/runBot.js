@@ -190,15 +190,49 @@ async function runBot() {
       const title = normStr(pick(row, ["Наименование на продукта", "Product name", "Name", "Title"]));
       const description = normStr(pick(row, ["Описание на продукта", "Description"]));
 
-      // ✅ affiliate link
-      const affiliateUrl = normStr(
-        pick(row, ["Текстов линк на продукта", "Affiliate URL", "Product URL", "URL", "Link"])
+      // ✅ affiliate / tracking link (many possible column names)
+      let affiliateUrl = normStr(
+        pick(row, [
+          "Текстов линк на продукта",
+          "Текстов линк",
+          "Афилиейт линк",
+          "Affiliate URL",
+          "Affiliate Url",
+          "affiliate_url",
+          "Affiliate link",
+          "Deeplink",
+          "Deep link",
+          "DeepLink",
+          "Tracking URL",
+          "Tracking Url",
+          "URL",
+          "Url",
+          "url",
+          "Link",
+          "link",
+          "Product URL",
+          "Product Url",
+          "ProductUrl",
+          "Product link",
+          "Product Link",
+        ])
       );
 
-      // ✅ if feed provides a clean product link (optional)
+      // ✅ clean product url (optional)
       const cleanProductUrl = normStr(
-        pick(row, ["Линк към продукта", "Продуктов линк", "Product link", "Product Link"])
+        pick(row, [
+          "Линк към продукта",
+          "Продуктов линк",
+          "Product link",
+          "Product Link",
+          "Landing page",
+          "Landing URL",
+          "Landing Url",
+        ])
       );
+
+      // ако няма affiliateUrl, но има cleanProductUrl — ползваме него, иначе няма какво да запишем
+      if (!affiliateUrl && cleanProductUrl) affiliateUrl = cleanProductUrl;
 
       const imageUrl = normStr(pick(row, ["Профилна снимка", "Image", "Image URL", "ImageUrl"]));
 
@@ -219,8 +253,8 @@ async function runBot() {
         giftRaw.toLowerCase() === "yes" ||
         giftRaw === "1";
 
-      // ✅ Use cleanProductUrl if exists, else affiliateUrl.
-      const sourceUrl = cleanProductUrl || affiliateUrl;
+      // ✅ stable upsert key
+      const sourceUrl = cleanProductUrl || affiliateUrl || productCode;
 
       if (!title || !affiliateUrl || !sourceUrl) {
         skipped++;
@@ -230,7 +264,7 @@ async function runBot() {
       const category = guessCategoryFromText(`${categoryText} ${title}`);
       const price = priceVat ?? salePriceVat ?? null;
 
-      // ✅ if product already exists and is approved, keep it approved
+      // ✅ keep approved if you already approved it
       const existing = await Product.findOne({ sourceUrl }).select("status").lean();
       const keepStatus = existing?.status === "approved";
 
@@ -255,7 +289,6 @@ async function runBot() {
         score: 0,
         profitScore: 0,
 
-        // ✅ admin approves manually
         status: keepStatus ? "approved" : "new",
       };
 
