@@ -280,7 +280,11 @@ router.patch("/products/:id/status", auth, adminOnly, async (req, res) => {
       return res.status(400).json({ message: "Invalid status" });
     }
 
-    const updated = await Product.findByIdAndUpdate(id, { status }, { new: true });
+    const updated = await Product.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
     if (!updated) return res.status(404).json({ message: "Not found" });
 
     return res.json({ ok: true, product: updated });
@@ -385,46 +389,6 @@ router.post("/products/backfill", auth, adminOnly, async (req, res) => {
 });
 
 /**
- * ✅ PATCH /admin/products/:id/category
- * Admin sets catalog category + (optional) legacy category + lock
- *
- * Body:
- * {
- *   "categoryId": "ObjectId or null",
- *   "categoryPath": ["home","kitchen","cookware"],
- *   "legacyCategory": "kitchen",   // optional
- *   "lock": true                  // default true
- * }
- */
-router.patch("/products/:id/category", auth, adminOnly, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      categoryId = null,
-      categoryPath = [],
-      legacyCategory = null,
-      lock = true,
-    } = req.body || {};
-
-    const update = {
-      categoryId: categoryId || null,
-      categoryPath: Array.isArray(categoryPath) ? categoryPath : [],
-      categoryLocked: !!lock,
-    };
-
-    // optional: keep current UI working (legacy)
-    if (legacyCategory) update.category = String(legacyCategory).trim();
-
-    const product = await Product.findByIdAndUpdate(id, update, { new: true });
-    if (!product) return res.status(404).json({ message: "Not found" });
-
-    return res.json({ ok: true, product });
-  } catch (err) {
-    return res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
-
-/**
  * ✅ DELETE /admin/products/purge-example
  * Delete only example.com products (safe cleanup)
  */
@@ -452,6 +416,87 @@ router.delete("/products/:id", auth, adminOnly, async (req, res) => {
     return res.json({ ok: true });
   } catch (err) {
     return res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+/* =========================================================
+   ✅ NEW: Seed categories into DB (admin only)
+   POST /admin/categories/seed
+   - Seeds ONLY if Category collection is empty
+========================================================= */
+router.post("/categories/seed", auth, adminOnly, async (req, res) => {
+  try {
+    const Category = require("../models/Category");
+
+    const existing = await Category.countDocuments();
+    if (existing > 0) {
+      return res.json({
+        ok: true,
+        message: "Categories already exist",
+        count: existing,
+      });
+    }
+
+    const now = new Date();
+
+    function make({ name, slug, path, level, parent = null, order = 0 }) {
+      return {
+        name,
+        slug,
+        path,
+        level,
+        parent,
+        order,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      };
+    }
+
+    // Roots
+    const roots = await Category.insertMany([
+      make({ name: "Home", slug: "home", path: ["home"], level: 0, order: 1 }),
+      make({ name: "Garden", slug: "garden", path: ["garden"], level: 0, order: 2 }),
+      make({ name: "Tools", slug: "tools", path: ["tools"], level: 0, order: 3 }),
+      make({ name: "Outdoor", slug: "outdoor", path: ["outdoor"], level: 0, order: 4 }),
+    ]);
+
+    const rootBySlug = {};
+    for (const r of roots) rootBySlug[r.slug] = r;
+
+    // Level 1
+    const lvl1 = await Category.insertMany([
+      // Home
+      make({ name: "Kitchen", slug: "kitchen", path: ["home", "kitchen"], level: 1, parent: rootBySlug.home._id, order: 1 }),
+      make({ name: "Bathroom", slug: "bathroom", path: ["home", "bathroom"], level: 1, parent: rootBySlug.home._id, order: 2 }),
+      make({ name: "Cleaning", slug: "cleaning", path: ["home", "cleaning"], level: 1, parent: rootBySlug.home._id, order: 3 }),
+      make({ name: "Storage", slug: "storage", path: ["home", "storage"], level: 1, parent: rootBySlug.home._id, order: 4 }),
+      make({ name: "Decor", slug: "decor", path: ["home", "decor"], level: 1, parent: rootBySlug.home._id, order: 5 }),
+
+      // Garden
+      make({ name: "Watering", slug: "watering", path: ["garden", "watering"], level: 1, parent: rootBySlug.garden._id, order: 1 }),
+      make({ name: "Plants", slug: "plants", path: ["garden", "plants"], level: 1, parent: rootBySlug.garden._id, order: 2 }),
+      make({ name: "Garden Furniture", slug: "garden-furniture", path: ["garden", "garden-furniture"], level: 1, parent: rootBySlug.garden._id, order: 3 }),
+      make({ name: "Garden Tools", slug: "garden-tools", path: ["garden", "garden-tools"], level: 1, parent: rootBySlug.garden._id, order: 4 }),
+
+      // Tools
+      make({ name: "Power Tools", slug: "power-tools", path: ["tools", "power-tools"], level: 1, parent: rootBySlug.tools._id, order: 1 }),
+      make({ name: "Hand Tools", slug: "hand-tools", path: ["tools", "hand-tools"], level: 1, parent: rootBySlug.tools._id, order: 2 }),
+      make({ name: "Tool Storage", slug: "tool-storage", path: ["tools", "tool-storage"], level: 1, parent: rootBySlug.tools._id, order: 3 }),
+
+      // Outdoor
+      make({ name: "Camping", slug: "camping", path: ["outdoor", "camping"], level: 1, parent: rootBySlug.outdoor._id, order: 1 }),
+      make({ name: "BBQ", slug: "bbq", path: ["outdoor", "bbq"], level: 1, parent: rootBySlug.outdoor._id, order: 2 }),
+      make({ name: "Lighting", slug: "lighting", path: ["outdoor", "lighting"], level: 1, parent: rootBySlug.outdoor._id, order: 3 }),
+    ]);
+
+    return res.json({
+      ok: true,
+      message: "Categories seeded",
+      created: roots.length + lvl1.length,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Seed error", error: err.message });
   }
 });
 
