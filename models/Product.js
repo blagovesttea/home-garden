@@ -15,9 +15,7 @@ const ProductSchema = new mongoose.Schema(
     // source info
     source: {
       type: String,
-      required: true,
-      enum: ["amazon_de", "aliexpress", "temu", "ebay", "other"],
-      default: "other",
+      default: "other", // ✅ махаме enum, за да приема profitshare, alleop и т.н.
     },
 
     sourceUrl: {
@@ -27,7 +25,7 @@ const ProductSchema = new mongoose.Schema(
       index: true,
     },
 
-    // ✅ affiliate link (печалба)
+    // affiliate link
     affiliateUrl: {
       type: String,
       default: "",
@@ -36,20 +34,17 @@ const ProductSchema = new mongoose.Schema(
     imageUrl: { type: String, default: "" },
 
     // pricing
-    price: { type: Number, required: true },
+    price: { type: Number, default: null }, // ✅ вече не е required
     currency: { type: String, default: "EUR" },
     shippingPrice: { type: Number, default: 0 },
     shippingToBG: { type: Boolean, default: true },
     shippingDays: { type: Number, default: null },
 
-    // analytics (важно за бизнес)
+    // analytics
     views: { type: Number, default: 0 },
     clicks: { type: Number, default: 0 },
 
-    // profitability score (ще го използваме по-късно)
     profitScore: { type: Number, default: 0 },
-
-    // our analysis
     score: { type: Number, default: 0 },
     notes: { type: String, default: "" },
 
