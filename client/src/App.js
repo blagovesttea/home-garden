@@ -275,7 +275,10 @@ function App() {
       unique.push(o);
     }
 
-    return [{ value: "all", label: categoriesLoading ? "Loading..." : "All categories" }, ...unique];
+    return [
+      { value: "all", label: categoriesLoading ? "Loading..." : "All categories" },
+      ...unique,
+    ];
   }, [categoriesFlat, categoriesLoading]);
 
   /* =========================
@@ -420,7 +423,12 @@ function App() {
     if (category && category !== "all") {
       items = items.filter((p) => {
         const okCatalog = pathPrefixMatch(p.categoryPath, category);
-        if (okCatalog && Array.isArray(p.categoryPath) && p.categoryPath.length) return true;
+        if (
+          okCatalog &&
+          Array.isArray(p.categoryPath) &&
+          p.categoryPath.length
+        )
+          return true;
 
         // fallback: legacy bucket root match (home/garden)
         const root = legacyToRootPath(p.category);
@@ -467,6 +475,9 @@ function App() {
   const [adminItems, setAdminItems] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminMsg, setAdminMsg] = useState("");
+
+  // ✅ NEW: seed categories action
+  const [seedCatsLoading, setSeedCatsLoading] = useState(false);
 
   async function loadAdmin() {
     if (!token) {
@@ -562,6 +573,41 @@ function App() {
     }
   }
 
+  // ✅ NEW: Seed categories (admin only)
+  async function seedCategories() {
+    setAdminMsg("");
+    if (!token) {
+      setAdminMsg("No token. Login first.");
+      return;
+    }
+    if (!isAdmin) {
+      setAdminMsg("You are not admin.");
+      return;
+    }
+
+    setSeedCatsLoading(true);
+    try {
+      const r = await apiFetch(`/admin/categories/seed`, { method: "POST" });
+
+      // show result
+      const msg =
+        r?.message ||
+        (r?.created != null
+          ? `Categories seeded: created ${r.created}`
+          : "Categories seed OK");
+      setAdminMsg(msg);
+
+      // refresh categories in UI
+      await loadCategories();
+      // optional: reset selection to all so user sees everything
+      setCategory("all");
+    } catch (e) {
+      setAdminMsg(e?.message || "Seed categories error");
+    } finally {
+      setSeedCatsLoading(false);
+    }
+  }
+
   /* =========================
      UI
   ========================== */
@@ -602,9 +648,7 @@ function App() {
         <div className="hg-topActions">
           <div className="hg-switch">
             <button
-              className={`hg-switchBtn ${
-                view === "public" ? "is-active" : ""
-              }`}
+              className={`hg-switchBtn ${view === "public" ? "is-active" : ""}`}
               onClick={() => setView("public")}
               disabled={view === "public"}
             >
@@ -724,6 +768,16 @@ function App() {
                   Approve existing NEW
                 </button>
 
+                {/* ✅ NEW: Seed categories */}
+                <button
+                  className="hg-btn"
+                  onClick={seedCategories}
+                  disabled={seedCatsLoading || adminLoading}
+                  title="Creates default category catalog if DB is empty"
+                >
+                  {seedCatsLoading ? "Seeding categories..." : "Seed categories"}
+                </button>
+
                 <div className="hg-counter">
                   Items: <b>{adminItems.length}</b>
                 </div>
@@ -756,7 +810,11 @@ function App() {
 
                     <div className="hg-kpis">
                       Catalog:{" "}
-                      <b>{Array.isArray(p.categoryPath) && p.categoryPath.length ? p.categoryPath.join(" / ") : "-"}</b>
+                      <b>
+                        {Array.isArray(p.categoryPath) && p.categoryPath.length
+                          ? p.categoryPath.join(" / ")
+                          : "-"}
+                      </b>
                     </div>
 
                     <div className="hg-price">
@@ -884,25 +942,19 @@ function App() {
 
           <div className="hg-modes">
             <button
-              className={`hg-btn ${
-                mode === "topProfit" ? "hg-btn--primary" : ""
-              }`}
+              className={`hg-btn ${mode === "topProfit" ? "hg-btn--primary" : ""}`}
               onClick={() => setMode("topProfit")}
             >
               Top Profit
             </button>
             <button
-              className={`hg-btn ${
-                mode === "topClicks" ? "hg-btn--primary" : ""
-              }`}
+              className={`hg-btn ${mode === "topClicks" ? "hg-btn--primary" : ""}`}
               onClick={() => setMode("topClicks")}
             >
               Top Clicks
             </button>
             <button
-              className={`hg-btn ${
-                mode === "latest" ? "hg-btn--primary" : ""
-              }`}
+              className={`hg-btn ${mode === "latest" ? "hg-btn--primary" : ""}`}
               onClick={() => setMode("latest")}
             >
               Latest
@@ -910,9 +962,7 @@ function App() {
           </div>
 
           {loading && <div className="hg-panel">Loading…</div>}
-          {!loading && errMsg && (
-            <div className="hg-panel hg-panel--bad">{errMsg}</div>
-          )}
+          {!loading && errMsg && <div className="hg-panel hg-panel--bad">{errMsg}</div>}
 
           {!loading && mode === "latest" && (
             <div className="hg-pager">
@@ -924,8 +974,7 @@ function App() {
                 Prev
               </button>
               <div className="hg-counter">
-                Page <b>{page}</b> / <b>{totalPages}</b> — Total:{" "}
-                <b>{meta.total}</b>
+                Page <b>{page}</b> / <b>{totalPages}</b> — Total: <b>{meta.total}</b>
               </div>
               <button
                 className="hg-btn"
@@ -938,9 +987,7 @@ function App() {
           )}
 
           <div className="hg-grid">
-            {!loading && publicItems.length === 0 && (
-              <div className="hg-panel">No products.</div>
-            )}
+            {!loading && publicItems.length === 0 && <div className="hg-panel">No products.</div>}
 
             {publicItems.map((p) => (
               <div className="hg-card" key={p._id}>
@@ -976,18 +1023,15 @@ function App() {
 
                     {toNum(p.shippingDays) > 0 && (
                       <span className="hg-pill">
-                        {toNum(p.shippingDays)} day
-                        {toNum(p.shippingDays) === 1 ? "" : "s"}
+                        {toNum(p.shippingDays)} day{toNum(p.shippingDays) === 1 ? "" : "s"}
                       </span>
                     )}
                   </div>
 
                   {token && isAdmin && showStats ? (
                     <div className="hg-kpis">
-                      Views: <b>{p.views ?? 0}</b> • Clicks:{" "}
-                      <b>{p.clicks ?? 0}</b> • ProfitScore:{" "}
-                      <b>{p.profitScore ?? 0}</b> • Score:{" "}
-                      <b>{p.score ?? 0}</b>
+                      Views: <b>{p.views ?? 0}</b> • Clicks: <b>{p.clicks ?? 0}</b> •
+                      ProfitScore: <b>{p.profitScore ?? 0}</b> • Score: <b>{p.score ?? 0}</b>
                     </div>
                   ) : null}
 
