@@ -164,11 +164,9 @@ function App() {
     if (view !== "admin") return;
 
     if (!token) return; // show login form
-
     if (meLoading) return; // wait for /auth/me
 
     if (!isAdmin) {
-      // token има, но user не е admin
       setAuthMsg("You are logged in, but not admin.");
       setView("public");
     }
@@ -193,8 +191,6 @@ function App() {
         localStorage.setItem("token", t);
       } catch {}
 
-      // Оставаме в admin view – гардът вече няма да те рита,
-      // докато чака /auth/me (meLoading=true).
       setView("admin");
       setAuthMsg("Login OK");
     } catch (e2) {
@@ -255,6 +251,9 @@ function App() {
     if (onlyBG) params.set("shippingToBG", "true");
     if (fastShip) params.set("maxShippingDays", "5");
 
+    // ✅ ensure approved only (even if backend changes)
+    params.set("status", "approved");
+
     return params.toString();
   }, [page, limit, qDebounced, category, onlyBG, fastShip]);
 
@@ -270,9 +269,9 @@ function App() {
       try {
         let url = "";
 
-        if (mode === "topClicks") url = `${API}/products/top?by=clicks&limit=60`;
-        else if (mode === "topProfit")
-          url = `${API}/products/top?by=profitScore&limit=60`;
+        // ✅ add status=approved to top endpoints too
+        if (mode === "topClicks") url = `${API}/products/top?by=clicks&limit=60&status=approved`;
+        else if (mode === "topProfit") url = `${API}/products/top?by=profitScore&limit=60&status=approved`;
         else url = `${API}/products?${queryStringForLatest}`;
 
         const res = await fetch(url);
@@ -294,12 +293,22 @@ function App() {
           throw new Error(msg);
         }
 
-        const items = Array.isArray(data?.items) ? data.items : [];
+        // ✅ IMPORTANT FIX:
+        // - /products returns {items:[...]}
+        // - /products/top may return an array directly OR {items:[...]}
+        let items = [];
+        if (Array.isArray(data)) items = data;
+        else if (Array.isArray(data?.items)) items = data.items;
+        else items = [];
+
+        // ✅ hard safety: public shows only approved
+        items = items.filter((p) => String(p?.status || "").toLowerCase() === "approved");
+
         setProducts(items);
 
         if (mode === "latest") {
           setMeta({
-            total: Number(data?.total || 0),
+            total: Number(data?.total || items.length || 0),
             page: Number(data?.page || page),
             limit: Number(data?.limit || limit),
           });
@@ -328,24 +337,21 @@ function App() {
   const publicItems = useMemo(() => {
     let items = Array.isArray(products) ? [...products] : [];
 
+    // ✅ safety: approved only
+    items = items.filter((p) => String(p?.status || "").toLowerCase() === "approved");
+
     if (category && category !== "all") {
-      items = items.filter(
-        (p) => String(p.category || "").toLowerCase() === category
-      );
+      items = items.filter((p) => String(p.category || "").toLowerCase() === category);
     }
 
     if (qDebounced) {
       const qq = qDebounced.toLowerCase();
-      items = items.filter((p) =>
-        String(p.title || "").toLowerCase().includes(qq)
-      );
+      items = items.filter((p) => String(p.title || "").toLowerCase().includes(qq));
     }
 
     if (onlyBG) items = items.filter((p) => !!p.shippingToBG);
     if (fastShip)
-      items = items.filter(
-        (p) => toNum(p.shippingDays) > 0 && toNum(p.shippingDays) <= 5
-      );
+      items = items.filter((p) => toNum(p.shippingDays) > 0 && toNum(p.shippingDays) <= 5);
 
     items.sort((a, b) => {
       if (sort === "popular") return toNum(b.clicks) - toNum(a.clicks);
