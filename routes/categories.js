@@ -7,12 +7,7 @@ const router = express.Router();
  * GET /categories
  * Tree structure for menu:
  * [
- *   {
- *     name,
- *     slug,
- *     path,
- *     children: [...]
- *   }
+ *   { name, slug, path, children:[...] }
  * ]
  */
 router.get("/", async (req, res) => {
@@ -24,7 +19,6 @@ router.get("/", async (req, res) => {
     const byId = new Map();
     const roots = [];
 
-    // prepare nodes
     for (const c of items) {
       byId.set(String(c._id), {
         _id: c._id,
@@ -37,10 +31,8 @@ router.get("/", async (req, res) => {
       });
     }
 
-    // build tree
     for (const c of items) {
       const node = byId.get(String(c._id));
-
       if (c.parent) {
         const parent = byId.get(String(c.parent));
         if (parent) parent.children.push(node);
@@ -52,16 +44,13 @@ router.get("/", async (req, res) => {
 
     return res.json({ ok: true, items: roots });
   } catch (err) {
-    return res.status(500).json({
-      message: "Server error",
-      error: err.message,
-    });
+    return res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
 /**
  * GET /categories/flat
- * Flat list for admin dropdowns
+ * Flat list for dropdowns
  */
 router.get("/flat", async (req, res) => {
   try {
@@ -71,10 +60,7 @@ router.get("/flat", async (req, res) => {
 
     return res.json({ ok: true, items });
   } catch (err) {
-    return res.status(500).json({
-      message: "Server error",
-      error: err.message,
-    });
+    return res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
@@ -84,34 +70,25 @@ router.get("/flat", async (req, res) => {
  * /categories/by-path/home
  * /categories/by-path/home/kitchen
  * /categories/by-path/home/kitchen/cookware
+ *
+ * ✅ Express5-safe: use regex to capture everything after /by-path/
  */
-router.get("/by-path/*", async (req, res) => {
+router.get(/^\/by-path\/(.+)$/, async (req, res) => {
   try {
     const pathStr = req.params[0];
-    if (!pathStr) {
-      return res.status(400).json({ message: "Path required" });
-    }
+    if (!pathStr) return res.status(400).json({ message: "Path required" });
 
-    const pathArr = pathStr
+    const pathArr = String(pathStr)
       .split("/")
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean);
 
-    const item = await Category.findOne({
-      path: pathArr,
-      isActive: true,
-    }).lean();
-
-    if (!item) {
-      return res.status(404).json({ message: "Category not found" });
-    }
+    const item = await Category.findOne({ path: pathArr, isActive: true }).lean();
+    if (!item) return res.status(404).json({ message: "Category not found" });
 
     return res.json({ ok: true, item });
   } catch (err) {
-    return res.status(500).json({
-      message: "Server error",
-      error: err.message,
-    });
+    return res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
