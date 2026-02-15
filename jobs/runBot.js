@@ -10,7 +10,8 @@ const Product = require("../models/Product");
    - Does NOT connect/disconnect Mongo (server.js already connects)
    - Exports a function
    - Does NOT downgrade approved -> new
-   - Works even if CSV column names differ (best-effort detection)
+   - Works with Profitshare EN columns (and BG too)
+   - Keeps your Product schema happy (required fields + source enum)
 ========================= */
 
 const FEED_URL = process.env.PROFITSHARE_FEED_URL;
@@ -26,7 +27,7 @@ function toNumber(val) {
   const s = String(val).trim();
   if (!s) return null;
 
-  // handles "1 234,56" or "1234.56"
+  // "1 234,56" or "1234.56"
   const normalized = s.replace(/\s+/g, "").replace(",", ".");
   const n = Number(normalized);
   return Number.isFinite(n) ? n : null;
@@ -35,7 +36,18 @@ function toNumber(val) {
 function guessCategoryFromText(text) {
   const t = normStr(text).toLowerCase();
 
-  if (t.includes("градин") || t.includes("garden") || t.includes("полив") || t.includes("маркуч") || t.includes("солар") || t.includes("външ"))
+  if (
+    t.includes("градин") ||
+    t.includes("garden") ||
+    t.includes("полив") ||
+    t.includes("ириг") ||
+    t.includes("маркуч") ||
+    t.includes("hose") ||
+    t.includes("солар") ||
+    t.includes("solar") ||
+    t.includes("външ") ||
+    t.includes("outdoor")
+  )
     return "garden";
 
   if (t.includes("кухн") || t.includes("kitchen")) return "kitchen";
@@ -43,14 +55,17 @@ function guessCategoryFromText(text) {
 
   if (
     t.includes("органайзер") ||
+    t.includes("organizer") ||
     t.includes("storage") ||
+    t.includes("съхран") ||
     t.includes("рафт") ||
     t.includes("shelf") ||
     t.includes("дом") ||
     t.includes("home") ||
     t.includes("декор") ||
     t.includes("decor") ||
-    t.includes("мебел")
+    t.includes("мебел") ||
+    t.includes("furniture")
   )
     return "home";
 
@@ -60,10 +75,12 @@ function guessCategoryFromText(text) {
 function computeScore(p) {
   let s = 0;
   if (p.category && p.category !== "other") s += 2;
+
   if (typeof p.price === "number") {
     if (p.price <= 50) s += 2;
     else if (p.price <= 120) s += 1;
   }
+
   if (p.imageUrl) s += 1;
   return s;
 }
@@ -142,7 +159,9 @@ async function fetchFeed(url) {
     });
 
     const text = await res.text();
-    if (!res.ok) throw new Error(`Feed HTTP ${res.status} | head: ${text.slice(0, 140)}`);
+    if (!res.ok) {
+      throw new Error(`Feed HTTP ${res.status} | head: ${text.slice(0, 140)}`);
+    }
     return text;
   } finally {
     clearTimeout(t);
@@ -172,48 +191,79 @@ function findFirstImageUrl(row) {
   for (const v of Object.values(row || {})) {
     const s = normStr(v);
     if (!s) continue;
+
     if (/^https?:\/\/\S+\.(jpg|jpeg|png|webp)(\?.*)?$/i.test(s)) return s;
-    if (/^https?:\/\/\S+/i.test(s) && /image|img|cdn|media/i.test(s)) return s;
+    if (/^https?:\/\/\S+/i.test(s) && /image|img|cdn|media|static/i.test(s)) return s;
   }
   return "";
 }
 
-// Fallback: find price by scanning headers
+// Detect price from known columns + scan
 function findPrice(row) {
-  // 1) known keys
-  const p1 = toNumber(
+  // Prefer price with VAT
+  const pVat = toNumber(
     pick(row, [
+      // EN from your logs:
+      "Price with VAT",
+      // BG variants:
       "Цена с ДДС",
-      "Цена",
-      "Price",
+      // generic:
       "Price VAT",
-      "price",
       "price_vat",
-      "amount",
+      "Price",
+      "Цена",
     ])
   );
-  if (p1 != null) return p1;
+  if (pVat != null) return pVat;
 
-  const p2 = toNumber(
+  // Discount price with VAT
+  const pDiscVat = toNumber(
     pick(row, [
+      // EN from your logs:
+      "Price with discount, with VAT",
+      // BG variants:
       "Цена с намаление, с ДДС",
-      "Намалена цена",
+      // generic:
       "Sale price",
       "Discount price",
       "sale_price",
-      "discount",
+      "discount_price",
     ])
   );
-  if (p2 !=null) return p2;
+  if (pDiscVat != null) return pDiscVat;
 
-  // 2) scan by header name containing "цена" or "price"
+  // As last resort: scan headers containing "price" / "цена"
   for (const [k, v] of Object.entries(row || {})) {
     const key = String(k).toLowerCase();
-    if (key.includes("цена") || key.includes("price")) {
+    if (key.includes("price") || key.includes("цена")) {
       const n = toNumber(v);
       if (n != null) return n;
     }
   }
+
+  return null;
+}
+
+// Detect sale price (optional)
+function findSalePrice(row) {
+  const pDiscVat = toNumber(
+    pick(row, [
+      "Price with discount, with VAT",
+      "Цена с намаление, с ДДС",
+      "Sale price",
+      "Discount price",
+    ])
+  );
+  if (pDiscVat != null) return pDiscVat;
+
+  const pDiscNoVat = toNumber(
+    pick(row, [
+      "Price with discount, without VAT",
+      "Цена с намаление без ДДС",
+      "Discount price without VAT",
+    ])
+  );
+  if (pDiscNoVat != null) return pDiscNoVat;
 
   return null;
 }
@@ -224,7 +274,9 @@ async function runBot() {
     return { ok: false, reason: "missing_feed_url" };
   }
 
+  console.log("🤖 Profitshare bot starting...");
   console.log("🤖 Profitshare bot: fetching feed...");
+
   const csvText = await fetchFeed(FEED_URL);
 
   // Profitshare often uses ";"
@@ -233,7 +285,6 @@ async function runBot() {
 
   console.log("🤖 Feed rows parsed:", rows.length);
 
-  // show columns once (helps you + me if feed changes)
   if (rows.length > 0) {
     console.log("🧾 Feed columns (first row):", Object.keys(rows[0]));
   }
@@ -247,60 +298,76 @@ async function runBot() {
 
   for (const row of limited) {
     try {
+      // ✅ These match your EN feed columns (from logs) + BG fallbacks
       const advertiser = normStr(
-        pick(row, ["Име рекламодател", "Advertiser", "Merchant", "Рекламодател"])
+        pick(row, [
+          "Advertiser name",
+          "Име рекламодател",
+          "Advertiser",
+          "Merchant",
+          "Рекламодател",
+        ])
       );
 
-      const categoryText = normStr(pick(row, ["Категория", "Category"]));
-      const manufacturer = normStr(pick(row, ["Производител", "Manufacturer", "Brand"]));
-      const productCode = normStr(pick(row, ["Код продукт", "Product code", "SKU"]));
+      const categoryText = normStr(pick(row, ["Category", "Категория"]));
+      const manufacturer = normStr(pick(row, ["Manufacturer", "Производител", "Brand"]));
+      const productCode = normStr(pick(row, ["Product code", "Код продукт", "SKU"]));
 
       const title = normStr(
-        pick(row, ["Наименование на продукта", "Product name", "Name", "Title", "Product Name"])
+        pick(row, [
+          "Product name",
+          "Наименование на продукта",
+          "Name",
+          "Title",
+          "Product Name",
+        ])
       );
-      const description = normStr(pick(row, ["Описание на продукта", "Description"]));
 
-      // Try many link keys + fallback to first url in row
+      const description = normStr(
+        pick(row, [
+          "Product description",
+          "Описание на продукта",
+          "Description",
+        ])
+      );
+
+      // ✅ affiliate link (from your EN feed column name)
       let affiliateUrl = normStr(
         pick(row, [
+          "Product affiliate link",
           "Текстов линк на продукта",
-          "Текстов линк",
           "Affiliate URL",
-          "Affiliate Url",
           "Affiliate link",
-          "Deeplink",
-          "Deep link",
           "Tracking URL",
           "URL",
-          "Url",
           "Link",
           "Product URL",
           "Product Link",
-          "Product link",
         ])
       );
       if (!affiliateUrl) affiliateUrl = findFirstUrlInRow(row);
 
-      // Optional clean link
-      let cleanProductUrl = normStr(
-        pick(row, ["Линк към продукта", "Продуктов линк", "Product link", "Product Link", "Landing URL"])
+      // ✅ image (from your EN feed column name)
+      let imageUrl = normStr(
+        pick(row, [
+          "Product picture",
+          "Профилна снимка",
+          "Image",
+          "Image URL",
+          "ImageUrl",
+        ])
       );
-
-      // If clean link missing, but affiliate exists, keep clean empty
-      // If affiliate missing but clean exists, use clean as affiliate too
-      if (!affiliateUrl && cleanProductUrl) affiliateUrl = cleanProductUrl;
-      if (!cleanProductUrl) cleanProductUrl = "";
-
-      // Image
-      let imageUrl = normStr(pick(row, ["Профилна снимка", "Image", "Image URL", "ImageUrl", "Image link"]));
       if (!imageUrl) imageUrl = findFirstImageUrl(row);
 
-      // Price (required by your schema)
+      // ✅ required by your schema
       const price = findPrice(row);
-      const currency = normStr(pick(row, ["Валута", "Currency"])) || "EUR";
+      const salePrice = findSalePrice(row);
 
-      // Must have required fields to satisfy schema
-      const sourceUrl = cleanProductUrl || affiliateUrl || productCode;
+      const currency = normStr(pick(row, ["Currency", "Валута"])) || "EUR";
+
+      // ✅ sourceUrl must be unique+required; pick best stable key
+      // For Profitshare we usually only have affiliate link; that's fine as unique.
+      const sourceUrl = affiliateUrl || productCode;
 
       if (!title || !affiliateUrl || !sourceUrl || typeof price !== "number" || price <= 0) {
         skipped++;
@@ -309,17 +376,18 @@ async function runBot() {
 
       const category = guessCategoryFromText(`${categoryText} ${title}`);
 
-      // keep approved if already approved
+      // ✅ keep approved if it was already approved
       const existing = await Product.findOne({ sourceUrl }).select("status").lean();
       const keepApproved = existing?.status === "approved";
 
-      // IMPORTANT: your schema source is enum => must be valid
+      // ✅ schema-safe product doc (your Product.js requires: title, category, source, sourceUrl, price)
       const doc = {
         title,
         category,
 
-        // schema-safe:
-        source: "other", // ✅ valid enum
+        // Your schema source enum is: ["amazon_de","aliexpress","temu","ebay","other"]
+        // Profitshare isn't listed, so we must store "other"
+        source: "other",
 
         sourceUrl,
         affiliateUrl,
@@ -328,11 +396,20 @@ async function runBot() {
         price,
         currency,
 
+        // schema fields (safe defaults)
         shippingPrice: 0,
         shippingToBG: true,
         shippingDays: null,
 
-        notes: advertiser ? `advertiser: ${advertiser}${manufacturer ? ` | brand: ${manufacturer}` : ""}` : "",
+        // analytics fields default in schema, no need to set
+
+        // optional schema fields
+        notes: advertiser
+          ? `advertiser: ${advertiser}${manufacturer ? ` | brand: ${manufacturer}` : ""}${
+              productCode ? ` | code: ${productCode}` : ""
+            }`
+          : "",
+
         score: 0,
         profitScore: 0,
 
@@ -340,7 +417,7 @@ async function runBot() {
       };
 
       doc.score = computeScore(doc);
-      doc.profitScore = computeProfitScore(doc);
+      doc.profitScore = computeProfitScore({ ...doc, salePrice });
 
       const res = await Product.updateOne(
         { sourceUrl: doc.sourceUrl },
@@ -351,7 +428,7 @@ async function runBot() {
           },
           $setOnInsert: {
             createdAt: new Date(),
-            // not in schema, but harmless if you later add it (Mongo keeps it)
+            // not in schema now, but OK in Mongo; you can add later if you want
             productCode: productCode || undefined,
           },
         },
@@ -371,6 +448,7 @@ async function runBot() {
   console.log("Updated:", updated);
   console.log("Skipped:", skipped);
   console.log("Errors:", errors);
+  console.log("✅ Profitshare bot finished.");
 
   return { ok: true, upserted, updated, skipped, errors, total: limited.length };
 }
