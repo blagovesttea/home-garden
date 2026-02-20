@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Routes, Route, useLocation, useNavigate, useParams } from "react-router-dom";
 import "./App.css";
 
 // ✅ API base (local + production same-origin)
@@ -9,7 +10,6 @@ const API =
 
 const ADMIN_STATUSES = ["all", "new", "approved", "rejected", "blacklisted"];
 
-// ✅ BG labels (UI only) — логиката НЕ се пипа
 const ADMIN_STATUS_LABELS = {
   all: "Всички",
   new: "Нови",
@@ -18,11 +18,10 @@ const ADMIN_STATUS_LABELS = {
   blacklisted: "Черен списък",
 };
 
-// Public sort (client-side fallback) — BG labels only
 const SORTS = [
-  { value: "popular", label: "Най-популярни" }, // clicks desc
-  { value: "profit", label: "Най-добра печалба" }, // profitScore desc
-  { value: "newest", label: "Най-нови" }, // createdAt desc
+  { value: "popular", label: "Най-популярни" },
+  { value: "profit", label: "Най-добра печалба" },
+  { value: "newest", label: "Най-нови" },
   { value: "priceAsc", label: "Цена (ниска → висока)" },
   { value: "priceDesc", label: "Цена (висока → ниска)" },
 ];
@@ -38,7 +37,6 @@ function joinPath(pathArr) {
 }
 
 function pathPrefixMatch(productPath, selectedPath) {
-  // selectedPath is string like "home/kitchen"
   if (!selectedPath || selectedPath === "all") return true;
 
   const sel = String(selectedPath).trim().toLowerCase();
@@ -47,11 +45,9 @@ function pathPrefixMatch(productPath, selectedPath) {
   const pArr = Array.isArray(productPath) ? productPath : [];
   const p = pArr.join("/").toLowerCase();
 
-  // exact prefix match: p starts with sel
   return p === sel || p.startsWith(sel + "/");
 }
 
-// fallback mapping when product has only legacy "category"
 function legacyToRootPath(legacy) {
   const c = String(legacy || "").toLowerCase();
   if (!c || c === "all") return "";
@@ -71,7 +67,6 @@ function buildCategoryTreeFromFlat(categoriesFlat) {
       map.set(key, {
         key,
         name: key.split("/").slice(-1)[0] || key,
-        level: Math.max(0, key.split("/").length - 1),
         children: [],
         _order: 999999,
       });
@@ -86,7 +81,6 @@ function buildCategoryTreeFromFlat(categoriesFlat) {
     map.set(key, {
       key,
       name: c.name || c.slug || key,
-      level: Number(c.level || Math.max(0, key.split("/").length - 1)),
       children: [],
       raw: c,
       _order: idx,
@@ -102,7 +96,6 @@ function buildCategoryTreeFromFlat(categoriesFlat) {
     }
     const parentKey = parts.slice(0, -1).join("/");
     const parent = ensureNode(parentKey);
-
     if (parent) parent.children.push(node);
     else roots.push(node);
   });
@@ -128,7 +121,25 @@ function buildCategoryTreeFromFlat(categoriesFlat) {
   return roots;
 }
 
-function App() {
+/** ✅ Extract categoryPath from URL /category/... */
+function useCategoryFromUrl() {
+  const location = useLocation();
+  const params = useParams();
+  // react-router-dom v6 wildcard param name is whatever you set. We'll set it as "path*"
+  const raw = params?.["*"] || ""; // everything after /category/
+  const cleaned = String(raw || "")
+    .replace(/^\/+|\/+$/g, "")
+    .trim();
+
+  // If route is /category (no path) -> all
+  const categoryFromUrl = cleaned ? cleaned : "all";
+
+  return { location, categoryFromUrl };
+}
+
+function AppShell() {
+  const navigate = useNavigate();
+
   /* =========================
      AUTH (login + admin)
   ========================== */
@@ -142,17 +153,15 @@ function App() {
     }
   });
 
-  const [me, setMe] = useState(null); // { id, role, email? }
+  const [me, setMe] = useState(null);
   const [meLoading, setMeLoading] = useState(false);
   const isAdmin = me?.role === "admin";
 
-  // login form
   const [loginEmail, setLoginEmail] = useState("test@test.com");
   const [loginPass, setLoginPass] = useState("Test1234");
   const [authLoading, setAuthLoading] = useState(false);
   const [authMsg, setAuthMsg] = useState("");
 
-  // ✅ admin-only: show stats in public (for you only)
   const [showStats, setShowStats] = useState(false);
   useEffect(() => {
     if (token && isAdmin) setShowStats(true);
@@ -189,12 +198,7 @@ function App() {
         (text?.includes("<!doctype") || text?.includes("<html")
           ? "Сървърът върна HTML (грешен endpoint или React страница)."
           : `HTTP ${res.status}`);
-
-      const err = new Error(msg);
-      err.status = res.status;
-      err.data = data;
-      err.raw = text;
-      throw err;
+      throw new Error(msg);
     }
 
     return data;
@@ -216,7 +220,6 @@ function App() {
       try {
         const data = await apiFetch("/auth/me", { method: "GET" });
         if (aborted) return;
-
         setMe(data?.user || null);
       } catch {
         if (aborted) return;
@@ -242,9 +245,8 @@ function App() {
 
   useEffect(() => {
     if (view !== "admin") return;
-
-    if (!token) return; // show login form
-    if (meLoading) return; // wait for /auth/me
+    if (!token) return;
+    if (meLoading) return;
 
     if (!isAdmin) {
       setAuthMsg("Влязъл си, но нямаш админ права.");
@@ -292,17 +294,15 @@ function App() {
   }
 
   /* =========================
-     CATEGORIES (Catalog)
+     CATEGORIES
   ========================== */
   const [categoriesFlat, setCategoriesFlat] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
+  // UI state category (fallback), but URL is the source of truth for SEO routes
   const [category, setCategory] = useState("all");
   const [catsOpen, setCatsOpen] = useState(false);
-
-  const [expandedCats, setExpandedCats] = useState(
-    () => new Set(["home", "garden"])
-  );
+  const [expandedCats, setExpandedCats] = useState(() => new Set(["home", "garden"]));
 
   async function loadCategories() {
     setCategoriesLoading(true);
@@ -324,7 +324,6 @@ function App() {
 
   const categoryOptions = useMemo(() => {
     const items = Array.isArray(categoriesFlat) ? categoriesFlat : [];
-
     const opts = items.map((c) => {
       const p = joinPath(c.path || []);
       const indent = "— ".repeat(Math.max(0, Number(c.level || 0)));
@@ -350,23 +349,41 @@ function App() {
     ];
   }, [categoriesFlat, categoriesLoading]);
 
-  const categoryTree = useMemo(() => {
-    return buildCategoryTreeFromFlat(categoriesFlat);
+  const categoryTree = useMemo(() => buildCategoryTreeFromFlat(categoriesFlat), [categoriesFlat]);
+
+  // ✅ Map pathKey -> BG name for breadcrumbs
+  const catNameByKey = useMemo(() => {
+    const map = new Map();
+    const items = Array.isArray(categoriesFlat) ? categoriesFlat : [];
+    for (const c of items) {
+      const key = joinPath(c.path || []) || c.slug || "";
+      if (!key) continue;
+      map.set(key, c.name || key);
+    }
+    // roots too (if not included)
+    map.set("home", map.get("home") || "Дом");
+    map.set("garden", map.get("garden") || "Градина");
+    return map;
   }, [categoriesFlat]);
 
   function selectCategory(v) {
-    setCategory(v);
+    const next = v || "all";
+    setCategory(next);
     setCatsOpen(false);
 
-    if (v && v !== "all") {
-      const parts = String(v).split("/").filter(Boolean);
+    // ✅ SEO URL
+    if (!next || next === "all") navigate("/");
+    else navigate(`/category/${next}`);
+
+    // expand parents for better UX
+    if (next && next !== "all") {
+      const parts = String(next).split("/").filter(Boolean);
       if (parts.length > 1) {
         setExpandedCats((prev) => {
-          const next = new Set(prev);
-          for (let i = 1; i < parts.length; i++) {
-            next.add(parts.slice(0, i).join("/"));
-          }
-          return next;
+          const n = new Set(prev);
+          for (let i = 1; i < parts.length; i++) n.add(parts.slice(0, i).join("/"));
+          n.add(parts[0]);
+          return n;
         });
       }
     }
@@ -402,18 +419,13 @@ function App() {
                     type="button"
                     className={`hg-catToggle ${isExpanded ? "is-open" : ""}`}
                     onClick={() => toggleExpand(n.key)}
-                    aria-label={
-                      isExpanded ? "Скрий подкатегории" : "Покажи подкатегории"
-                    }
+                    aria-label={isExpanded ? "Скрий подкатегории" : "Покажи подкатегории"}
                     title={isExpanded ? "Скрий" : "Покажи"}
                   >
                     ▸
                   </button>
                 ) : (
-                  <span
-                    className="hg-catToggle hg-catToggle--ghost"
-                    aria-hidden="true"
-                  >
+                  <span className="hg-catToggle hg-catToggle--ghost" aria-hidden="true">
                     ▸
                   </span>
                 )}
@@ -428,9 +440,7 @@ function App() {
                 </button>
               </div>
 
-              {hasKids && isExpanded ? (
-                <CategoryTree nodes={n.children} />
-              ) : null}
+              {hasKids && isExpanded ? <CategoryTree nodes={n.children} /> : null}
             </li>
           );
         })}
@@ -439,11 +449,48 @@ function App() {
   }
 
   /* =========================
+     ✅ URL -> category sync
+  ========================== */
+  const { categoryFromUrl } = useCategoryFromUrl();
+
+  useEffect(() => {
+    // Only in public view
+    if (view !== "public") return;
+    setCategory(categoryFromUrl || "all");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryFromUrl, view]);
+
+  // ✅ Breadcrumb data
+  const breadcrumb = useMemo(() => {
+    const key = categoryFromUrl || category || "all";
+    if (!key || key === "all") return [];
+
+    const parts = String(key).split("/").filter(Boolean);
+    const crumbs = [];
+    for (let i = 0; i < parts.length; i++) {
+      const k = parts.slice(0, i + 1).join("/");
+      const name = catNameByKey.get(k) || parts[i];
+      crumbs.push({ key: k, name });
+    }
+    return crumbs;
+  }, [categoryFromUrl, category, catNameByKey]);
+
+  useEffect(() => {
+    // basic SEO title (SPA-friendly)
+    if (view !== "public") return;
+    const base = "Home & Garden";
+    if (!breadcrumb.length) {
+      document.title = base;
+      return;
+    }
+    document.title = `${breadcrumb.map((c) => c.name).join(" > ")} | ${base}`;
+  }, [breadcrumb, view]);
+
+  /* =========================
      PUBLIC LIST
   ========================== */
   const [mode, setMode] = useState("topProfit"); // latest | topClicks | topProfit
   const [q, setQ] = useState("");
-
   const [sort, setSort] = useState("profit");
   const [fastShip, setFastShip] = useState(false);
 
@@ -472,9 +519,7 @@ function App() {
     if (qDebounced) params.set("q", qDebounced);
 
     if (category && category !== "all") params.set("category", category);
-
     if (fastShip) params.set("maxShippingDays", "5");
-
     params.set("status", "approved");
 
     return params.toString();
@@ -513,21 +558,15 @@ function App() {
         if (!res.ok) {
           const msg =
             data?.message ||
-            (text?.includes("<!doctype")
-              ? "Сървърът върна HTML (не JSON)."
-              : `HTTP ${res.status}`);
+            (text?.includes("<!doctype") ? "Сървърът върна HTML (не JSON)." : `HTTP ${res.status}`);
           throw new Error(msg);
         }
 
         let items = [];
         if (Array.isArray(data)) items = data;
         else if (Array.isArray(data?.items)) items = data.items;
-        else items = [];
 
-        items = items.filter(
-          (p) => String(p?.status || "").toLowerCase() === "approved"
-        );
-
+        items = items.filter((p) => String(p?.status || "").toLowerCase() === "approved");
         setProducts(items);
 
         if (mode === "latest") {
@@ -560,19 +599,12 @@ function App() {
   const publicItems = useMemo(() => {
     let items = Array.isArray(products) ? [...products] : [];
 
-    items = items.filter(
-      (p) => String(p?.status || "").toLowerCase() === "approved"
-    );
+    items = items.filter((p) => String(p?.status || "").toLowerCase() === "approved");
 
     if (category && category !== "all") {
       items = items.filter((p) => {
         const okCatalog = pathPrefixMatch(p.categoryPath, category);
-        if (
-          okCatalog &&
-          Array.isArray(p.categoryPath) &&
-          p.categoryPath.length
-        )
-          return true;
+        if (okCatalog && Array.isArray(p.categoryPath) && p.categoryPath.length) return true;
 
         const root = legacyToRootPath(p.category);
         if (!root) return false;
@@ -582,15 +614,12 @@ function App() {
 
     if (qDebounced) {
       const qq = qDebounced.toLowerCase();
-      items = items.filter((p) =>
-        String(p.title || "").toLowerCase().includes(qq)
-      );
+      items = items.filter((p) => String(p.title || "").toLowerCase().includes(qq));
     }
 
-    if (fastShip)
-      items = items.filter(
-        (p) => toNum(p.shippingDays) > 0 && toNum(p.shippingDays) <= 5
-      );
+    if (fastShip) {
+      items = items.filter((p) => toNum(p.shippingDays) > 0 && toNum(p.shippingDays) <= 5);
+    }
 
     items.sort((a, b) => {
       if (sort === "popular") return toNum(b.clicks) - toNum(a.clicks);
@@ -606,9 +635,42 @@ function App() {
     });
 
     if (mode !== "latest") items = items.slice(0, 24);
-
     return items;
   }, [products, category, qDebounced, fastShip, sort, mode]);
+
+  /* =========================
+     ✅ Related products (modal)
+  ========================== */
+  const [relOpen, setRelOpen] = useState(false);
+  const [relLoading, setRelLoading] = useState(false);
+  const [relErr, setRelErr] = useState("");
+  const [relFor, setRelFor] = useState(null); // product
+  const [relItems, setRelItems] = useState([]);
+
+  async function openRelated(p) {
+    setRelFor(p);
+    setRelOpen(true);
+    setRelLoading(true);
+    setRelErr("");
+    setRelItems([]);
+
+    try {
+      const data = await apiFetch(`/products/${p._id}/related?limit=8`, { method: "GET" });
+      setRelItems(Array.isArray(data?.items) ? data.items : []);
+    } catch (e) {
+      setRelErr(e?.message || "Грешка при зареждане на подобни продукти");
+    } finally {
+      setRelLoading(false);
+    }
+  }
+
+  function closeRelated() {
+    setRelOpen(false);
+    setRelFor(null);
+    setRelItems([]);
+    setRelErr("");
+    setRelLoading(false);
+  }
 
   /* =========================
      ADMIN PANEL
@@ -619,6 +681,7 @@ function App() {
   const [adminMsg, setAdminMsg] = useState("");
 
   const [seedCatsLoading, setSeedCatsLoading] = useState(false);
+  const [recatLoading, setRecatLoading] = useState(false);
 
   async function loadAdmin() {
     if (!token) {
@@ -637,10 +700,7 @@ function App() {
       const qs = new URLSearchParams();
       if (adminStatus && adminStatus !== "all") qs.set("status", adminStatus);
 
-      const data = await apiFetch(`/admin/products?${qs.toString()}`, {
-        method: "GET",
-      });
-
+      const data = await apiFetch(`/admin/products?${qs.toString()}`, { method: "GET" });
       setAdminItems(Array.isArray(data?.items) ? data.items : []);
     } catch (e) {
       setAdminMsg(e?.message || "Грешка при зареждане (Admin)");
@@ -676,9 +736,7 @@ function App() {
   async function deleteProduct(id) {
     setAdminMsg("");
     try {
-      await apiFetch(`/admin/products/${id}`, {
-        method: "DELETE",
-      });
+      await apiFetch(`/admin/products/${id}`, { method: "DELETE" });
       await loadAdmin();
     } catch (e) {
       setAdminMsg(e?.message || "Грешка при изтриване");
@@ -689,25 +747,12 @@ function App() {
     setAdminMsg("");
     try {
       try {
-        const r1 = await apiFetch(`/admin/products/approve-existing`, {
-          method: "POST",
-        });
-        setAdminMsg(
-          `Одобрени: matched ${r1?.matched ?? "-"} / modified ${
-            r1?.modified ?? "-"
-          }`
-        );
+        const r1 = await apiFetch(`/admin/products/approve-existing`, { method: "POST" });
+        setAdminMsg(`Одобрени: matched ${r1?.matched ?? "-"} / modified ${r1?.modified ?? "-"}`);
       } catch {
-        const r2 = await apiFetch(`/admin/products/backfill`, {
-          method: "POST",
-        });
-        setAdminMsg(
-          `Backfill OK: scanned ${r2?.scanned ?? "-"} / updated ${
-            r2?.updated ?? "-"
-          }`
-        );
+        const r2 = await apiFetch(`/admin/products/backfill`, { method: "POST" });
+        setAdminMsg(`Backfill OK: scanned ${r2?.scanned ?? "-"} / updated ${r2?.updated ?? "-"}`);
       }
-
       await loadAdmin();
     } catch (e) {
       setAdminMsg(e?.message || "Грешка при масово одобрение");
@@ -716,28 +761,18 @@ function App() {
 
   async function seedCategories() {
     setAdminMsg("");
-    if (!token) {
-      setAdminMsg("Няма токен. Влез първо.");
-      return;
-    }
-    if (!isAdmin) {
-      setAdminMsg("Нямаш админ права.");
-      return;
-    }
+    if (!token) return setAdminMsg("Няма токен. Влез първо.");
+    if (!isAdmin) return setAdminMsg("Нямаш админ права.");
 
     setSeedCatsLoading(true);
     try {
       const r = await apiFetch(`/categories/seed`, { method: "POST" });
-
       const msg =
         r?.message ||
-        (r?.count != null
-          ? `Категориите са добавени. Общо: ${r.count}`
-          : "Категориите са добавени.");
+        (r?.count != null ? `Категориите са добавени. Общо: ${r.count}` : "Категориите са добавени.");
       setAdminMsg(msg);
 
       await loadCategories();
-      setCategory("all");
       setExpandedCats(new Set(["home", "garden"]));
     } catch (e) {
       setAdminMsg(e?.message || "Грешка при добавяне на категории");
@@ -746,6 +781,30 @@ function App() {
     }
   }
 
+  // ✅ Auto re-categorize (admin)
+  async function recategorizeMissing() {
+    setAdminMsg("");
+    if (!token) return setAdminMsg("Няма токен. Влез първо.");
+    if (!isAdmin) return setAdminMsg("Нямаш админ права.");
+
+    setRecatLoading(true);
+    try {
+      const r = await apiFetch(`/admin/products/recategorize-missing`, { method: "POST" });
+      setAdminMsg(
+        r?.message ||
+          `Рекатегоризация: проверени ${r?.scanned ?? "-"} / обновени ${r?.updated ?? "-"}`
+      );
+      await loadAdmin();
+    } catch (e) {
+      setAdminMsg(e?.message || "Грешка при рекатегоризация");
+    } finally {
+      setRecatLoading(false);
+    }
+  }
+
+  /* =========================
+     UI
+  ========================== */
   return (
     <div className={`hg ${view === "public" ? "hg--public" : "hg--admin"}`}>
       <div className="hg-topbar">
@@ -757,11 +816,7 @@ function App() {
                 <>
                   Преглед:{" "}
                   <b>
-                    {mode === "topProfit"
-                      ? "Най-добра печалба"
-                      : mode === "topClicks"
-                      ? "Най-кликвани"
-                      : "Най-нови"}
+                    {mode === "topProfit" ? "Най-добра печалба" : mode === "topClicks" ? "Най-кликвани" : "Най-нови"}
                   </b>
                 </>
               ) : (
@@ -794,13 +849,7 @@ function App() {
               className={`hg-switchBtn ${view === "admin" ? "is-active" : ""}`}
               onClick={() => setView("admin")}
               disabled={view === "admin"}
-              title={
-                !token
-                  ? "Отвори админ вход"
-                  : isAdmin
-                  ? "Отвори админ панел"
-                  : "Нямаш админ права"
-              }
+              title={!token ? "Отвори админ вход" : isAdmin ? "Отвори админ панел" : "Нямаш админ права"}
             >
               Админ{!token ? " (вход)" : ""}
             </button>
@@ -809,8 +858,7 @@ function App() {
           {token ? (
             <>
               <div className="hg-userChip">
-                роля:{" "}
-                <b>{me?.role || (meLoading ? "проверка…" : "неизвестна")}</b>
+                роля: <b>{me?.role || (meLoading ? "проверка…" : "неизвестна")}</b>
               </div>
               <button className="hg-btn" onClick={doLogout}>
                 Изход
@@ -820,6 +868,7 @@ function App() {
         </div>
       </div>
 
+      {/* ✅ ADMIN LOGIN */}
       {view === "admin" && !token && (
         <form className="hg-panel" onSubmit={doLogin}>
           <div className="hg-panelTitle">Админ вход</div>
@@ -840,11 +889,7 @@ function App() {
               type="password"
               autoComplete="current-password"
             />
-            <button
-              className="hg-btn hg-btn--primary"
-              type="submit"
-              disabled={authLoading}
-            >
+            <button className="hg-btn hg-btn--primary" type="submit" disabled={authLoading}>
               {authLoading ? "..." : "Вход"}
             </button>
           </div>
@@ -853,30 +898,20 @@ function App() {
         </form>
       )}
 
-      {view === "admin" && token && meLoading && (
-        <div className="hg-panel">Проверка на права…</div>
-      )}
+      {view === "admin" && token && meLoading && <div className="hg-panel">Проверка на права…</div>}
+      {view === "admin" && token && authMsg && !meLoading && <div className="hg-panel">{authMsg}</div>}
 
-      {view === "admin" && token && authMsg && !meLoading && (
-        <div className="hg-panel">{authMsg}</div>
-      )}
-
+      {/* ✅ ADMIN PANEL */}
       {view === "admin" && (
         <div>
           {!token ? (
             <div className="hg-panel hg-panel--bad">Влез първо.</div>
           ) : meLoading ? null : !isAdmin ? (
-            <div className="hg-panel hg-panel--bad">
-              Нямаш админ права (роля: {me?.role || "неизвестна"}).
-            </div>
+            <div className="hg-panel hg-panel--bad">Нямаш админ права (роля: {me?.role || "неизвестна"}).</div>
           ) : (
             <>
               <div className="hg-toolbar">
-                <select
-                  className="hg-select"
-                  value={adminStatus}
-                  onChange={(e) => setAdminStatus(e.target.value)}
-                >
+                <select className="hg-select" value={adminStatus} onChange={(e) => setAdminStatus(e.target.value)}>
                   {ADMIN_STATUSES.map((s) => (
                     <option key={s} value={s}>
                       {ADMIN_STATUS_LABELS[s] || s}
@@ -884,19 +919,11 @@ function App() {
                   ))}
                 </select>
 
-                <button
-                  className="hg-btn"
-                  onClick={loadAdmin}
-                  disabled={adminLoading}
-                >
+                <button className="hg-btn" onClick={loadAdmin} disabled={adminLoading}>
                   Обнови
                 </button>
 
-                <button
-                  className="hg-btn"
-                  onClick={approveExistingNew}
-                  disabled={adminLoading}
-                >
+                <button className="hg-btn" onClick={approveExistingNew} disabled={adminLoading}>
                   Одобри всички НОВИ
                 </button>
 
@@ -907,6 +934,15 @@ function App() {
                   title="Създава стандартен каталог с категории"
                 >
                   {seedCatsLoading ? "Добавяне..." : "Добави категории"}
+                </button>
+
+                <button
+                  className="hg-btn"
+                  onClick={recategorizeMissing}
+                  disabled={recatLoading || adminLoading}
+                  title="Попълва categoryPath за продукти без категория"
+                >
+                  {recatLoading ? "Обработка..." : "Рекатегоризирай липсващи"}
                 </button>
 
                 <div className="hg-counter">
@@ -922,11 +958,7 @@ function App() {
               {adminLoading && <div className="hg-panel">Зареждане…</div>}
 
               <div className="hg-grid">
-                {!adminLoading && adminItems.length === 0 && (
-                  <div className="hg-panel">
-                    Няма продукти за този филтър.
-                  </div>
-                )}
+                {!adminLoading && adminItems.length === 0 && <div className="hg-panel">Няма продукти за този филтър.</div>}
 
                 {adminItems.map((p) => (
                   <div className="hg-card" key={p._id}>
@@ -935,18 +967,14 @@ function App() {
                       <div className="hg-meta">
                         <span className="hg-pill">{p.category}</span>
                         <span className="hg-pill">{p.source}</span>
-                        <span className="hg-pill hg-pill--status">
-                          статус: {p.status}
-                        </span>
+                        <span className="hg-pill hg-pill--status">статус: {p.status}</span>
                       </div>
                     </div>
 
                     <div className="hg-kpis">
                       Каталог:{" "}
                       <b>
-                        {Array.isArray(p.categoryPath) && p.categoryPath.length
-                          ? p.categoryPath.join(" / ")
-                          : "-"}
+                        {Array.isArray(p.categoryPath) && p.categoryPath.length ? p.categoryPath.join(" / ") : "-"}
                       </b>
                     </div>
 
@@ -955,49 +983,27 @@ function App() {
                     </div>
 
                     <div className="hg-kpis">
-                      Оценка: <b>{p.score ?? 0}</b> • ProfitScore:{" "}
-                      <b>{p.profitScore ?? 0}</b> • Преглеждания:{" "}
+                      Оценка: <b>{p.score ?? 0}</b> • ProfitScore: <b>{p.profitScore ?? 0}</b> • Преглеждания:{" "}
                       <b>{p.views ?? 0}</b> • Кликове: <b>{p.clicks ?? 0}</b>
                     </div>
 
                     <div className="hg-url">{p.sourceUrl}</div>
 
                     <div className="hg-actions hg-actions--wrap">
-                      <button
-                        className="hg-btn"
-                        onClick={() => setStatus(p._id, "approved")}
-                        disabled={adminLoading}
-                      >
+                      <button className="hg-btn" onClick={() => setStatus(p._id, "approved")} disabled={adminLoading}>
                         Одобри
                       </button>
-                      <button
-                        className="hg-btn"
-                        onClick={() => setStatus(p._id, "rejected")}
-                        disabled={adminLoading}
-                      >
+                      <button className="hg-btn" onClick={() => setStatus(p._id, "rejected")} disabled={adminLoading}>
                         Откажи
                       </button>
-                      <button
-                        className="hg-btn"
-                        onClick={() => setStatus(p._id, "blacklisted")}
-                        disabled={adminLoading}
-                      >
+                      <button className="hg-btn" onClick={() => setStatus(p._id, "blacklisted")} disabled={adminLoading}>
                         Черен списък
                       </button>
-                      <button
-                        className="hg-btn hg-btn--danger"
-                        onClick={() => deleteProduct(p._id)}
-                        disabled={adminLoading}
-                      >
+                      <button className="hg-btn hg-btn--danger" onClick={() => deleteProduct(p._id)} disabled={adminLoading}>
                         Изтрий
                       </button>
 
-                      <a
-                        className="hg-link"
-                        href={`${API}/products/${p._id}/click`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
+                      <a className="hg-link" href={`${API}/products/${p._id}/click`} target="_blank" rel="noreferrer">
                         Отвори оферта →
                       </a>
                     </div>
@@ -1009,27 +1015,19 @@ function App() {
         </div>
       )}
 
+      {/* ✅ PUBLIC */}
       {view === "public" && (
         <>
-          <div
-            className={`hg-backdrop ${catsOpen ? "is-open" : ""}`}
-            onClick={() => setCatsOpen(false)}
-            aria-hidden={!catsOpen}
-          />
+          {/* Drawer */}
+          <div className={`hg-backdrop ${catsOpen ? "is-open" : ""}`} onClick={() => setCatsOpen(false)} aria-hidden={!catsOpen} />
           <aside className={`hg-drawer ${catsOpen ? "is-open" : ""}`}>
             <div className="hg-sideTitle">
               <h3>Категории</h3>
-              <span className="hg-sideHint">
-                {categoriesLoading ? "Зареждане…" : "Подкатегории"}
-              </span>
+              <span className="hg-sideHint">{categoriesLoading ? "Зареждане…" : "Подкатегории"}</span>
             </div>
 
             <div className="hg-catTop">
-              <button
-                type="button"
-                className={`hg-catBtn ${category === "all" ? "is-active" : ""}`}
-                onClick={() => selectCategory("all")}
-              >
+              <button type="button" className={`hg-catBtn ${category === "all" ? "is-active" : ""}`} onClick={() => selectCategory("all")}>
                 <span className="hg-catDot" />
                 <span className="hg-catName">Всички категории</span>
               </button>
@@ -1039,20 +1037,15 @@ function App() {
           </aside>
 
           <div className="hg-main">
+            {/* Sidebar */}
             <aside className="hg-side">
               <div className="hg-sideTitle">
                 <h3>Категории</h3>
-                <span className="hg-sideHint">
-                  {categoriesLoading ? "Зареждане…" : "Подкатегории"}
-                </span>
+                <span className="hg-sideHint">{categoriesLoading ? "Зареждане…" : "Подкатегории"}</span>
               </div>
 
               <div className="hg-catTop">
-                <button
-                  type="button"
-                  className={`hg-catBtn ${category === "all" ? "is-active" : ""}`}
-                  onClick={() => selectCategory("all")}
-                >
+                <button type="button" className={`hg-catBtn ${category === "all" ? "is-active" : ""}`} onClick={() => selectCategory("all")}>
                   <span className="hg-catDot" />
                   <span className="hg-catName">Всички категории</span>
                 </button>
@@ -1061,28 +1054,37 @@ function App() {
               <CategoryTree nodes={categoryTree} />
             </aside>
 
+            {/* Content */}
             <div>
+              {/* ✅ Breadcrumb */}
+              {breadcrumb.length ? (
+                <div className="hg-breadcrumb">
+                  <button className="hg-bcLink" type="button" onClick={() => selectCategory("all")}>
+                    Начало
+                  </button>
+                  {breadcrumb.map((c, idx) => (
+                    <span key={c.key} className="hg-bcItem">
+                      <span className="hg-bcSep">›</span>
+                      {idx === breadcrumb.length - 1 ? (
+                        <span className="hg-bcCurrent">{c.name}</span>
+                      ) : (
+                        <button className="hg-bcLink" type="button" onClick={() => selectCategory(c.key)}>
+                          {c.name}
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+
               <div className="hg-toolbar">
-                <button
-                  type="button"
-                  className="hg-catOpenBtn"
-                  onClick={() => setCatsOpen(true)}
-                >
+                <button type="button" className="hg-catOpenBtn" onClick={() => setCatsOpen(true)}>
                   Категории
                 </button>
 
-                <input
-                  className="hg-input"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Търси продукти..."
-                />
+                <input className="hg-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Търси продукти..." />
 
-                <select
-                  className="hg-select"
-                  value={category}
-                  onChange={(e) => selectCategory(e.target.value)}
-                >
+                <select className="hg-select" value={category} onChange={(e) => selectCategory(e.target.value)}>
                   {categoryOptions.map((c) => (
                     <option key={c.value} value={c.value}>
                       {c.label}
@@ -1090,11 +1092,7 @@ function App() {
                   ))}
                 </select>
 
-                <select
-                  className="hg-select"
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value)}
-                >
+                <select className="hg-select" value={sort} onChange={(e) => setSort(e.target.value)}>
                   {SORTS.map((s) => (
                     <option key={s.value} value={s.value}>
                       {s.label}
@@ -1103,11 +1101,7 @@ function App() {
                 </select>
 
                 <div className="hg-chips">
-                  <button
-                    type="button"
-                    className={`hg-chip ${fastShip ? "is-on" : ""}`}
-                    onClick={() => setFastShip((v) => !v)}
-                  >
+                  <button type="button" className={`hg-chip ${fastShip ? "is-on" : ""}`} onClick={() => setFastShip((v) => !v)}>
                     Бърза доставка
                   </button>
 
@@ -1125,67 +1119,40 @@ function App() {
               </div>
 
               <div className="hg-modes">
-                <button
-                  className={`hg-btn ${
-                    mode === "topProfit" ? "hg-btn--primary" : ""
-                  }`}
-                  onClick={() => setMode("topProfit")}
-                >
+                <button className={`hg-btn ${mode === "topProfit" ? "hg-btn--primary" : ""}`} onClick={() => setMode("topProfit")}>
                   Най-добра печалба
                 </button>
-                <button
-                  className={`hg-btn ${
-                    mode === "topClicks" ? "hg-btn--primary" : ""
-                  }`}
-                  onClick={() => setMode("topClicks")}
-                >
+                <button className={`hg-btn ${mode === "topClicks" ? "hg-btn--primary" : ""}`} onClick={() => setMode("topClicks")}>
                   Най-кликвани
                 </button>
-                <button
-                  className={`hg-btn ${
-                    mode === "latest" ? "hg-btn--primary" : ""
-                  }`}
-                  onClick={() => setMode("latest")}
-                >
+                <button className={`hg-btn ${mode === "latest" ? "hg-btn--primary" : ""}`} onClick={() => setMode("latest")}>
                   Най-нови
                 </button>
               </div>
 
               {loading && <div className="hg-panel">Зареждане…</div>}
-              {!loading && errMsg && (
-                <div className="hg-panel hg-panel--bad">{errMsg}</div>
-              )}
+              {!loading && errMsg && <div className="hg-panel hg-panel--bad">{errMsg}</div>}
 
               {!loading && mode === "latest" && (
                 <div className="hg-pager">
-                  <button
-                    className="hg-btn"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                  >
+                  <button className="hg-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
                     Назад
                   </button>
                   <div className="hg-counter">
-                    Страница <b>{page}</b> / <b>{totalPages}</b> — Общо:{" "}
-                    <b>{meta.total}</b>
+                    Страница <b>{page}</b> / <b>{totalPages}</b> — Общо: <b>{meta.total}</b>
                   </div>
-                  <button
-                    className="hg-btn"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page >= totalPages}
-                  >
+                  <button className="hg-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
                     Напред
                   </button>
                 </div>
               )}
 
               <div className="hg-grid">
-                {!loading && publicItems.length === 0 && (
-                  <div className="hg-panel">Няма продукти.</div>
-                )}
+                {!loading && publicItems.length === 0 && <div className="hg-panel">Няма продукти.</div>}
 
                 {publicItems.map((p) => (
                   <div className="hg-card" key={p._id}>
+                    {/* ✅ Click on image -> offer */}
                     <a
                       className="hg-thumbLink"
                       href={`${API}/products/${p._id}/click`}
@@ -1193,9 +1160,7 @@ function App() {
                       rel="noreferrer"
                       title="Отвори оферта"
                       style={{
-                        backgroundImage: p.imageUrl
-                          ? `url("${p.imageUrl}")`
-                          : "linear-gradient(135deg,#eee,#f7f7f7)",
+                        backgroundImage: p.imageUrl ? `url("${p.imageUrl}")` : "linear-gradient(135deg,#eee,#f7f7f7)",
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                         backgroundRepeat: "no-repeat",
@@ -1209,36 +1174,83 @@ function App() {
 
                       <div className="hg-meta">
                         <span className="hg-pill">
-                          {Array.isArray(p.categoryPath) && p.categoryPath.length
-                            ? p.categoryPath.join(" / ")
-                            : p.category}
+                          {Array.isArray(p.categoryPath) && p.categoryPath.length ? p.categoryPath.join(" / ") : p.category}
                         </span>
                         <span className="hg-pill">{p.source}</span>
 
                         {toNum(p.shippingDays) > 0 && (
                           <span className="hg-pill">
-                            {toNum(p.shippingDays)} ден
-                            {toNum(p.shippingDays) === 1 ? "" : "а"}
+                            {toNum(p.shippingDays)} ден{toNum(p.shippingDays) === 1 ? "" : "а"}
                           </span>
                         )}
                       </div>
 
                       {token && isAdmin && showStats ? (
                         <div className="hg-kpis">
-                          Преглеждания: <b>{p.views ?? 0}</b> • Кликове:{" "}
-                          <b>{p.clicks ?? 0}</b> • ProfitScore:{" "}
-                          <b>{p.profitScore ?? 0}</b> • Оценка:{" "}
-                          <b>{p.score ?? 0}</b>
+                          Преглеждания: <b>{p.views ?? 0}</b> • Кликове: <b>{p.clicks ?? 0}</b> • ProfitScore:{" "}
+                          <b>{p.profitScore ?? 0}</b> • Оценка: <b>{p.score ?? 0}</b>
                         </div>
                       ) : null}
 
                       <div className="hg-price">
                         {p.price} {p.currency}
                       </div>
+
+                      {/* ✅ Related link (NOT a details button) */}
+                      <button type="button" className="hg-relatedLink" onClick={() => openRelated(p)}>
+                        Подобни продукти
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
+
+              {/* ✅ Related modal */}
+              {relOpen ? (
+                <>
+                  <div className="hg-modalBackdrop" onClick={closeRelated} />
+                  <div className="hg-modal">
+                    <div className="hg-modalHead">
+                      <div className="hg-modalTitle">Подобни продукти</div>
+                      <button className="hg-modalClose" onClick={closeRelated} aria-label="Затвори">
+                        ✕
+                      </button>
+                    </div>
+
+                    {relFor ? <div className="hg-modalSub">{relFor.title}</div> : null}
+
+                    {relLoading ? <div className="hg-panel">Зареждане…</div> : null}
+                    {!relLoading && relErr ? <div className="hg-panel hg-panel--bad">{relErr}</div> : null}
+
+                    {!relLoading && !relErr && (
+                      <div className="hg-relGrid">
+                        {relItems.map((x) => (
+                          <a
+                            key={x._id}
+                            className="hg-relItem"
+                            href={`${API}/products/${x._id}/click`}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Отвори оферта"
+                          >
+                            <div
+                              className="hg-relThumb"
+                              style={{
+                                backgroundImage: x.imageUrl ? `url("${x.imageUrl}")` : "linear-gradient(135deg,#eee,#f7f7f7)",
+                              }}
+                            />
+                            <div className="hg-relName">{x.title}</div>
+                            <div className="hg-relPrice">
+                              {x.price} {x.currency}
+                            </div>
+                          </a>
+                        ))}
+                        {!relItems.length ? <div className="hg-panel">Няма намерени подобни продукти.</div> : null}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
         </>
@@ -1247,4 +1259,15 @@ function App() {
   );
 }
 
-export default App;
+/** ✅ Routes:
+    /                -> shop
+    /category/*      -> shop with category from URL (SEO)
+*/
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<AppShell />} />
+      <Route path="/category/*" element={<AppShell />} />
+    </Routes>
+  );
+}

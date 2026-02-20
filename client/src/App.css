@@ -756,3 +756,178 @@ body{
 
 /* old cat item (neutral) */
 .hg-catItem{ display:none; }
+/* =========================
+   BREADCRUMB
+========================= */
+.hg-breadcrumb{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+  color: rgba(17,24,39,.62);
+  font-size: 13px;
+}
+.hg-bcSep{ opacity:.5; margin: 0 2px; }
+.hg-bcLink{
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  color: rgba(17,24,39,.70);
+  font-weight: 700;
+  text-decoration: none;
+}
+.hg-bcLink:hover{ text-decoration: underline; }
+.hg-bcCurrent{
+  color: rgba(17,24,39,.92);
+  font-weight: 800;
+}
+
+/* =========================
+   CATEGORY TREE (toggle arrow)
+========================= */
+.hg-catTree{
+  list-style: none;
+  margin: 0;
+  padding: 6px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hg-catNode{ margin: 0; padding: 0; }
+.hg-catRow{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hg-catToggle{
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 1px solid rgba(17,24,39,.10);
+  background: #fff;
+  cursor: pointer;
+  display:grid;
+  place-items:center;
+  color: rgba(17,24,39,.70);
+  transform: rotate(0deg);
+  transition: transform .15s ease, background .15s ease;
+}
+.hg-catToggle:hover{ background: #f3f4f6; }
+.hg-catToggle.is-open{ transform: rotate(90deg); }
+.hg-catToggle--ghost{
+  opacity: 0;
+  pointer-events: none;
+}
+.hg-catName{ font-weight: 700; }
+
+/* =========================
+   RELATED LINK
+========================= */
+.hg-relatedLink{
+  margin-top: 6px;
+  width: fit-content;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  font-size: 13px;
+  color: rgba(17,24,39,.60);
+  font-weight: 800;
+}
+.hg-relatedLink:hover{ text-decoration: underline; }
+
+/* =========================
+   MODAL (Related)
+========================= */
+.hg-modalBackdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.35);
+  z-index: 70;
+}
+.hg-modal{
+  position: fixed;
+  z-index: 71;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(920px, calc(100vw - 26px));
+  max-height: min(78vh, 720px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid rgba(17,24,39,.14);
+  border-radius: 16px;
+  padding: 14px;
+}
+.hg-modalHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+}
+.hg-modalTitle{
+  font-size: 16px;
+  font-weight: 900;
+  color: rgba(17,24,39,.92);
+}
+.hg-modalSub{
+  margin: 6px 0 12px;
+  font-size: 13px;
+  color: rgba(17,24,39,.60);
+  font-weight: 700;
+}
+.hg-modalClose{
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(17,24,39,.14);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 900;
+}
+.hg-modalClose:hover{ background: #f3f4f6; }
+
+.hg-relGrid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.hg-relItem{
+  text-decoration:none;
+  color: inherit;
+  border: 1px solid rgba(17,24,39,.10);
+  border-radius: 12px;
+  padding: 10px;
+  background: #fff;
+}
+.hg-relItem:hover{ background: #f7f7f8; }
+.hg-relThumb{
+  height: 120px;
+  border-radius: 10px;
+  border: 1px solid rgba(17,24,39,.08);
+  background-size: cover;
+  background-position: center;
+}
+.hg-relName{
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(17,24,39,.88);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 34px;
+}
+.hg-relPrice{
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 900;
+  color: rgba(17,24,39,.92);
+}
+
+@media (max-width: 860px){
+  .hg-relGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

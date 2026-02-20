@@ -3,6 +3,9 @@ const Product = require("../models/Product");
 const auth = require("../middleware/auth");
 const adminOnly = require("../middleware/admin");
 
+// ✅ NEW: categorizer (auto re-categorize)
+const { categorizeProduct } = require("../services/categorizer");
+
 const router = express.Router();
 
 const ALLOWED_STATUS = ["new", "approved", "rejected", "blacklisted"];
@@ -388,6 +391,65 @@ router.post("/products/backfill", auth, adminOnly, async (req, res) => {
   }
 });
 
+/* =========================================================
+   ✅ NEW: Auto re-categorize products missing categoryPath
+   POST /admin/products/recategorize-missing
+   - safe batch (max 500 per run)
+   - uses services/categorizer.js
+   - fills categoryPath + categoryId + legacy category
+========================================================= */
+router.post(
+  "/products/recategorize-missing",
+  auth,
+  adminOnly,
+  async (req, res) => {
+    try {
+      const query = {
+        $or: [
+          { categoryPath: { $exists: false } },
+          { categoryPath: { $type: "array", $size: 0 } },
+        ],
+      };
+
+      const items = await Product.find(query).limit(500).lean();
+
+      let updated = 0;
+
+      for (const p of items) {
+        const cat = await categorizeProduct({
+          title: p.title,
+          categoryText: p.categoryText || p.category,
+          description: p.description,
+          brand: p.brand,
+        });
+
+        const patch = {};
+        if (Array.isArray(cat.categoryPath) && cat.categoryPath.length) {
+          patch.categoryPath = cat.categoryPath;
+        }
+        if (cat.categoryId) patch.categoryId = cat.categoryId;
+        if (cat.legacyCategory) patch.category = cat.legacyCategory;
+
+        if (Object.keys(patch).length) {
+          await Product.updateOne({ _id: p._id }, { $set: patch });
+          updated++;
+        }
+      }
+
+      return res.json({
+        ok: true,
+        message: `Готово. Проверени: ${items.length} / обновени: ${updated}`,
+        scanned: items.length,
+        updated,
+      });
+    } catch (err) {
+      return res
+        .status(500)
+        .json({ message: "Server error", error: err.message });
+    }
+  }
+);
+
 /**
  * ✅ DELETE /admin/products/purge-example
  * Delete only example.com products (safe cleanup)
@@ -456,9 +518,21 @@ router.post("/categories/seed", auth, adminOnly, async (req, res) => {
     // Roots
     const roots = await Category.insertMany([
       make({ name: "Home", slug: "home", path: ["home"], level: 0, order: 1 }),
-      make({ name: "Garden", slug: "garden", path: ["garden"], level: 0, order: 2 }),
+      make({
+        name: "Garden",
+        slug: "garden",
+        path: ["garden"],
+        level: 0,
+        order: 2,
+      }),
       make({ name: "Tools", slug: "tools", path: ["tools"], level: 0, order: 3 }),
-      make({ name: "Outdoor", slug: "outdoor", path: ["outdoor"], level: 0, order: 4 }),
+      make({
+        name: "Outdoor",
+        slug: "outdoor",
+        path: ["outdoor"],
+        level: 0,
+        order: 4,
+      }),
     ]);
 
     const rootBySlug = {};
@@ -467,27 +541,132 @@ router.post("/categories/seed", auth, adminOnly, async (req, res) => {
     // Level 1
     const lvl1 = await Category.insertMany([
       // Home
-      make({ name: "Kitchen", slug: "kitchen", path: ["home", "kitchen"], level: 1, parent: rootBySlug.home._id, order: 1 }),
-      make({ name: "Bathroom", slug: "bathroom", path: ["home", "bathroom"], level: 1, parent: rootBySlug.home._id, order: 2 }),
-      make({ name: "Cleaning", slug: "cleaning", path: ["home", "cleaning"], level: 1, parent: rootBySlug.home._id, order: 3 }),
-      make({ name: "Storage", slug: "storage", path: ["home", "storage"], level: 1, parent: rootBySlug.home._id, order: 4 }),
-      make({ name: "Decor", slug: "decor", path: ["home", "decor"], level: 1, parent: rootBySlug.home._id, order: 5 }),
+      make({
+        name: "Kitchen",
+        slug: "kitchen",
+        path: ["home", "kitchen"],
+        level: 1,
+        parent: rootBySlug.home._id,
+        order: 1,
+      }),
+      make({
+        name: "Bathroom",
+        slug: "bathroom",
+        path: ["home", "bathroom"],
+        level: 1,
+        parent: rootBySlug.home._id,
+        order: 2,
+      }),
+      make({
+        name: "Cleaning",
+        slug: "cleaning",
+        path: ["home", "cleaning"],
+        level: 1,
+        parent: rootBySlug.home._id,
+        order: 3,
+      }),
+      make({
+        name: "Storage",
+        slug: "storage",
+        path: ["home", "storage"],
+        level: 1,
+        parent: rootBySlug.home._id,
+        order: 4,
+      }),
+      make({
+        name: "Decor",
+        slug: "decor",
+        path: ["home", "decor"],
+        level: 1,
+        parent: rootBySlug.home._id,
+        order: 5,
+      }),
 
       // Garden
-      make({ name: "Watering", slug: "watering", path: ["garden", "watering"], level: 1, parent: rootBySlug.garden._id, order: 1 }),
-      make({ name: "Plants", slug: "plants", path: ["garden", "plants"], level: 1, parent: rootBySlug.garden._id, order: 2 }),
-      make({ name: "Garden Furniture", slug: "garden-furniture", path: ["garden", "garden-furniture"], level: 1, parent: rootBySlug.garden._id, order: 3 }),
-      make({ name: "Garden Tools", slug: "garden-tools", path: ["garden", "garden-tools"], level: 1, parent: rootBySlug.garden._id, order: 4 }),
+      make({
+        name: "Watering",
+        slug: "watering",
+        path: ["garden", "watering"],
+        level: 1,
+        parent: rootBySlug.garden._id,
+        order: 1,
+      }),
+      make({
+        name: "Plants",
+        slug: "plants",
+        path: ["garden", "plants"],
+        level: 1,
+        parent: rootBySlug.garden._id,
+        order: 2,
+      }),
+      make({
+        name: "Garden Furniture",
+        slug: "garden-furniture",
+        path: ["garden", "garden-furniture"],
+        level: 1,
+        parent: rootBySlug.garden._id,
+        order: 3,
+      }),
+      make({
+        name: "Garden Tools",
+        slug: "garden-tools",
+        path: ["garden", "garden-tools"],
+        level: 1,
+        parent: rootBySlug.garden._id,
+        order: 4,
+      }),
 
       // Tools
-      make({ name: "Power Tools", slug: "power-tools", path: ["tools", "power-tools"], level: 1, parent: rootBySlug.tools._id, order: 1 }),
-      make({ name: "Hand Tools", slug: "hand-tools", path: ["tools", "hand-tools"], level: 1, parent: rootBySlug.tools._id, order: 2 }),
-      make({ name: "Tool Storage", slug: "tool-storage", path: ["tools", "tool-storage"], level: 1, parent: rootBySlug.tools._id, order: 3 }),
+      make({
+        name: "Power Tools",
+        slug: "power-tools",
+        path: ["tools", "power-tools"],
+        level: 1,
+        parent: rootBySlug.tools._id,
+        order: 1,
+      }),
+      make({
+        name: "Hand Tools",
+        slug: "hand-tools",
+        path: ["tools", "hand-tools"],
+        level: 1,
+        parent: rootBySlug.tools._id,
+        order: 2,
+      }),
+      make({
+        name: "Tool Storage",
+        slug: "tool-storage",
+        path: ["tools", "tool-storage"],
+        level: 1,
+        parent: rootBySlug.tools._id,
+        order: 3,
+      }),
 
       // Outdoor
-      make({ name: "Camping", slug: "camping", path: ["outdoor", "camping"], level: 1, parent: rootBySlug.outdoor._id, order: 1 }),
-      make({ name: "BBQ", slug: "bbq", path: ["outdoor", "bbq"], level: 1, parent: rootBySlug.outdoor._id, order: 2 }),
-      make({ name: "Lighting", slug: "lighting", path: ["outdoor", "lighting"], level: 1, parent: rootBySlug.outdoor._id, order: 3 }),
+      make({
+        name: "Camping",
+        slug: "camping",
+        path: ["outdoor", "camping"],
+        level: 1,
+        parent: rootBySlug.outdoor._id,
+        order: 1,
+      }),
+      make({
+        name: "BBQ",
+        slug: "bbq",
+        path: ["outdoor", "bbq"],
+        level: 1,
+        parent: rootBySlug.outdoor._id,
+        order: 2,
+      }),
+      make({
+        name: "Lighting",
+        slug: "lighting",
+        path: ["outdoor", "lighting"],
+        level: 1,
+        parent: rootBySlug.outdoor._id,
+        order: 3,
+      }),
     ]);
 
     return res.json({
