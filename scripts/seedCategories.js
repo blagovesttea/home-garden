@@ -96,146 +96,146 @@ async function run() {
 
   const HOME = [
     {
-      name: "Kitchen & Dining",
+      name: "Кухня и хранене",
       slug: "kitchen",
       children: [
-        { name: "Cookware", slug: "cookware" },
-        { name: "Bakeware", slug: "bakeware" },
-        { name: "Kitchen Tools", slug: "kitchen-tools" },
-        { name: "Knives & Cutting", slug: "knives" },
-        { name: "Food Storage", slug: "food-storage" },
-        { name: "Small Appliances", slug: "small-appliances" },
-        { name: "Tableware", slug: "tableware" },
-        { name: "Drinkware", slug: "drinkware" },
+        { name: "Съдове за готвене", slug: "cookware" },
+        { name: "Съдове за печене", slug: "bakeware" },
+        { name: "Кухненски инструменти", slug: "kitchen-tools" },
+        { name: "Ножове и дъски", slug: "knives" },
+        { name: "Кутии за храна", slug: "food-storage" },
+        { name: "Малки електроуреди", slug: "small-appliances" },
+        { name: "Сервизи и прибори", slug: "tableware" },
+        { name: "Чаши и термоси", slug: "drinkware" },
       ],
     },
     {
-      name: "Cleaning",
+      name: "Почистване",
       slug: "cleaning",
       children: [
-        { name: "Mops & Brooms", slug: "mops" },
-        { name: "Cleaning Tools", slug: "cleaning-tools" },
-        { name: "Sponges & Cloths", slug: "sponges" },
-        { name: "Buckets", slug: "buckets" },
+        { name: "Мопове и метли", slug: "mops" },
+        { name: "Инструменти за почистване", slug: "cleaning-tools" },
+        { name: "Гъби и кърпи", slug: "sponges" },
+        { name: "Кофи и легенчета", slug: "buckets" },
       ],
     },
     {
-      name: "Storage & Organization",
+      name: "Съхранение и организация",
       slug: "storage",
       children: [
-        { name: "Boxes & Organizers", slug: "boxes" },
-        { name: "Drawer Organizers", slug: "drawer-organizers" },
-        { name: "Wardrobe Organizers", slug: "wardrobe" },
-        { name: "Shelving & Racks", slug: "shelving" },
-        { name: "Hangers", slug: "hangers" },
+        { name: "Кутии и органайзери", slug: "boxes" },
+        { name: "Органайзери за чекмеджета", slug: "drawer-organizers" },
+        { name: "Органайзери за гардероб", slug: "wardrobe" },
+        { name: "Етажерки и стелажи", slug: "shelving" },
+        { name: "Закачалки", slug: "hangers" },
       ],
     },
     {
-      name: "Home Decor",
+      name: "Декорация за дома",
       slug: "decor",
       children: [
-        { name: "Wall Decor", slug: "wall-decor" },
-        { name: "Mirrors", slug: "mirrors" },
-        { name: "Candles", slug: "candles" },
-        { name: "Clocks", slug: "clocks" },
+        { name: "Декорация за стена", slug: "wall-decor" },
+        { name: "Огледала", slug: "mirrors" },
+        { name: "Свещи", slug: "candles" },
+        { name: "Часовници", slug: "clocks" },
       ],
     },
     {
-      name: "Lighting",
+      name: "Осветление",
       slug: "lighting",
       children: [
-        { name: "Ceiling Lights", slug: "ceiling" },
-        { name: "Table Lamps", slug: "table-lamps" },
-        { name: "Floor Lamps", slug: "floor-lamps" },
-        { name: "LED", slug: "led" },
+        { name: "Таванни лампи", slug: "ceiling" },
+        { name: "Настолни лампи", slug: "table-lamps" },
+        { name: "Подови лампи", slug: "floor-lamps" },
+        { name: "LED осветление", slug: "led" },
       ],
     },
     {
-      name: "Bathroom",
+      name: "Баня",
       slug: "bathroom",
       children: [
-        { name: "Shower Accessories", slug: "shower" },
-        { name: "Bath Mats", slug: "bath-mats" },
-        { name: "Bathroom Storage", slug: "bathroom-storage" },
+        { name: "Аксесоари за душ", slug: "shower" },
+        { name: "Постелки за баня", slug: "bath-mats" },
+        { name: "Съхранение за баня", slug: "bathroom-storage" },
       ],
     },
     {
-      name: "Bedroom",
+      name: "Спалня",
       slug: "bedroom",
       children: [
-        { name: "Bedding", slug: "bedding" },
-        { name: "Pillows", slug: "pillows" },
-        { name: "Blankets", slug: "blankets" },
+        { name: "Спално бельо", slug: "bedding" },
+        { name: "Възглавници", slug: "pillows" },
+        { name: "Одеяла", slug: "blankets" },
       ],
     },
     {
-      name: "Home Improvement",
+      name: "Ремонти и подобрения",
       slug: "improvement",
       children: [
-        { name: "Hardware", slug: "hardware" },
-        { name: "Adhesives", slug: "adhesives" },
-        { name: "Tools & Measuring", slug: "measuring" },
+        { name: "Крепежи и обков", slug: "hardware" },
+        { name: "Лепила и силикони", slug: "adhesives" },
+        { name: "Инструменти и измерване", slug: "measuring" },
       ],
     },
   ];
 
   const GARDEN = [
     {
-      name: "Plants & Growing",
+      name: "Растения и отглеждане",
       slug: "plants",
       children: [
-        { name: "Seeds", slug: "seeds" },
-        { name: "Soil & Fertilizers", slug: "soil" },
-        { name: "Pots & Planters", slug: "pots" },
+        { name: "Семена", slug: "seeds" },
+        { name: "Почва и торове", slug: "soil" },
+        { name: "Саксии и кашпи", slug: "pots" },
       ],
     },
     {
-      name: "Watering & Irrigation",
+      name: "Поливане и напояване",
       slug: "irrigation",
       children: [
-        { name: "Hoses", slug: "hoses" },
-        { name: "Sprinklers", slug: "sprinklers" },
-        { name: "Drip Irrigation", slug: "drip" },
+        { name: "Маркучи", slug: "hoses" },
+        { name: "Разпръсквачи", slug: "sprinklers" },
+        { name: "Капково напояване", slug: "drip" },
       ],
     },
     {
-      name: "Garden Tools",
+      name: "Градински инструменти",
       slug: "tools",
       children: [
-        { name: "Hand Tools", slug: "hand-tools" },
-        { name: "Power Tools", slug: "power-tools" },
-        { name: "Gloves", slug: "gloves" },
+        { name: "Ръчни инструменти", slug: "hand-tools" },
+        { name: "Електроинструменти", slug: "power-tools" },
+        { name: "Ръкавици", slug: "gloves" },
       ],
     },
     {
-      name: "Outdoor Living",
+      name: "Двор и отдих",
       slug: "outdoor",
       children: [
-        { name: "Outdoor Furniture", slug: "furniture" },
-        { name: "Umbrellas & Shades", slug: "umbrellas" },
-        { name: "Hammocks", slug: "hammocks" },
+        { name: "Градински мебели", slug: "furniture" },
+        { name: "Чадъри и сенници", slug: "umbrellas" },
+        { name: "Хамаци", slug: "hammocks" },
       ],
     },
     {
-      name: "BBQ & Cooking",
+      name: "Барбекю и готвене",
       slug: "bbq",
       children: [
-        { name: "Grills", slug: "grills" },
-        { name: "BBQ Accessories", slug: "bbq-accessories" },
+        { name: "Скари", slug: "grills" },
+        { name: "Аксесоари за BBQ", slug: "bbq-accessories" },
       ],
     },
     {
-      name: "Garden Lighting & Decor",
+      name: "Градинско осветление и декор",
       slug: "garden-decor",
       children: [
-        { name: "Solar Lights", slug: "solar" },
-        { name: "Garden Statues", slug: "statues" },
+        { name: "Соларни лампи", slug: "solar" },
+        { name: "Градински фигури", slug: "statues" },
       ],
     },
   ];
 
-  await seedTree("Home", "home", HOME);
-  await seedTree("Garden", "garden", GARDEN);
+  await seedTree("Дом", "home", HOME);
+  await seedTree("Градина", "garden", GARDEN);
 
   console.log("✅ Categories seeded");
   await mongoose.disconnect();
