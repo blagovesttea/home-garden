@@ -2,6 +2,8 @@
    JYSK-LIKE CATALOG (CLEAN WHITE + AIRY) + ALWAYS-VISIBLE CATEGORIES
    + ✅ TREE CATEGORIES (SUBCATEGORIES)
    + ✅ CLICKABLE IMAGE (NO "View offer"/"Details" buttons in card)
+   + ✅ BREADCRUMB + RELATED MODAL STYLES
+   + ✅ LIGHT ACCENT COLOR (to "живне" сайта)
    Uses your existing class names (.hg-*)
 ========================================================= */
 
@@ -30,6 +32,13 @@
   --p-ink:#111827;
   --p-ink2: rgba(17,24,39,.78);
 
+  /* ✅ Accent (магазинен цвят) */
+  --accent: #2563eb;        /* blue */
+  --accent2:#0ea5e9;        /* sky */
+  --accentSoft: rgba(37,99,235,.10);
+  --accentLine: rgba(37,99,235,.22);
+  --accentText:#1d4ed8;
+
   /* ADMIN */
   --a-bg1:#0b1020;
   --a-bg2:#0a1226;
@@ -56,12 +65,17 @@ body{
 ========================= */
 .hg--public{
   min-height: 100vh;
-  background:#fff;
   color: var(--text);
 
   max-width: var(--wrap);
   margin: 0 auto;
   padding: 22px 18px 70px;
+
+  /* ✅ subtle airy color background */
+  background:
+    radial-gradient(1200px 420px at 20% -10%, rgba(37,99,235,.10), transparent 55%),
+    radial-gradient(900px 360px at 88% 0%, rgba(14,165,233,.10), transparent 55%),
+    #ffffff;
 }
 
 /* =========================
@@ -84,8 +98,21 @@ body{
   font-size: 34px;
   line-height: 1.05;
   letter-spacing: -0.02em;
-  font-weight: 700;
+  font-weight: 800;
+  color: var(--p-ink);
+  position: relative;
 }
+.hg--public .hg-title::after{
+  content:"";
+  display:block;
+  width: 54px;
+  height: 4px;
+  border-radius: 999px;
+  margin-top: 10px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  opacity: .95;
+}
+
 .hg--public .hg-sub{
   margin: 8px 0 0;
   font-size: var(--fs-13);
@@ -102,7 +129,8 @@ body{
   padding: 4px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  background: #fafafa;
+  background: rgba(255,255,255,.75);
+  backdrop-filter: blur(8px);
 }
 .hg--public .hg-switchBtn{
   height: 30px;
@@ -111,12 +139,12 @@ body{
   border: 1px solid transparent;
   background: transparent;
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   opacity: .86;
 }
 .hg--public .hg-switchBtn.is-active{
-  background: #111827;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: #fff;
   opacity: 1;
 }
@@ -128,7 +156,8 @@ body{
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  background: #fafafa;
+  background: rgba(255,255,255,.75);
+  backdrop-filter: blur(8px);
   display:flex;
   align-items:center;
   font-size: var(--fs-13);
@@ -152,7 +181,8 @@ body{
   align-self: start;
 
   border: 1px solid rgba(17,24,39,.08);
-  background: #ffffff;
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(10px);
   border-radius: 14px;
   padding: 12px;
 }
@@ -178,10 +208,7 @@ body{
 }
 
 /* ===== Tree categories (NEW) ===== */
-
-.hg--public .hg-catTop{
-  margin: 6px 0 10px;
-}
+.hg--public .hg-catTop{ margin: 6px 0 10px; }
 
 /* tree wrapper */
 .hg--public .hg-catTree{
@@ -193,10 +220,7 @@ body{
 }
 
 /* node */
-.hg--public .hg-catNode{
-  margin: 0;
-  padding: 0;
-}
+.hg--public .hg-catNode{ margin: 0; padding: 0; }
 
 /* row: toggle + button */
 .hg--public .hg-catRow{
@@ -233,7 +257,7 @@ body{
   cursor: default;
 }
 
-/* reuse existing button style but better for tree */
+/* category button */
 .hg--public .hg-catBtn{
   width: 100%;
   text-align: left;
@@ -243,16 +267,18 @@ body{
   border-radius: 10px;
   padding: 9px 10px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13px;
   display:flex;
   align-items:center;
   gap: 10px;
 }
 .hg--public .hg-catBtn:hover{ background: #f6f7f9; }
+
+/* ✅ active category = accent */
 .hg--public .hg-catBtn.is-active{
-  background: rgba(17,24,39,.06);
-  border-color: rgba(17,24,39,.12);
+  background: var(--accentSoft);
+  border-color: var(--accentLine);
 }
 
 /* dot bullet */
@@ -264,7 +290,7 @@ body{
   flex: 0 0 6px;
 }
 .hg--public .hg-catBtn.is-active .hg-catDot{
-  background: rgba(17,24,39,.62);
+  background: var(--accent);
 }
 
 /* name */
@@ -289,11 +315,12 @@ body{
   flex-wrap: wrap;
   gap: 12px;
 
-  background: #f7f7f8;
-  border: 1px solid rgba(17,24,39,.06);
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(17,24,39,.08);
   border-radius: 14px;
   padding: 12px;
   margin: 0 0 14px;
+  backdrop-filter: blur(10px);
 }
 
 .hg--public .hg-input,
@@ -313,9 +340,11 @@ body{
 
 .hg--public .hg-input::placeholder{ color: rgba(17,24,39,.38); }
 
+/* ✅ focus glow */
 .hg--public .hg-input:focus,
 .hg--public .hg-select:focus{
-  border-color: rgba(17,24,39,.30);
+  border-color: var(--accentLine);
+  box-shadow: 0 0 0 4px var(--accentSoft);
 }
 
 /* chips on right */
@@ -333,16 +362,16 @@ body{
   border: 1px solid var(--line2);
   background: #fff;
   color: var(--text);
-  font-weight: 700;
+  font-weight: 800;
   font-size: var(--fs-13);
   cursor:pointer;
 }
 
-/* ✅ make “on” state NOT black */
+/* ✅ ON state = accent */
 .hg--public .hg-chip.is-on{
-  background: rgba(17,24,39,.08);
-  color: #111827;
-  border-color: rgba(17,24,39,.18);
+  background: var(--accentSoft);
+  color: var(--accentText);
+  border-color: var(--accentLine);
 }
 
 /* =========================
@@ -364,14 +393,14 @@ body{
   background: #fff;
   color: var(--text);
   cursor:pointer;
-  font-weight: 700;
+  font-weight: 800;
 }
 .hg--public .hg-btn:hover{ border-color: rgba(17,24,39,.22); }
 
-/* ✅ primary for tabs */
+/* ✅ primary for tabs = accent gradient */
 .hg--public .hg-btn--primary{
-  background: rgba(17,24,39,.90);
-  border-color: rgba(17,24,39,.90);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-color: transparent;
   color: #fff;
 }
 
@@ -426,8 +455,8 @@ body{
 }
 .hg--public .hg-thumbLink:hover{
   transform: translateY(-1px);
-  border-color: rgba(17,24,39,.16);
-  box-shadow: 0 10px 30px rgba(17,24,39,.08);
+  border-color: rgba(37,99,235,.25);
+  box-shadow: 0 12px 34px rgba(37,99,235,.14);
 }
 .hg--public .hg-thumbLink:active{ transform: translateY(0); }
 
@@ -439,9 +468,9 @@ body{
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,.60);
-  background: rgba(17,24,39,.68);
+  background: rgba(37,99,235,.78);
   color: #fff;
-  font-weight: 800;
+  font-weight: 900;
   font-size: 12px;
   letter-spacing: .01em;
   opacity: 0;
@@ -454,7 +483,7 @@ body{
   transform: translateY(0);
 }
 
-/* Keep old .hg-thumb styles harmless (if some other view still uses it) */
+/* Keep old .hg-thumb styles harmless */
 .hg--public .hg-thumb{
   height: 240px;
   background: #fff;
@@ -477,10 +506,9 @@ body{
   margin: 0;
   font-size: var(--fs-14);
   line-height: 1.25;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
 
-  /* clamp 2 lines */
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -506,7 +534,7 @@ body{
   padding: 0;
   border-radius: 0;
   font-size: var(--fs-12);
-  font-weight: 700;
+  font-weight: 800;
   color: rgba(17,24,39,.62);
 }
 
@@ -514,7 +542,7 @@ body{
 .hg--public .hg-pill--ok{ color: #0f6b3a; }
 .hg--public .hg-pill--bad{ color: rgba(17,24,39,.55); }
 
-/* (optional) stats line */
+/* stats line */
 .hg--public .hg-kpis{
   font-size: var(--fs-12);
   color: rgba(17,24,39,.55);
@@ -525,25 +553,23 @@ body{
 .hg--public .hg-price{
   font-size: 26px;
   line-height: 1;
-  font-weight: 750;
+  font-weight: 850;
   letter-spacing: -0.02em;
   margin-top: 6px;
 }
 
-/* actions block not used in public now (but keep in case admin) */
+/* actions block (public not used now) */
 .hg--public .hg-actions{
   display:flex;
   gap: 14px;
   align-items:center;
   margin-top: 6px;
 }
-
-/* old CTA styles are harmless now; keep them but not required */
 .hg--public a.hg-btn.hg-btn--primary{
   height: 38px;
   padding: 0 16px;
   border-radius: var(--r-8);
-  font-weight: 700;
+  font-weight: 800;
   text-decoration:none;
   display:inline-flex;
   align-items:center;
@@ -599,19 +625,17 @@ body{
   z-index: 61;
   padding: 12px;
 }
-.hg--public .hg-drawer.is-open{
-  transform: translateX(0);
-}
+.hg--public .hg-drawer.is-open{ transform: translateX(0); }
 
 .hg--public .hg-catOpenBtn{
-  display:none; /* shown on mobile */
+  display:none;
   height: 36px;
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid rgba(17,24,39,.14);
   background: #fff;
   color: #111827;
-  font-weight: 800;
+  font-weight: 900;
   cursor: pointer;
 }
 
@@ -693,7 +717,6 @@ body{
 }
 
 @media (max-width: 980px){
-  /* ✅ hide sidebar & show open button */
   .hg--public .hg-main{ grid-template-columns: 1fr; }
   .hg--public .hg-side{ display:none; }
   .hg--public .hg-catOpenBtn{ display:inline-flex; align-items:center; gap:8px; }
@@ -705,7 +728,6 @@ body{
   .hg--public .hg-input{ flex-basis: 100%; }
   .hg--public .hg-select{ flex: 1 1 220px; }
 
-  /* drawer tree scroll */
   .hg--public .hg-drawer .hg-catTree{
     max-height: calc(100vh - 150px);
   }
@@ -717,45 +739,15 @@ body{
   .hg--public .hg-thumbLink{ height: 220px; }
 }
 
-/* ===== Optional JYSK text style helpers (kept) ===== */
-.hg--public .hg-brandLine{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  margin-top: 2px;
-}
-.hg--public .hg-brandName{
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-  color: #111827;
-  line-height: 1.2;
-}
-.hg--public .hg-badgeOk{
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  color: #1d4ed8;
-  background: rgba(29,78,216,0.10);
-  border: 1px solid rgba(29,78,216,0.25);
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
 /* =========================================================
    NOTE: Старите класове hg-layout/hg-sidebar/hg-catItem
    не се използват от текущия App.js.
-   Оставени са да не чупят нищо, но НЕ влияят на .hg-main/.hg-side.
 ========================================================= */
-
-/* wrapper/old layout (neutral) */
 .hg-layout{ display:block; }
 .hg-sidebar{ display:none; }
 .hg-content{ min-width: 0; }
-
-/* old cat item (neutral) */
 .hg-catItem{ display:none; }
+
 /* =========================
    BREADCRUMB
 ========================= */
@@ -774,53 +766,15 @@ body{
   background: transparent;
   cursor: pointer;
   padding: 0;
-  color: rgba(17,24,39,.70);
-  font-weight: 700;
+  color: var(--accentText);
+  font-weight: 900;
   text-decoration: none;
 }
 .hg-bcLink:hover{ text-decoration: underline; }
 .hg-bcCurrent{
   color: rgba(17,24,39,.92);
-  font-weight: 800;
+  font-weight: 900;
 }
-
-/* =========================
-   CATEGORY TREE (toggle arrow)
-========================= */
-.hg-catTree{
-  list-style: none;
-  margin: 0;
-  padding: 6px 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.hg-catNode{ margin: 0; padding: 0; }
-.hg-catRow{
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.hg-catToggle{
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
-  border: 1px solid rgba(17,24,39,.10);
-  background: #fff;
-  cursor: pointer;
-  display:grid;
-  place-items:center;
-  color: rgba(17,24,39,.70);
-  transform: rotate(0deg);
-  transition: transform .15s ease, background .15s ease;
-}
-.hg-catToggle:hover{ background: #f3f4f6; }
-.hg-catToggle.is-open{ transform: rotate(90deg); }
-.hg-catToggle--ghost{
-  opacity: 0;
-  pointer-events: none;
-}
-.hg-catName{ font-weight: 700; }
 
 /* =========================
    RELATED LINK
@@ -834,7 +788,7 @@ body{
   padding: 0;
   font-size: 13px;
   color: rgba(17,24,39,.60);
-  font-weight: 800;
+  font-weight: 900;
 }
 .hg-relatedLink:hover{ text-decoration: underline; }
 
@@ -902,7 +856,10 @@ body{
   padding: 10px;
   background: #fff;
 }
-.hg-relItem:hover{ background: #f7f7f8; }
+.hg-relItem:hover{
+  background: #f7f7f8;
+  border-color: rgba(37,99,235,.20);
+}
 .hg-relThumb{
   height: 120px;
   border-radius: 10px;
@@ -913,7 +870,7 @@ body{
 .hg-relName{
   margin-top: 8px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 900;
   color: rgba(17,24,39,.88);
   display: -webkit-box;
   -webkit-line-clamp: 2;
