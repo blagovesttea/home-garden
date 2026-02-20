@@ -1,7 +1,8 @@
 /* =========================================================
    JYSK-LIKE CATALOG (CLEAN WHITE + AIRY) + ALWAYS-VISIBLE CATEGORIES
+   + ✅ TREE CATEGORIES (SUBCATEGORIES)
+   + ✅ CLICKABLE IMAGE (NO "View offer"/"Details" buttons in card)
    Uses your existing class names (.hg-*)
-   Wrapper: .hg hg--public / hg--admin
 ========================================================= */
 
 :root{
@@ -136,7 +137,6 @@ body{
 
 /* =========================
    ✅ PUBLIC LAYOUT (SIDEBAR + CONTENT)
-   Put your toolbar + grid inside .hg-main (App.js will add wrapper)
 ========================= */
 .hg--public .hg-main{
   display:grid;
@@ -177,19 +177,63 @@ body{
   color: rgba(17,24,39,.46);
 }
 
-/* Category list */
-.hg--public .hg-catList{
-  display:flex;
-  flex-direction: column;
-  gap: 4px;
+/* ===== Tree categories (NEW) ===== */
+
+.hg--public .hg-catTop{
+  margin: 6px 0 10px;
+}
+
+/* tree wrapper */
+.hg--public .hg-catTree{
+  list-style: none;
   margin: 0;
   padding: 0;
-  list-style: none;
-  max-height: calc(100vh - 170px);
+  max-height: calc(100vh - 220px);
   overflow: auto;
 }
 
-/* Category button */
+/* node */
+.hg--public .hg-catNode{
+  margin: 0;
+  padding: 0;
+}
+
+/* row: toggle + button */
+.hg--public .hg-catRow{
+  display:flex;
+  align-items:center;
+  gap: 6px;
+}
+
+/* expand/collapse arrow */
+.hg--public .hg-catToggle{
+  width: 26px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  display:grid;
+  place-items:center;
+  color: rgba(17,24,39,.50);
+  user-select:none;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
+}
+.hg--public .hg-catToggle:hover{
+  background: #f6f7f9;
+  border-color: rgba(17,24,39,.10);
+  color: rgba(17,24,39,.75);
+}
+.hg--public .hg-catToggle.is-open{
+  transform: rotate(90deg);
+  color: rgba(17,24,39,.72);
+}
+.hg--public .hg-catToggle--ghost{
+  opacity: .25;
+  cursor: default;
+}
+
+/* reuse existing button style but better for tree */
 .hg--public .hg-catBtn{
   width: 100%;
   text-align: left;
@@ -205,21 +249,13 @@ body{
   align-items:center;
   gap: 10px;
 }
-.hg--public .hg-catBtn:hover{
-  background: #f6f7f9;
-}
+.hg--public .hg-catBtn:hover{ background: #f6f7f9; }
 .hg--public .hg-catBtn.is-active{
   background: rgba(17,24,39,.06);
   border-color: rgba(17,24,39,.12);
 }
 
-/* level indent */
-.hg--public .hg-catIndent{
-  opacity: .55;
-  font-weight: 800;
-}
-
-/* little dot bullet */
+/* dot bullet */
 .hg--public .hg-catDot{
   width: 6px;
   height: 6px;
@@ -229,6 +265,19 @@ body{
 }
 .hg--public .hg-catBtn.is-active .hg-catDot{
   background: rgba(17,24,39,.62);
+}
+
+/* name */
+.hg--public .hg-catName{
+  display:inline-block;
+  line-height: 1.2;
+}
+
+/* indent for nested ul */
+.hg--public .hg-catTree .hg-catTree{
+  margin-left: 18px;
+  padding-left: 10px;
+  border-left: 1px dashed rgba(17,24,39,.10);
 }
 
 /* =========================
@@ -289,7 +338,7 @@ body{
   cursor:pointer;
 }
 
-/* ✅ make “on” state NOT black (so it’s not “черен инструмент”) */
+/* ✅ make “on” state NOT black */
 .hg--public .hg-chip.is-on{
   background: rgba(17,24,39,.08);
   color: #111827;
@@ -319,7 +368,7 @@ body{
 }
 .hg--public .hg-btn:hover{ border-color: rgba(17,24,39,.22); }
 
-/* ✅ primary for tabs = soft dark, not pure black */
+/* ✅ primary for tabs */
 .hg--public .hg-btn--primary{
   background: rgba(17,24,39,.90);
   border-color: rgba(17,24,39,.90);
@@ -345,8 +394,7 @@ body{
 }
 
 /* =========================
-   GRID / PRODUCT ITEM
-   (NO boxed cards)
+   GRID / PRODUCT ITEM (NO boxed cards)
 ========================= */
 .hg--public .hg-grid{
   display:grid;
@@ -364,7 +412,49 @@ body{
   flex-direction: column;
 }
 
-/* photo area */
+/* ===== Clickable image (NEW) ===== */
+.hg--public .hg-thumbLink{
+  height: 240px;
+  border-radius: var(--r-6);
+  border: 1px solid rgba(17,24,39,.06);
+  display:block;
+  position: relative;
+  overflow:hidden;
+  text-decoration:none;
+  background: #fff;
+  transition: transform .10s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.hg--public .hg-thumbLink:hover{
+  transform: translateY(-1px);
+  border-color: rgba(17,24,39,.16);
+  box-shadow: 0 10px 30px rgba(17,24,39,.08);
+}
+.hg--public .hg-thumbLink:active{ transform: translateY(0); }
+
+/* subtle overlay that appears on hover */
+.hg--public .hg-thumbOverlay{
+  position:absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.60);
+  background: rgba(17,24,39,.68);
+  color: #fff;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: .01em;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .15s ease, transform .15s ease;
+  pointer-events: none;
+}
+.hg--public .hg-thumbLink:hover .hg-thumbOverlay{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Keep old .hg-thumb styles harmless (if some other view still uses it) */
 .hg--public .hg-thumb{
   height: 240px;
   background: #fff;
@@ -372,7 +462,7 @@ body{
   border: 1px solid rgba(17,24,39,.06);
   position: relative;
 }
-.hg--public .hg-thumb::after{ content: ""; } /* no "Добави снимка" */
+.hg--public .hg-thumb::after{ content: ""; }
 
 /* info block under image */
 .hg--public .hg-cardBody{
@@ -399,7 +489,7 @@ body{
   min-height: 36px;
 }
 
-/* meta line becomes small text, NOT pills */
+/* meta line becomes small text */
 .hg--public .hg-meta{
   display:flex;
   flex-wrap: wrap;
@@ -420,11 +510,11 @@ body{
   color: rgba(17,24,39,.62);
 }
 
-/* shipping highlight (subtle green like status) */
+/* shipping highlight */
 .hg--public .hg-pill--ok{ color: #0f6b3a; }
 .hg--public .hg-pill--bad{ color: rgba(17,24,39,.55); }
 
-/* (optional) stats line if you show it */
+/* (optional) stats line */
 .hg--public .hg-kpis{
   font-size: var(--fs-12);
   color: rgba(17,24,39,.55);
@@ -440,7 +530,7 @@ body{
   margin-top: 6px;
 }
 
-/* actions = white CTA + link */
+/* actions block not used in public now (but keep in case admin) */
 .hg--public .hg-actions{
   display:flex;
   gap: 14px;
@@ -448,9 +538,7 @@ body{
   margin-top: 6px;
 }
 
-/* IMPORTANT:
-   Offer button is WHITE like JYSK.
-*/
+/* old CTA styles are harmless now; keep them but not required */
 .hg--public a.hg-btn.hg-btn--primary{
   height: 38px;
   padding: 0 16px;
@@ -474,7 +562,6 @@ body{
 }
 .hg--public a.hg-btn.hg-btn--primary:active{ transform: translateY(0); }
 
-/* details link */
 .hg--public .hg-mini{
   font-size: var(--fs-13);
   color: rgba(17,24,39,.55);
@@ -484,7 +571,6 @@ body{
 
 /* =========================
    ✅ MOBILE CATEGORY DRAWER (CSS only)
-   In App.js you will toggle: .hg-drawer.is-open + .hg-backdrop.is-open
 ========================= */
 .hg--public .hg-backdrop{
   position: fixed;
@@ -618,11 +704,17 @@ body{
   .hg--public .hg-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hg--public .hg-input{ flex-basis: 100%; }
   .hg--public .hg-select{ flex: 1 1 220px; }
+
+  /* drawer tree scroll */
+  .hg--public .hg-drawer .hg-catTree{
+    max-height: calc(100vh - 150px);
+  }
 }
 
 @media (max-width: 680px){
   .hg--public .hg-grid{ grid-template-columns: 1fr; }
   .hg--public .hg-thumb{ height: 220px; }
+  .hg--public .hg-thumbLink{ height: 220px; }
 }
 
 /* ===== Optional JYSK text style helpers (kept) ===== */
@@ -650,3 +742,17 @@ body{
   padding: 4px 8px;
   border-radius: 4px;
 }
+
+/* =========================================================
+   NOTE: Старите класове hg-layout/hg-sidebar/hg-catItem
+   не се използват от текущия App.js.
+   Оставени са да не чупят нищо, но НЕ влияят на .hg-main/.hg-side.
+========================================================= */
+
+/* wrapper/old layout (neutral) */
+.hg-layout{ display:block; }
+.hg-sidebar{ display:none; }
+.hg-content{ min-width: 0; }
+
+/* old cat item (neutral) */
+.hg-catItem{ display:none; }

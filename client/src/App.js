@@ -9,13 +9,22 @@ const API =
 
 const ADMIN_STATUSES = ["all", "new", "approved", "rejected", "blacklisted"];
 
-// Public sort (client-side fallback)
+// ✅ BG labels (UI only) — логиката НЕ се пипа
+const ADMIN_STATUS_LABELS = {
+  all: "Всички",
+  new: "Нови",
+  approved: "Одобрени",
+  rejected: "Отхвърлени",
+  blacklisted: "Черен списък",
+};
+
+// Public sort (client-side fallback) — BG labels only
 const SORTS = [
-  { value: "popular", label: "Most popular" }, // clicks desc
-  { value: "profit", label: "Best profit" }, // profitScore desc
-  { value: "newest", label: "Newest" }, // createdAt desc
-  { value: "priceAsc", label: "Price (low → high)" },
-  { value: "priceDesc", label: "Price (high → low)" },
+  { value: "popular", label: "Най-популярни" }, // clicks desc
+  { value: "profit", label: "Най-добра печалба" }, // profitScore desc
+  { value: "newest", label: "Най-нови" }, // createdAt desc
+  { value: "priceAsc", label: "Цена (ниска → висока)" },
+  { value: "priceDesc", label: "Цена (висока → ниска)" },
 ];
 
 function toNum(v) {
@@ -49,6 +58,80 @@ function legacyToRootPath(legacy) {
   if (["home", "kitchen", "storage"].includes(c)) return "home";
   if (["garden", "outdoor", "tools"].includes(c)) return "garden";
   return "";
+}
+
+/** ✅ Build tree from flat categories without touching backend */
+function buildCategoryTreeFromFlat(categoriesFlat) {
+  const items = Array.isArray(categoriesFlat) ? categoriesFlat : [];
+
+  // nodeMap by pathKey
+  const map = new Map();
+
+  function ensureNode(key) {
+    if (!key) return null;
+    if (!map.has(key)) {
+      map.set(key, {
+        key,
+        name: key.split("/").slice(-1)[0] || key,
+        level: Math.max(0, key.split("/").length - 1),
+        children: [],
+        _order: 999999,
+      });
+    }
+    return map.get(key);
+  }
+
+  // 1) create nodes
+  items.forEach((c, idx) => {
+    const key = joinPath(c.path || []) || c.slug || "";
+    if (!key) return;
+
+    map.set(key, {
+      key,
+      name: c.name || c.slug || key,
+      level: Number(c.level || Math.max(0, key.split("/").length - 1)),
+      children: [],
+      raw: c,
+      _order: idx,
+    });
+  });
+
+  // 2) attach to parent by path prefix (slice)
+  const roots = [];
+  map.forEach((node) => {
+    const parts = String(node.key).split("/").filter(Boolean);
+    if (parts.length <= 1) {
+      roots.push(node);
+      return;
+    }
+    const parentKey = parts.slice(0, -1).join("/");
+    const parent = ensureNode(parentKey);
+
+    if (parent) parent.children.push(node);
+    else roots.push(node);
+  });
+
+  // 3) sort children by original order to keep stable
+  function sortNode(n) {
+    n.children.sort((a, b) => (a._order ?? 0) - (b._order ?? 0));
+    n.children.forEach(sortNode);
+  }
+  roots.sort((a, b) => (a._order ?? 0) - (b._order ?? 0));
+  roots.forEach(sortNode);
+
+  // 4) remove duplicates in children (in case)
+  function dedupe(n) {
+    const seen = new Set();
+    n.children = n.children.filter((ch) => {
+      if (seen.has(ch.key)) return false;
+      seen.add(ch.key);
+      return true;
+    });
+    n.children.forEach(dedupe);
+  }
+  roots.forEach(dedupe);
+
+  return roots;
 }
 
 function App() {
@@ -117,7 +200,7 @@ function App() {
         data?.message ||
         data?.error ||
         (text?.includes("<!doctype") || text?.includes("<html")
-          ? "Server returned HTML (wrong endpoint or React page)."
+          ? "Сървърът върна HTML (грешен endpoint или React страница)."
           : `HTTP ${res.status}`);
 
       const err = new Error(msg);
@@ -157,7 +240,7 @@ function App() {
         try {
           localStorage.removeItem("token");
         } catch {}
-        setAuthMsg("Token invalid/expired. Please login again.");
+        setAuthMsg("Сесията е невалидна/изтекла. Влез отново.");
         setView("public");
       } finally {
         if (!aborted) setMeLoading(false);
@@ -184,7 +267,7 @@ function App() {
     if (meLoading) return; // wait for /auth/me
 
     if (!isAdmin) {
-      setAuthMsg("You are logged in, but not admin.");
+      setAuthMsg("Влязъл си, но нямаш админ права.");
       setView("public");
     }
   }, [view, token, meLoading, isAdmin]);
@@ -201,7 +284,7 @@ function App() {
       });
 
       const t = data?.token || data?.accessToken || data?.data?.token || "";
-      if (!t) throw new Error("No token returned");
+      if (!t) throw new Error("Не е върнат токен");
 
       setToken(t);
       try {
@@ -209,9 +292,9 @@ function App() {
       } catch {}
 
       setView("admin");
-      setAuthMsg("Login OK");
+      setAuthMsg("Успешен вход ✅");
     } catch (e2) {
-      setAuthMsg(e2?.message || "Login error");
+      setAuthMsg(e2?.message || "Грешка при вход");
     } finally {
       setAuthLoading(false);
     }
@@ -237,8 +320,11 @@ function App() {
   // selected category as path string e.g. "home/kitchen/cookware"
   const [category, setCategory] = useState("all");
 
-  // ✅ NEW: mobile drawer for categories
+  // ✅ mobile drawer for categories
   const [catsOpen, setCatsOpen] = useState(false);
+
+  // ✅ tree expand/collapse state
+  const [expandedCats, setExpandedCats] = useState(() => new Set(["home", "garden"]));
 
   async function loadCategories() {
     setCategoriesLoading(true);
@@ -261,7 +347,6 @@ function App() {
   const categoryOptions = useMemo(() => {
     const items = Array.isArray(categoriesFlat) ? categoriesFlat : [];
 
-    // only show active + sorted already by backend
     const opts = items.map((c) => {
       const p = joinPath(c.path || []);
       const indent = "— ".repeat(Math.max(0, Number(c.level || 0)));
@@ -279,21 +364,96 @@ function App() {
     }
 
     return [
-      { value: "all", label: categoriesLoading ? "Loading..." : "All categories", level: 0 },
+      {
+        value: "all",
+        label: categoriesLoading ? "Зареждане..." : "Всички категории",
+        level: 0,
+      },
       ...unique,
     ];
   }, [categoriesFlat, categoriesLoading]);
 
-  // ✅ For sidebar list (same values, but keep levels)
-  const categoryList = categoryOptions;
+  // ✅ Build tree (subcategories)
+  const categoryTree = useMemo(() => {
+    return buildCategoryTreeFromFlat(categoriesFlat);
+  }, [categoriesFlat]);
 
   function selectCategory(v) {
     setCategory(v);
     setCatsOpen(false);
-    // nice UX: scroll to top of content area
+
+    // auto-expand parents for better UX
+    if (v && v !== "all") {
+      const parts = String(v).split("/").filter(Boolean);
+      if (parts.length > 1) {
+        setExpandedCats((prev) => {
+          const next = new Set(prev);
+          for (let i = 1; i < parts.length; i++) {
+            next.add(parts.slice(0, i).join("/"));
+          }
+          return next;
+        });
+      }
+    }
+
     try {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {}
+  }
+
+  function toggleExpand(key) {
+    setExpandedCats((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function CategoryTree({ nodes }) {
+    if (!Array.isArray(nodes) || nodes.length === 0) return null;
+
+    return (
+      <ul className="hg-catTree">
+        {nodes.map((n) => {
+          const hasKids = Array.isArray(n.children) && n.children.length > 0;
+          const isExpanded = expandedCats.has(n.key);
+
+          return (
+            <li key={n.key} className="hg-catNode">
+              <div className="hg-catRow">
+                {hasKids ? (
+                  <button
+                    type="button"
+                    className={`hg-catToggle ${isExpanded ? "is-open" : ""}`}
+                    onClick={() => toggleExpand(n.key)}
+                    aria-label={isExpanded ? "Скрий подкатегории" : "Покажи подкатегории"}
+                    title={isExpanded ? "Скрий" : "Покажи"}
+                  >
+                    ▸
+                  </button>
+                ) : (
+                  <span className="hg-catToggle hg-catToggle--ghost" aria-hidden="true">
+                    ▸
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  className={`hg-catBtn ${category === n.key ? "is-active" : ""}`}
+                  onClick={() => selectCategory(n.key)}
+                >
+                  <span className="hg-catDot" />
+                  <span className="hg-catName">{n.name}</span>
+                </button>
+              </div>
+
+              {hasKids && isExpanded ? <CategoryTree nodes={n.children} /> : null}
+            </li>
+          );
+        })}
+      </ul>
+    );
   }
 
   /* =========================
@@ -378,7 +538,7 @@ function App() {
           const msg =
             data?.message ||
             (text?.includes("<!doctype")
-              ? "Server returned HTML (not JSON)."
+              ? "Сървърът върна HTML (не JSON)."
               : `HTTP ${res.status}`);
           throw new Error(msg);
         }
@@ -408,7 +568,7 @@ function App() {
           setMeta({ total: items.length, page: 1, limit: items.length });
         }
       } catch (e) {
-        if (!aborted) setErrMsg(e?.message || "Load error");
+        if (!aborted) setErrMsg(e?.message || "Грешка при зареждане");
       } finally {
         if (!aborted) setLoading(false);
       }
@@ -491,16 +651,16 @@ function App() {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminMsg, setAdminMsg] = useState("");
 
-  // ✅ NEW: seed categories action
+  // ✅ seed categories action
   const [seedCatsLoading, setSeedCatsLoading] = useState(false);
 
   async function loadAdmin() {
     if (!token) {
-      setAdminMsg("No token. Login first.");
+      setAdminMsg("Няма токен. Влез първо.");
       return;
     }
     if (!isAdmin) {
-      setAdminMsg("You are not admin.");
+      setAdminMsg("Нямаш админ права.");
       return;
     }
 
@@ -517,7 +677,7 @@ function App() {
 
       setAdminItems(Array.isArray(data?.items) ? data.items : []);
     } catch (e) {
-      setAdminMsg(e?.message || "Admin load error");
+      setAdminMsg(e?.message || "Грешка при зареждане (Admin)");
       setAdminItems([]);
     } finally {
       setAdminLoading(false);
@@ -543,7 +703,7 @@ function App() {
       });
       await loadAdmin();
     } catch (e) {
-      setAdminMsg(e?.message || "Status update error");
+      setAdminMsg(e?.message || "Грешка при промяна на статус");
     }
   }
 
@@ -555,7 +715,7 @@ function App() {
       });
       await loadAdmin();
     } catch (e) {
-      setAdminMsg(e?.message || "Delete error");
+      setAdminMsg(e?.message || "Грешка при изтриване");
     }
   }
 
@@ -567,24 +727,20 @@ function App() {
           method: "POST",
         });
         setAdminMsg(
-          `Approved existing: matched ${r1?.matched ?? "-"} / modified ${
-            r1?.modified ?? "-"
-          }`
+          `Одобрени: matched ${r1?.matched ?? "-"} / modified ${r1?.modified ?? "-"}`
         );
       } catch {
         const r2 = await apiFetch(`/admin/products/backfill`, {
           method: "POST",
         });
         setAdminMsg(
-          `Backfill OK: scanned ${r2?.scanned ?? "-"} / updated ${
-            r2?.updated ?? "-"
-          }`
+          `Backfill OK: scanned ${r2?.scanned ?? "-"} / updated ${r2?.updated ?? "-"}`
         );
       }
 
       await loadAdmin();
     } catch (e) {
-      setAdminMsg(e?.message || "Approve existing error");
+      setAdminMsg(e?.message || "Грешка при масово одобрение");
     }
   }
 
@@ -592,29 +748,32 @@ function App() {
   async function seedCategories() {
     setAdminMsg("");
     if (!token) {
-      setAdminMsg("No token. Login first.");
+      setAdminMsg("Няма токен. Влез първо.");
       return;
     }
     if (!isAdmin) {
-      setAdminMsg("You are not admin.");
+      setAdminMsg("Нямаш админ права.");
       return;
     }
 
     setSeedCatsLoading(true);
     try {
-      // ✅ IMPORTANT: your server exposes POST /categories/seed (NOT /admin/categories/seed)
+      // ✅ IMPORTANT: your server exposes POST /categories/seed
       const r = await apiFetch(`/categories/seed`, { method: "POST" });
 
       const msg =
         r?.message ||
-        (r?.count != null ? `Categories seeded. Total: ${r.count}` : "Categories seed OK");
+        (r?.count != null
+          ? `Категориите са добавени. Общо: ${r.count}`
+          : "Категориите са добавени.");
       setAdminMsg(msg);
 
       // refresh categories in UI
       await loadCategories();
       setCategory("all");
+      setExpandedCats(new Set(["home", "garden"]));
     } catch (e) {
-      setAdminMsg(e?.message || "Seed categories error");
+      setAdminMsg(e?.message || "Грешка при добавяне на категории");
     } finally {
       setSeedCatsLoading(false);
     }
@@ -632,24 +791,24 @@ function App() {
             <div className="hg-sub">
               {view === "public" ? (
                 <>
-                  Browse:{" "}
+                  Преглед:{" "}
                   <b>
                     {mode === "topProfit"
-                      ? "Best Profit Picks"
+                      ? "Най-добра печалба"
                       : mode === "topClicks"
-                      ? "Most Clicked"
-                      : "Latest"}
+                      ? "Най-кликвани"
+                      : "Най-нови"}
                   </b>
                 </>
               ) : (
                 <>
-                  Admin panel{" "}
+                  Админ панел{" "}
                   {meLoading ? (
-                    <b className="hg-pill">checking…</b>
+                    <b className="hg-pill">проверка…</b>
                   ) : isAdmin ? (
-                    <b className="hg-pill hg-pill--ok">admin</b>
+                    <b className="hg-pill hg-pill--ok">админ</b>
                   ) : (
-                    <b className="hg-pill hg-pill--bad">no admin</b>
+                    <b className="hg-pill hg-pill--bad">няма права</b>
                   )}
                 </>
               )}
@@ -664,34 +823,33 @@ function App() {
               onClick={() => setView("public")}
               disabled={view === "public"}
             >
-              Shop
+              Магазин
             </button>
 
-            {/* ✅ FIX: Admin tab is always accessible to reach login */}
+            {/* ✅ Admin tab is always accessible to reach login */}
             <button
               className={`hg-switchBtn ${view === "admin" ? "is-active" : ""}`}
               onClick={() => setView("admin")}
               disabled={view === "admin"}
               title={
                 !token
-                  ? "Open admin login"
+                  ? "Отвори админ вход"
                   : isAdmin
-                  ? "Open admin panel"
-                  : "Not admin"
+                  ? "Отвори админ панел"
+                  : "Нямаш админ права"
               }
             >
-              Admin{!token ? " (login)" : ""}
+              Админ{!token ? " (вход)" : ""}
             </button>
           </div>
 
           {token ? (
             <>
               <div className="hg-userChip">
-                role:{" "}
-                <b>{me?.role || (meLoading ? "checking…" : "unknown")}</b>
+                роля: <b>{me?.role || (meLoading ? "проверка…" : "неизвестна")}</b>
               </div>
               <button className="hg-btn" onClick={doLogout}>
-                Logout
+                Изход
               </button>
             </>
           ) : null}
@@ -701,21 +859,21 @@ function App() {
       {/* ✅ Login in ADMIN view */}
       {view === "admin" && !token && (
         <form className="hg-panel" onSubmit={doLogin}>
-          <div className="hg-panelTitle">Admin Login</div>
+          <div className="hg-panelTitle">Админ вход</div>
 
           <div className="hg-loginGrid">
             <input
               className="hg-input"
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
-              placeholder="email"
+              placeholder="имейл"
               autoComplete="email"
             />
             <input
               className="hg-input"
               value={loginPass}
               onChange={(e) => setLoginPass(e.target.value)}
-              placeholder="password"
+              placeholder="парола"
               type="password"
               autoComplete="current-password"
             />
@@ -724,7 +882,7 @@ function App() {
               type="submit"
               disabled={authLoading}
             >
-              {authLoading ? "..." : "Login"}
+              {authLoading ? "..." : "Вход"}
             </button>
           </div>
 
@@ -732,9 +890,8 @@ function App() {
         </form>
       )}
 
-      {/* ✅ Logged in but waiting /auth/me */}
       {view === "admin" && token && meLoading && (
-        <div className="hg-panel">Checking your role…</div>
+        <div className="hg-panel">Проверка на права…</div>
       )}
 
       {view === "admin" && token && authMsg && !meLoading && (
@@ -744,10 +901,10 @@ function App() {
       {view === "admin" && (
         <div>
           {!token ? (
-            <div className="hg-panel hg-panel--bad">Login first.</div>
+            <div className="hg-panel hg-panel--bad">Влез първо.</div>
           ) : meLoading ? null : !isAdmin ? (
             <div className="hg-panel hg-panel--bad">
-              You are not admin (role: {me?.role || "unknown"}).
+              Нямаш админ права (роля: {me?.role || "неизвестна"}).
             </div>
           ) : (
             <>
@@ -759,17 +916,13 @@ function App() {
                 >
                   {ADMIN_STATUSES.map((s) => (
                     <option key={s} value={s}>
-                      {s === "all" ? "All statuses" : s}
+                      {ADMIN_STATUS_LABELS[s] || s}
                     </option>
                   ))}
                 </select>
 
-                <button
-                  className="hg-btn"
-                  onClick={loadAdmin}
-                  disabled={adminLoading}
-                >
-                  Refresh
+                <button className="hg-btn" onClick={loadAdmin} disabled={adminLoading}>
+                  Обнови
                 </button>
 
                 <button
@@ -777,36 +930,33 @@ function App() {
                   onClick={approveExistingNew}
                   disabled={adminLoading}
                 >
-                  Approve existing NEW
+                  Одобри всички НОВИ
                 </button>
 
-                {/* ✅ Seed categories */}
                 <button
                   className="hg-btn"
                   onClick={seedCategories}
                   disabled={seedCatsLoading || adminLoading}
-                  title="Creates default category catalog if DB is empty"
+                  title="Създава стандартен каталог с категории"
                 >
-                  {seedCatsLoading ? "Seeding categories..." : "Seed categories"}
+                  {seedCatsLoading ? "Добавяне..." : "Добави категории"}
                 </button>
 
                 <div className="hg-counter">
-                  Items: <b>{adminItems.length}</b>
+                  Продукти: <b>{adminItems.length}</b>
                 </div>
 
                 <button className="hg-btn" onClick={doLogout}>
-                  Logout
+                  Изход
                 </button>
               </div>
 
               {adminMsg && <div className="hg-panel">{adminMsg}</div>}
-              {adminLoading && <div className="hg-panel">Loading…</div>}
+              {adminLoading && <div className="hg-panel">Зареждане…</div>}
 
               <div className="hg-grid">
                 {!adminLoading && adminItems.length === 0 && (
-                  <div className="hg-panel">
-                    No admin products for this filter.
-                  </div>
+                  <div className="hg-panel">Няма продукти за този филтър.</div>
                 )}
 
                 {adminItems.map((p) => (
@@ -816,14 +966,12 @@ function App() {
                       <div className="hg-meta">
                         <span className="hg-pill">{p.category}</span>
                         <span className="hg-pill">{p.source}</span>
-                        <span className="hg-pill hg-pill--status">
-                          status: {p.status}
-                        </span>
+                        <span className="hg-pill hg-pill--status">статус: {p.status}</span>
                       </div>
                     </div>
 
                     <div className="hg-kpis">
-                      Catalog:{" "}
+                      Каталог:{" "}
                       <b>
                         {Array.isArray(p.categoryPath) && p.categoryPath.length
                           ? p.categoryPath.join(" / ")
@@ -836,9 +984,9 @@ function App() {
                     </div>
 
                     <div className="hg-kpis">
-                      Score: <b>{p.score ?? 0}</b> • ProfitScore:{" "}
-                      <b>{p.profitScore ?? 0}</b> • Views:{" "}
-                      <b>{p.views ?? 0}</b> • Clicks: <b>{p.clicks ?? 0}</b>
+                      Оценка: <b>{p.score ?? 0}</b> • ProfitScore:{" "}
+                      <b>{p.profitScore ?? 0}</b> • Преглеждания: <b>{p.views ?? 0}</b> •
+                      Кликове: <b>{p.clicks ?? 0}</b>
                     </div>
 
                     <div className="hg-url">{p.sourceUrl}</div>
@@ -849,28 +997,28 @@ function App() {
                         onClick={() => setStatus(p._id, "approved")}
                         disabled={adminLoading}
                       >
-                        Approve
+                        Одобри
                       </button>
                       <button
                         className="hg-btn"
                         onClick={() => setStatus(p._id, "rejected")}
                         disabled={adminLoading}
                       >
-                        Reject
+                        Откажи
                       </button>
                       <button
                         className="hg-btn"
                         onClick={() => setStatus(p._id, "blacklisted")}
                         disabled={adminLoading}
                       >
-                        Blacklist
+                        Черен списък
                       </button>
                       <button
                         className="hg-btn hg-btn--danger"
                         onClick={() => deleteProduct(p._id)}
                         disabled={adminLoading}
                       >
-                        Delete
+                        Изтрий
                       </button>
 
                       <a
@@ -879,7 +1027,7 @@ function App() {
                         target="_blank"
                         rel="noreferrer"
                       >
-                        Open click →
+                        Отвори оферта →
                       </a>
                     </div>
                   </div>
@@ -891,7 +1039,7 @@ function App() {
       )}
 
       {/* =========================
-         ✅ PUBLIC (with always-visible categories)
+         ✅ PUBLIC (категории с подкатегории + клик върху снимка към оферта)
       ========================== */}
       {view === "public" && (
         <>
@@ -903,62 +1051,48 @@ function App() {
           />
           <aside className={`hg-drawer ${catsOpen ? "is-open" : ""}`}>
             <div className="hg-sideTitle">
-              <h3>Categories</h3>
+              <h3>Категории</h3>
               <span className="hg-sideHint">
-                {categoriesLoading ? "Loading…" : `${Math.max(0, categoryOptions.length - 1)} items`}
+                {categoriesLoading ? "Зареждане…" : "Подкатегории"}
               </span>
             </div>
 
-            <ul className="hg-catList">
-              {categoryList.map((c) => (
-                <li key={c.value}>
-                  <button
-                    type="button"
-                    className={`hg-catBtn ${category === c.value ? "is-active" : ""}`}
-                    onClick={() => selectCategory(c.value)}
-                  >
-                    <span className="hg-catDot" />
-                    {c.level ? (
-                      <span className="hg-catIndent">
-                        {"— ".repeat(Math.max(0, Number(c.level || 0)))}
-                      </span>
-                    ) : null}
-                    <span>{c.label.replace(/^(-\s)+/, "").trim()}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="hg-catTop">
+              <button
+                type="button"
+                className={`hg-catBtn ${category === "all" ? "is-active" : ""}`}
+                onClick={() => selectCategory("all")}
+              >
+                <span className="hg-catDot" />
+                <span className="hg-catName">Всички категории</span>
+              </button>
+            </div>
+
+            <CategoryTree nodes={categoryTree} />
           </aside>
 
           <div className="hg-main">
             {/* ✅ Desktop sidebar */}
             <aside className="hg-side">
               <div className="hg-sideTitle">
-                <h3>Categories</h3>
+                <h3>Категории</h3>
                 <span className="hg-sideHint">
-                  {categoriesLoading ? "Loading…" : `${Math.max(0, categoryOptions.length - 1)} items`}
+                  {categoriesLoading ? "Зареждане…" : "Подкатегории"}
                 </span>
               </div>
 
-              <ul className="hg-catList">
-                {categoryList.map((c) => (
-                  <li key={c.value}>
-                    <button
-                      type="button"
-                      className={`hg-catBtn ${category === c.value ? "is-active" : ""}`}
-                      onClick={() => selectCategory(c.value)}
-                    >
-                      <span className="hg-catDot" />
-                      {c.level ? (
-                        <span className="hg-catIndent">
-                          {"— ".repeat(Math.max(0, Number(c.level || 0)))}
-                        </span>
-                      ) : null}
-                      <span>{c.label.replace(/^(-\s)+/, "").trim()}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <div className="hg-catTop">
+                <button
+                  type="button"
+                  className={`hg-catBtn ${category === "all" ? "is-active" : ""}`}
+                  onClick={() => selectCategory("all")}
+                >
+                  <span className="hg-catDot" />
+                  <span className="hg-catName">Всички категории</span>
+                </button>
+              </div>
+
+              <CategoryTree nodes={categoryTree} />
             </aside>
 
             {/* ✅ Content */}
@@ -970,17 +1104,17 @@ function App() {
                   className="hg-catOpenBtn"
                   onClick={() => setCatsOpen(true)}
                 >
-                  Categories
+                  Категории
                 </button>
 
                 <input
                   className="hg-input"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search products..."
+                  placeholder="Търси продукти..."
                 />
 
-                {/* keep dropdown too (optional, helpful) */}
+                {/* dropdown оставям — не пречи и е удобен fallback */}
                 <select
                   className="hg-select"
                   value={category}
@@ -1011,14 +1145,14 @@ function App() {
                     className={`hg-chip ${onlyBG ? "is-on" : ""}`}
                     onClick={() => setOnlyBG((v) => !v)}
                   >
-                    Shipping to BG
+                    Доставка до BG
                   </button>
                   <button
                     type="button"
                     className={`hg-chip ${fastShip ? "is-on" : ""}`}
                     onClick={() => setFastShip((v) => !v)}
                   >
-                    Fast delivery
+                    Бърза доставка
                   </button>
 
                   {token && isAdmin ? (
@@ -1026,9 +1160,9 @@ function App() {
                       type="button"
                       className={`hg-chip ${showStats ? "is-on" : ""}`}
                       onClick={() => setShowStats((v) => !v)}
-                      title="Show clicks/views/profit score (admin only)"
+                      title="Покажи статистики (само за админ)"
                     >
-                      Show stats
+                      Статистики
                     </button>
                   ) : null}
                 </div>
@@ -1039,26 +1173,24 @@ function App() {
                   className={`hg-btn ${mode === "topProfit" ? "hg-btn--primary" : ""}`}
                   onClick={() => setMode("topProfit")}
                 >
-                  Top Profit
+                  Най-добра печалба
                 </button>
                 <button
                   className={`hg-btn ${mode === "topClicks" ? "hg-btn--primary" : ""}`}
                   onClick={() => setMode("topClicks")}
                 >
-                  Top Clicks
+                  Най-кликвани
                 </button>
                 <button
                   className={`hg-btn ${mode === "latest" ? "hg-btn--primary" : ""}`}
                   onClick={() => setMode("latest")}
                 >
-                  Latest
+                  Най-нови
                 </button>
               </div>
 
-              {loading && <div className="hg-panel">Loading…</div>}
-              {!loading && errMsg && (
-                <div className="hg-panel hg-panel--bad">{errMsg}</div>
-              )}
+              {loading && <div className="hg-panel">Зареждане…</div>}
+              {!loading && errMsg && <div className="hg-panel hg-panel--bad">{errMsg}</div>}
 
               {!loading && mode === "latest" && (
                 <div className="hg-pager">
@@ -1067,32 +1199,35 @@ function App() {
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page <= 1}
                   >
-                    Prev
+                    Назад
                   </button>
                   <div className="hg-counter">
-                    Page <b>{page}</b> / <b>{totalPages}</b> — Total:{" "}
-                    <b>{meta.total}</b>
+                    Страница <b>{page}</b> / <b>{totalPages}</b> — Общо: <b>{meta.total}</b>
                   </div>
                   <button
                     className="hg-btn"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
                   >
-                    Next
+                    Напред
                   </button>
                 </div>
               )}
 
               <div className="hg-grid">
                 {!loading && publicItems.length === 0 && (
-                  <div className="hg-panel">No products.</div>
+                  <div className="hg-panel">Няма продукти.</div>
                 )}
 
                 {publicItems.map((p) => (
                   <div className="hg-card" key={p._id}>
-                    <div
-                      className="hg-thumb"
-                      aria-hidden="true"
+                    {/* ✅ ВАЖНО: Клик върху снимката отваря офертата. Няма Details/View Offer бутон */}
+                    <a
+                      className="hg-thumbLink"
+                      href={`${API}/products/${p._id}/click`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Отвори оферта"
                       style={{
                         backgroundImage: p.imageUrl
                           ? `url("${p.imageUrl}")`
@@ -1101,7 +1236,9 @@ function App() {
                         backgroundPosition: "center",
                         backgroundRepeat: "no-repeat",
                       }}
-                    />
+                    >
+                      <span className="hg-thumbOverlay">Отвори оферта →</span>
+                    </a>
 
                     <div className="hg-cardBody">
                       <h3 className="hg-cardTitle">{p.title}</h3>
@@ -1115,25 +1252,22 @@ function App() {
                         <span className="hg-pill">{p.source}</span>
 
                         {p.shippingToBG ? (
-                          <span className="hg-pill hg-pill--ok">Ships to BG</span>
+                          <span className="hg-pill hg-pill--ok">Доставка до BG</span>
                         ) : (
-                          <span className="hg-pill">No BG shipping</span>
+                          <span className="hg-pill">Без доставка до BG</span>
                         )}
 
                         {toNum(p.shippingDays) > 0 && (
                           <span className="hg-pill">
-                            {toNum(p.shippingDays)} day
-                            {toNum(p.shippingDays) === 1 ? "" : "s"}
+                            {toNum(p.shippingDays)} ден{toNum(p.shippingDays) === 1 ? "" : "а"}
                           </span>
                         )}
                       </div>
 
                       {token && isAdmin && showStats ? (
                         <div className="hg-kpis">
-                          Views: <b>{p.views ?? 0}</b> • Clicks:{" "}
-                          <b>{p.clicks ?? 0}</b> • ProfitScore:{" "}
-                          <b>{p.profitScore ?? 0}</b> • Score:{" "}
-                          <b>{p.score ?? 0}</b>
+                          Преглеждания: <b>{p.views ?? 0}</b> • Кликове: <b>{p.clicks ?? 0}</b> •
+                          ProfitScore: <b>{p.profitScore ?? 0}</b> • Оценка: <b>{p.score ?? 0}</b>
                         </div>
                       ) : null}
 
@@ -1141,25 +1275,7 @@ function App() {
                         {p.price} {p.currency}
                       </div>
 
-                      <div className="hg-actions">
-                        <a
-                          className="hg-btn hg-btn--primary"
-                          href={`${API}/products/${p._id}/click`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          View offer →
-                        </a>
-
-                        <a
-                          className="hg-mini"
-                          href={`${API}/products/${p._id}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Details
-                        </a>
-                      </div>
+                      {/* ✅ няма бутони тук – снимката е “бутон” */}
                     </div>
                   </div>
                 ))}
