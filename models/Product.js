@@ -4,9 +4,25 @@ const ProductSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
 
+    shortDescription: { type: String, default: "", trim: true },
+    description: { type: String, default: "", trim: true },
+
+    sku: {
+      type: String,
+      default: "",
+      trim: true,
+      index: true,
+    },
+
+    brand: {
+      type: String,
+      default: "",
+      trim: true,
+      index: true,
+    },
+
     /**
-     * ✅ Legacy simple category (оставяме го да не чупим текущия код)
-     * По-нататък ще го държим като fallback или ще го махнем, когато минем изцяло на Catalog.
+     * Legacy simple category
      */
     category: {
       type: String,
@@ -17,10 +33,7 @@ const ProductSchema = new mongoose.Schema(
     },
 
     /**
-     * ✅ NEW: Catalog category (истински ecommerce)
-     * categoryId -> сочи към Category (подкатегория)
-     * categoryPath -> slug path за бързо филтриране: ["home","kitchen","cookware"]
-     * categoryLocked -> ако admin я фиксира, ботът НЕ я променя
+     * Catalog category
      */
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -28,32 +41,43 @@ const ProductSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+
     categoryPath: {
       type: [String],
       default: [],
       index: true,
     },
+
     categoryLocked: {
       type: Boolean,
       default: false,
       index: true,
     },
 
-    // source info
+    /**
+     * Source info
+     * Оставяме го, защото може още да вкарваш продукти от външен source.
+     */
     source: {
       type: String,
-      default: "other", // ✅ махаме enum, за да приема profitshare, alleop и т.н.
+      default: "manual",
       index: true,
     },
 
+    /**
+     * Вече НЕ е required и НЕ е unique,
+     * защото за реален магазин не трябва всеки продукт да идва от affiliate/source url.
+     */
     sourceUrl: {
       type: String,
-      required: true,
-      unique: true,
+      default: "",
       index: true,
     },
 
-    // affiliate link
+    /**
+     * Legacy affiliate поле – оставяме го засега,
+     * но вече не е основна логика.
+     */
     affiliateUrl: {
       type: String,
       default: "",
@@ -61,30 +85,36 @@ const ProductSchema = new mongoose.Schema(
 
     imageUrl: { type: String, default: "" },
 
+    images: {
+      type: [String],
+      default: [],
+    },
+
     // pricing
-    price: { type: Number, default: null }, // ✅ вече не е required
-    currency: { type: String, default: "EUR" },
+    price: { type: Number, default: null },
+    currency: { type: String, default: "BGN" },
+
     shippingPrice: { type: Number, default: 0 },
     shippingToBG: { type: Boolean, default: true },
     shippingDays: { type: Number, default: null },
 
     /**
-     * ✅ Ecommerce-ready pricing (за истински магазин)
-     * basePrice = цена от source (ако искаш да я пазиш отделно)
-     * markupType/value = надценка
-     * finalPrice = сметната крайна цена (за по-късно)
+     * Store pricing
      */
     basePrice: { type: Number, default: null },
+
     markupType: {
       type: String,
       enum: ["none", "percent", "fixed"],
       default: "none",
     },
+
     markupValue: { type: Number, default: 0 },
+
     finalPrice: { type: Number, default: null },
 
     /**
-     * ✅ Ecommerce-ready stock (за по-късно)
+     * Stock
      */
     stockStatus: {
       type: String,
@@ -92,17 +122,42 @@ const ProductSchema = new mongoose.Schema(
       default: "unknown",
       index: true,
     },
+
     stockQty: { type: Number, default: null },
 
-    // analytics
+    /**
+     * Store flags
+     */
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+
+    isFeatured: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    /**
+     * Analytics
+     */
     views: { type: Number, default: 0 },
     clicks: { type: Number, default: 0 },
 
+    /**
+     * Legacy scoring – оставяме го засега,
+     * за да не счупим стар код.
+     */
     profitScore: { type: Number, default: 0 },
     score: { type: Number, default: 0 },
+
     notes: { type: String, default: "" },
 
-    // BG check
+    /**
+     * Legacy BG check – оставяме го, но вече не е ключово.
+     */
     bg: {
       foundInBG: {
         type: String,
@@ -113,7 +168,9 @@ const ProductSchema = new mongoose.Schema(
       bgUrls: { type: [String], default: [] },
     },
 
-    // workflow
+    /**
+     * Workflow
+     */
     status: {
       type: String,
       enum: ["new", "approved", "rejected", "blacklisted"],
@@ -130,13 +187,12 @@ const ProductSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// индекси
 ProductSchema.index({ createdAt: -1 });
 ProductSchema.index({ score: -1 });
 ProductSchema.index({ profitScore: -1 });
-
-// ✅ по-бързо филтриране по каталог
 ProductSchema.index({ categoryPath: 1 });
 ProductSchema.index({ status: 1, categoryPath: 1 });
+ProductSchema.index({ isActive: 1, isFeatured: 1 });
+ProductSchema.index({ brand: 1, sku: 1 });
 
 module.exports = mongoose.model("Product", ProductSchema);

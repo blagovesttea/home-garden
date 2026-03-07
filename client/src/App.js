@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Routes, Route, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import "./App.css";
 
-// ✅ API base (local + production same-origin)
+// API base
 const API =
   process.env.NODE_ENV === "production"
     ? window.location.origin
@@ -19,9 +19,9 @@ const ADMIN_STATUS_LABELS = {
 };
 
 const SORTS = [
-  { value: "popular", label: "Най-популярни" },
-  { value: "profit", label: "Най-добра печалба" },
+  { value: "featured", label: "Препоръчани" },
   { value: "newest", label: "Най-нови" },
+  { value: "popular", label: "Най-популярни" },
   { value: "priceAsc", label: "Цена (ниска → висока)" },
   { value: "priceDesc", label: "Цена (висока → ниска)" },
 ];
@@ -31,119 +31,60 @@ function toNum(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function joinPath(pathArr) {
-  if (!Array.isArray(pathArr)) return "";
-  return pathArr.filter(Boolean).join("/");
+function formatPrice(v, currency = "BGN") {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return "—";
+  return `${n.toFixed(2)} ${currency}`;
 }
 
-function pathPrefixMatch(productPath, selectedPath) {
-  if (!selectedPath || selectedPath === "all") return true;
-
-  const sel = String(selectedPath).trim().toLowerCase();
-  if (!sel) return true;
-
-  const pArr = Array.isArray(productPath) ? productPath : [];
-  const p = pArr.join("/").toLowerCase();
-
-  return p === sel || p.startsWith(sel + "/");
+function productPrice(p) {
+  return p?.finalPrice != null ? p.finalPrice : p?.price;
 }
 
-function legacyToRootPath(legacy) {
-  const c = String(legacy || "").toLowerCase();
-  if (!c || c === "all") return "";
-  if (["home", "kitchen", "storage"].includes(c)) return "home";
-  if (["garden", "outdoor", "tools"].includes(c)) return "garden";
+function productImage(p) {
+  if (Array.isArray(p?.images) && p.images.length) return p.images[0];
+  if (p?.imageUrl) return p.imageUrl;
   return "";
 }
 
-/** ✅ Build tree from flat categories without touching backend */
-function buildCategoryTreeFromFlat(categoriesFlat) {
-  const items = Array.isArray(categoriesFlat) ? categoriesFlat : [];
-  const map = new Map();
-
-  function ensureNode(key) {
-    if (!key) return null;
-    if (!map.has(key)) {
-      map.set(key, {
-        key,
-        name: key.split("/").slice(-1)[0] || key,
-        children: [],
-        _order: 999999,
-      });
-    }
-    return map.get(key);
-  }
-
-  items.forEach((c, idx) => {
-    const key = joinPath(c.path || []) || c.slug || "";
-    if (!key) return;
-
-    map.set(key, {
-      key,
-      name: c.name || c.slug || key,
-      children: [],
-      raw: c,
-      _order: idx,
-    });
-  });
-
-  const roots = [];
-  map.forEach((node) => {
-    const parts = String(node.key).split("/").filter(Boolean);
-    if (parts.length <= 1) {
-      roots.push(node);
-      return;
-    }
-    const parentKey = parts.slice(0, -1).join("/");
-    const parent = ensureNode(parentKey);
-    if (parent) parent.children.push(node);
-    else roots.push(node);
-  });
-
-  function sortNode(n) {
-    n.children.sort((a, b) => (a._order ?? 0) - (b._order ?? 0));
-    n.children.forEach(sortNode);
-  }
-  roots.sort((a, b) => (a._order ?? 0) - (b._order ?? 0));
-  roots.forEach(sortNode);
-
-  function dedupe(n) {
-    const seen = new Set();
-    n.children = n.children.filter((ch) => {
-      if (seen.has(ch.key)) return false;
-      seen.add(ch.key);
-      return true;
-    });
-    n.children.forEach(dedupe);
-  }
-  roots.forEach(dedupe);
-
-  return roots;
+function cartStorageKey() {
+  return "moto_cart_v1";
 }
 
-/** ✅ Extract categoryPath from URL /category/... */
-function useCategoryFromUrl() {
-  const location = useLocation();
-  const params = useParams();
-  // react-router-dom v6 wildcard param name is whatever you set. We'll set it as "path*"
-  const raw = params?.["*"] || ""; // everything after /category/
-  const cleaned = String(raw || "")
-    .replace(/^\/+|\/+$/g, "")
-    .trim();
-
-  // If route is /category (no path) -> all
-  const categoryFromUrl = cleaned ? cleaned : "all";
-
-  return { location, categoryFromUrl };
+function emptyProductForm() {
+  return {
+    title: "",
+    shortDescription: "",
+    description: "",
+    brand: "",
+    sku: "",
+    category: "other",
+    source: "manual",
+    sourceUrl: "",
+    imageUrl: "",
+    imagesText: "",
+    price: "",
+    basePrice: "",
+    markupType: "none",
+    markupValue: "",
+    finalPrice: "",
+    currency: "BGN",
+    shippingPrice: "0",
+    shippingToBG: true,
+    shippingDays: "",
+    stockStatus: "in_stock",
+    stockQty: "",
+    isActive: true,
+    isFeatured: false,
+    status: "new",
+  };
 }
 
 function AppShell() {
-  const navigate = useNavigate();
-
   /* =========================
-     AUTH (login + admin)
+     AUTH / ADMIN
   ========================== */
-  const [view, setView] = useState("public"); // public | admin
+  const [view, setView] = useState("public");
 
   const [token, setToken] = useState(() => {
     try {
@@ -162,21 +103,17 @@ function AppShell() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authMsg, setAuthMsg] = useState("");
 
-  const [showStats, setShowStats] = useState(false);
-  useEffect(() => {
-    if (token && isAdmin) setShowStats(true);
-    else setShowStats(false);
-  }, [token, isAdmin]);
-
   const authHeaders = useMemo(() => {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [token]);
 
   async function apiFetch(path, opts = {}) {
+    const hasBody = opts.body != null;
+
     const res = await fetch(`${API}${path}`, {
       ...opts,
       headers: {
-        "Content-Type": "application/json",
+        ...(hasBody ? { "Content-Type": "application/json" } : {}),
         ...authHeaders,
         ...(opts.headers || {}),
       },
@@ -196,7 +133,7 @@ function AppShell() {
         data?.message ||
         data?.error ||
         (text?.includes("<!doctype") || text?.includes("<html")
-          ? "Сървърът върна HTML (грешен endpoint или React страница)."
+          ? "Сървърът върна HTML вместо JSON."
           : `HTTP ${res.status}`);
       throw new Error(msg);
     }
@@ -217,19 +154,19 @@ function AppShell() {
       }
 
       setMeLoading(true);
+
       try {
         const data = await apiFetch("/auth/me", { method: "GET" });
         if (aborted) return;
         setMe(data?.user || null);
       } catch {
         if (aborted) return;
-
         setMe(null);
         setToken("");
         try {
           localStorage.removeItem("token");
         } catch {}
-        setAuthMsg("Сесията е невалидна/изтекла. Влез отново.");
+        setAuthMsg("Сесията е изтекла. Влез отново.");
         setView("public");
       } finally {
         if (!aborted) setMeLoading(false);
@@ -242,17 +179,6 @@ function AppShell() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
-
-  useEffect(() => {
-    if (view !== "admin") return;
-    if (!token) return;
-    if (meLoading) return;
-
-    if (!isAdmin) {
-      setAuthMsg("Влязъл си, но нямаш админ права.");
-      setView("public");
-    }
-  }, [view, token, meLoading, isAdmin]);
 
   async function doLogin(e) {
     e?.preventDefault?.();
@@ -274,7 +200,7 @@ function AppShell() {
       } catch {}
 
       setView("admin");
-      setAuthMsg("Успешен вход ✅");
+      setAuthMsg("Успешен вход");
     } catch (e2) {
       setAuthMsg(e2?.message || "Грешка при вход");
     } finally {
@@ -294,206 +220,11 @@ function AppShell() {
   }
 
   /* =========================
-     CATEGORIES
+     PUBLIC PRODUCTS
   ========================== */
-  const [categoriesFlat, setCategoriesFlat] = useState([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(false);
-
-  // UI state category (fallback), but URL is the source of truth for SEO routes
-  const [category, setCategory] = useState("all");
-  const [catsOpen, setCatsOpen] = useState(false);
-  const [expandedCats, setExpandedCats] = useState(() => new Set(["home", "garden"]));
-
-  async function loadCategories() {
-    setCategoriesLoading(true);
-    try {
-      const data = await apiFetch("/categories/flat", { method: "GET" });
-      setCategoriesFlat(Array.isArray(data?.items) ? data.items : []);
-    } catch {
-      setCategoriesFlat([]);
-    } finally {
-      setCategoriesLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (view !== "public") return;
-    loadCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view]);
-
-  const categoryOptions = useMemo(() => {
-    const items = Array.isArray(categoriesFlat) ? categoriesFlat : [];
-    const opts = items.map((c) => {
-      const p = joinPath(c.path || []);
-      const indent = "— ".repeat(Math.max(0, Number(c.level || 0)));
-      const label = `${indent}${c.name}`;
-      return { value: p || c.slug, label, level: Number(c.level || 0), raw: c };
-    });
-
-    const seen = new Set();
-    const unique = [];
-    for (const o of opts) {
-      if (!o.value || seen.has(o.value)) continue;
-      seen.add(o.value);
-      unique.push(o);
-    }
-
-    return [
-      {
-        value: "all",
-        label: categoriesLoading ? "Зареждане..." : "Всички категории",
-        level: 0,
-      },
-      ...unique,
-    ];
-  }, [categoriesFlat, categoriesLoading]);
-
-  const categoryTree = useMemo(() => buildCategoryTreeFromFlat(categoriesFlat), [categoriesFlat]);
-
-  // ✅ Map pathKey -> BG name for breadcrumbs
-  const catNameByKey = useMemo(() => {
-    const map = new Map();
-    const items = Array.isArray(categoriesFlat) ? categoriesFlat : [];
-    for (const c of items) {
-      const key = joinPath(c.path || []) || c.slug || "";
-      if (!key) continue;
-      map.set(key, c.name || key);
-    }
-    // roots too (if not included)
-    map.set("home", map.get("home") || "Дом");
-    map.set("garden", map.get("garden") || "Градина");
-    return map;
-  }, [categoriesFlat]);
-
-  function selectCategory(v) {
-    const next = v || "all";
-    setCategory(next);
-    setCatsOpen(false);
-
-    // ✅ SEO URL
-    if (!next || next === "all") navigate("/");
-    else navigate(`/category/${next}`);
-
-    // expand parents for better UX
-    if (next && next !== "all") {
-      const parts = String(next).split("/").filter(Boolean);
-      if (parts.length > 1) {
-        setExpandedCats((prev) => {
-          const n = new Set(prev);
-          for (let i = 1; i < parts.length; i++) n.add(parts.slice(0, i).join("/"));
-          n.add(parts[0]);
-          return n;
-        });
-      }
-    }
-
-    try {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch {}
-  }
-
-  function toggleExpand(key) {
-    setExpandedCats((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }
-
-  function CategoryTree({ nodes }) {
-    if (!Array.isArray(nodes) || nodes.length === 0) return null;
-
-    return (
-      <ul className="hg-catTree">
-        {nodes.map((n) => {
-          const hasKids = Array.isArray(n.children) && n.children.length > 0;
-          const isExpanded = expandedCats.has(n.key);
-
-          return (
-            <li key={n.key} className="hg-catNode">
-              <div className="hg-catRow">
-                {hasKids ? (
-                  <button
-                    type="button"
-                    className={`hg-catToggle ${isExpanded ? "is-open" : ""}`}
-                    onClick={() => toggleExpand(n.key)}
-                    aria-label={isExpanded ? "Скрий подкатегории" : "Покажи подкатегории"}
-                    title={isExpanded ? "Скрий" : "Покажи"}
-                  >
-                    ▸
-                  </button>
-                ) : (
-                  <span className="hg-catToggle hg-catToggle--ghost" aria-hidden="true">
-                    ▸
-                  </span>
-                )}
-
-                <button
-                  type="button"
-                  className={`hg-catBtn ${category === n.key ? "is-active" : ""}`}
-                  onClick={() => selectCategory(n.key)}
-                >
-                  <span className="hg-catDot" />
-                  <span className="hg-catName">{n.name}</span>
-                </button>
-              </div>
-
-              {hasKids && isExpanded ? <CategoryTree nodes={n.children} /> : null}
-            </li>
-          );
-        })}
-      </ul>
-    );
-  }
-
-  /* =========================
-     ✅ URL -> category sync
-  ========================== */
-  const { categoryFromUrl } = useCategoryFromUrl();
-
-  useEffect(() => {
-    // Only in public view
-    if (view !== "public") return;
-    setCategory(categoryFromUrl || "all");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryFromUrl, view]);
-
-  // ✅ Breadcrumb data
-  const breadcrumb = useMemo(() => {
-    const key = categoryFromUrl || category || "all";
-    if (!key || key === "all") return [];
-
-    const parts = String(key).split("/").filter(Boolean);
-    const crumbs = [];
-    for (let i = 0; i < parts.length; i++) {
-      const k = parts.slice(0, i + 1).join("/");
-      const name = catNameByKey.get(k) || parts[i];
-      crumbs.push({ key: k, name });
-    }
-    return crumbs;
-  }, [categoryFromUrl, category, catNameByKey]);
-
-  useEffect(() => {
-    // basic SEO title (SPA-friendly)
-    if (view !== "public") return;
-    const base = "Home & Garden";
-    if (!breadcrumb.length) {
-      document.title = base;
-      return;
-    }
-    document.title = `${breadcrumb.map((c) => c.name).join(" > ")} | ${base}`;
-  }, [breadcrumb, view]);
-
-  /* =========================
-     PUBLIC LIST
-  ========================== */
-  const [mode, setMode] = useState("topProfit"); // latest | topClicks | topProfit
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState("profit");
-  const [fastShip, setFastShip] = useState(false);
-
+  const [qDebounced, setQDebounced] = useState("");
+  const [sort, setSort] = useState("featured");
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
 
@@ -502,186 +233,171 @@ function AppShell() {
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState("");
 
-  const [qDebounced, setQDebounced] = useState(q);
   useEffect(() => {
-    const t = setTimeout(() => setQDebounced(q.trim()), 350);
+    const t = setTimeout(() => setQDebounced(q.trim()), 300);
     return () => clearTimeout(t);
   }, [q]);
 
   useEffect(() => {
     setPage(1);
-  }, [mode, qDebounced, category, fastShip]);
-
-  const queryStringForLatest = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set("page", String(page));
-    params.set("limit", String(limit));
-    if (qDebounced) params.set("q", qDebounced);
-
-    if (category && category !== "all") params.set("category", category);
-    if (fastShip) params.set("maxShippingDays", "5");
-    params.set("status", "approved");
-
-    return params.toString();
-  }, [page, limit, qDebounced, category, fastShip]);
+  }, [qDebounced, sort]);
 
   useEffect(() => {
-    if (view !== "public") return;
-
     let aborted = false;
 
-    async function load() {
+    async function loadProducts() {
+      if (view !== "public") return;
+
       setLoading(true);
       setErrMsg("");
 
       try {
-        let url = "";
+        const params = new URLSearchParams();
+        params.set("page", String(page));
+        params.set("limit", String(limit));
+        params.set("sort", sort);
+        if (qDebounced) params.set("q", qDebounced);
 
-        if (mode === "topClicks")
-          url = `${API}/products/top?by=clicks&limit=60&status=approved`;
-        else if (mode === "topProfit")
-          url = `${API}/products/top?by=profitScore&limit=60&status=approved`;
-        else url = `${API}/products?${queryStringForLatest}`;
-
-        const res = await fetch(url);
-        const text = await res.text();
-
-        let data = null;
-        try {
-          data = text ? JSON.parse(text) : null;
-        } catch {
-          data = null;
-        }
+        const data = await apiFetch(`/products?${params.toString()}`, {
+          method: "GET",
+        });
 
         if (aborted) return;
 
-        if (!res.ok) {
-          const msg =
-            data?.message ||
-            (text?.includes("<!doctype") ? "Сървърът върна HTML (не JSON)." : `HTTP ${res.status}`);
-          throw new Error(msg);
-        }
-
-        let items = [];
-        if (Array.isArray(data)) items = data;
-        else if (Array.isArray(data?.items)) items = data.items;
-
-        items = items.filter((p) => String(p?.status || "").toLowerCase() === "approved");
+        const items = Array.isArray(data?.items) ? data.items : [];
         setProducts(items);
-
-        if (mode === "latest") {
-          setMeta({
-            total: Number(data?.total || items.length || 0),
-            page: Number(data?.page || page),
-            limit: Number(data?.limit || limit),
-          });
-        } else {
-          setMeta({ total: items.length, page: 1, limit: items.length });
-        }
+        setMeta({
+          total: Number(data?.total || items.length || 0),
+          page: Number(data?.page || page),
+          limit: Number(data?.limit || limit),
+        });
       } catch (e) {
-        if (!aborted) setErrMsg(e?.message || "Грешка при зареждане");
+        if (!aborted) {
+          setErrMsg(e?.message || "Грешка при зареждане");
+          setProducts([]);
+        }
       } finally {
         if (!aborted) setLoading(false);
       }
     }
 
-    load();
+    loadProducts();
     return () => {
       aborted = true;
     };
-  }, [view, mode, queryStringForLatest, page, limit]);
+  }, [view, qDebounced, sort, page, limit]);
 
   const totalPages = useMemo(() => {
-    if (mode !== "latest") return 1;
     return Math.max(1, Math.ceil((meta.total || 0) / (meta.limit || 20)));
-  }, [mode, meta]);
-
-  const publicItems = useMemo(() => {
-    let items = Array.isArray(products) ? [...products] : [];
-
-    items = items.filter((p) => String(p?.status || "").toLowerCase() === "approved");
-
-    if (category && category !== "all") {
-      items = items.filter((p) => {
-        const okCatalog = pathPrefixMatch(p.categoryPath, category);
-        if (okCatalog && Array.isArray(p.categoryPath) && p.categoryPath.length) return true;
-
-        const root = legacyToRootPath(p.category);
-        if (!root) return false;
-        return category === root || category.startsWith(root + "/");
-      });
-    }
-
-    if (qDebounced) {
-      const qq = qDebounced.toLowerCase();
-      items = items.filter((p) => String(p.title || "").toLowerCase().includes(qq));
-    }
-
-    if (fastShip) {
-      items = items.filter((p) => toNum(p.shippingDays) > 0 && toNum(p.shippingDays) <= 5);
-    }
-
-    items.sort((a, b) => {
-      if (sort === "popular") return toNum(b.clicks) - toNum(a.clicks);
-      if (sort === "profit") return toNum(b.profitScore) - toNum(a.profitScore);
-      if (sort === "priceAsc") return toNum(a.price) - toNum(b.price);
-      if (sort === "priceDesc") return toNum(b.price) - toNum(a.price);
-      if (sort === "newest") {
-        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return tb - ta;
-      }
-      return 0;
-    });
-
-    if (mode !== "latest") items = items.slice(0, 24);
-    return items;
-  }, [products, category, qDebounced, fastShip, sort, mode]);
+  }, [meta]);
 
   /* =========================
-     ✅ Related products (modal)
+     PRODUCT MODAL
   ========================== */
-  const [relOpen, setRelOpen] = useState(false);
-  const [relLoading, setRelLoading] = useState(false);
-  const [relErr, setRelErr] = useState("");
-  const [relFor, setRelFor] = useState(null); // product
-  const [relItems, setRelItems] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  async function openRelated(p) {
-    setRelFor(p);
-    setRelOpen(true);
-    setRelLoading(true);
-    setRelErr("");
-    setRelItems([]);
-
+  async function openProduct(product) {
+    setSelectedProduct(product);
     try {
-      const data = await apiFetch(`/products/${p._id}/related?limit=8`, { method: "GET" });
-      setRelItems(Array.isArray(data?.items) ? data.items : []);
-    } catch (e) {
-      setRelErr(e?.message || "Грешка при зареждане на подобни продукти");
-    } finally {
-      setRelLoading(false);
-    }
+      await fetch(`${API}/products/${product._id}/view`);
+    } catch {}
   }
 
-  function closeRelated() {
-    setRelOpen(false);
-    setRelFor(null);
-    setRelItems([]);
-    setRelErr("");
-    setRelLoading(false);
+  function closeProduct() {
+    setSelectedProduct(null);
   }
 
   /* =========================
-     ADMIN PANEL
+     CART
+  ========================== */
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cart, setCart] = useState(() => {
+    try {
+      const raw = localStorage.getItem(cartStorageKey());
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(cartStorageKey(), JSON.stringify(cart));
+    } catch {}
+  }, [cart]);
+
+  function addToCart(product) {
+    if (!product?._id) return;
+
+    setCart((prev) => {
+      const idx = prev.findIndex((x) => x._id === product._id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = {
+          ...next[idx],
+          qty: next[idx].qty + 1,
+        };
+        return next;
+      }
+
+      return [
+        ...prev,
+        {
+          _id: product._id,
+          title: product.title,
+          price: productPrice(product),
+          currency: product.currency || "BGN",
+          imageUrl: productImage(product),
+          qty: 1,
+        },
+      ];
+    });
+  }
+
+  function decreaseQty(id) {
+    setCart((prev) =>
+      prev
+        .map((x) => (x._id === id ? { ...x, qty: x.qty - 1 } : x))
+        .filter((x) => x.qty > 0)
+    );
+  }
+
+  function increaseQty(id) {
+    setCart((prev) =>
+      prev.map((x) => (x._id === id ? { ...x, qty: x.qty + 1 } : x))
+    );
+  }
+
+  function removeFromCart(id) {
+    setCart((prev) => prev.filter((x) => x._id !== id));
+  }
+
+  function clearCart() {
+    setCart([]);
+  }
+
+  const cartCount = useMemo(
+    () => cart.reduce((sum, x) => sum + toNum(x.qty), 0),
+    [cart]
+  );
+
+  const cartTotal = useMemo(
+    () => cart.reduce((sum, x) => sum + toNum(x.price) * toNum(x.qty), 0),
+    [cart]
+  );
+
+  /* =========================
+     ADMIN
   ========================== */
   const [adminStatus, setAdminStatus] = useState("new");
   const [adminItems, setAdminItems] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminMsg, setAdminMsg] = useState("");
 
-  const [seedCatsLoading, setSeedCatsLoading] = useState(false);
-  const [recatLoading, setRecatLoading] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState("");
+  const [productForm, setProductForm] = useState(emptyProductForm());
+  const [formLoading, setFormLoading] = useState(false);
 
   async function loadAdmin() {
     if (!token) {
@@ -700,10 +416,13 @@ function AppShell() {
       const qs = new URLSearchParams();
       if (adminStatus && adminStatus !== "all") qs.set("status", adminStatus);
 
-      const data = await apiFetch(`/admin/products?${qs.toString()}`, { method: "GET" });
+      const data = await apiFetch(`/admin/products?${qs.toString()}`, {
+        method: "GET",
+      });
+
       setAdminItems(Array.isArray(data?.items) ? data.items : []);
     } catch (e) {
-      setAdminMsg(e?.message || "Грешка при зареждане (Admin)");
+      setAdminMsg(e?.message || "Грешка при зареждане");
       setAdminItems([]);
     } finally {
       setAdminLoading(false);
@@ -718,7 +437,7 @@ function AppShell() {
 
     loadAdmin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, adminStatus, token, me?.role, meLoading, isAdmin]);
+  }, [view, token, meLoading, isAdmin, adminStatus]);
 
   async function setStatus(id, status) {
     setAdminMsg("");
@@ -746,59 +465,142 @@ function AppShell() {
   async function approveExistingNew() {
     setAdminMsg("");
     try {
-      try {
-        const r1 = await apiFetch(`/admin/products/approve-existing`, { method: "POST" });
-        setAdminMsg(`Одобрени: matched ${r1?.matched ?? "-"} / modified ${r1?.modified ?? "-"}`);
-      } catch {
-        const r2 = await apiFetch(`/admin/products/backfill`, { method: "POST" });
-        setAdminMsg(`Backfill OK: scanned ${r2?.scanned ?? "-"} / updated ${r2?.updated ?? "-"}`);
-      }
+      const r = await apiFetch(`/admin/products/approve-existing`, {
+        method: "POST",
+      });
+      setAdminMsg(
+        `Одобрени: matched ${r?.matched ?? "-"} / modified ${r?.modified ?? "-"}`
+      );
       await loadAdmin();
     } catch (e) {
       setAdminMsg(e?.message || "Грешка при масово одобрение");
     }
   }
 
-  async function seedCategories() {
+  function openCreateForm() {
+    setEditingId("");
+    setProductForm(emptyProductForm());
+    setFormOpen(true);
     setAdminMsg("");
-    if (!token) return setAdminMsg("Няма токен. Влез първо.");
-    if (!isAdmin) return setAdminMsg("Нямаш админ права.");
-
-    setSeedCatsLoading(true);
-    try {
-      const r = await apiFetch(`/categories/seed`, { method: "POST" });
-      const msg =
-        r?.message ||
-        (r?.count != null ? `Категориите са добавени. Общо: ${r.count}` : "Категориите са добавени.");
-      setAdminMsg(msg);
-
-      await loadCategories();
-      setExpandedCats(new Set(["home", "garden"]));
-    } catch (e) {
-      setAdminMsg(e?.message || "Грешка при добавяне на категории");
-    } finally {
-      setSeedCatsLoading(false);
-    }
   }
 
-  // ✅ Auto re-categorize (admin)
-  async function recategorizeMissing() {
+  function openEditForm(product) {
+    setEditingId(product?._id || "");
+    setProductForm({
+      title: product?.title || "",
+      shortDescription: product?.shortDescription || "",
+      description: product?.description || "",
+      brand: product?.brand || "",
+      sku: product?.sku || "",
+      category: product?.category || "other",
+      source: product?.source || "manual",
+      sourceUrl: product?.sourceUrl || "",
+      imageUrl: product?.imageUrl || "",
+      imagesText: Array.isArray(product?.images) ? product.images.join("\n") : "",
+      price: product?.price ?? "",
+      basePrice: product?.basePrice ?? "",
+      markupType: product?.markupType || "none",
+      markupValue: product?.markupValue ?? "",
+      finalPrice: product?.finalPrice ?? "",
+      currency: product?.currency || "BGN",
+      shippingPrice: product?.shippingPrice ?? 0,
+      shippingToBG:
+        typeof product?.shippingToBG === "boolean" ? product.shippingToBG : true,
+      shippingDays: product?.shippingDays ?? "",
+      stockStatus: product?.stockStatus || "in_stock",
+      stockQty: product?.stockQty ?? "",
+      isActive:
+        typeof product?.isActive === "boolean" ? product.isActive : true,
+      isFeatured:
+        typeof product?.isFeatured === "boolean" ? product.isFeatured : false,
+      status: product?.status || "new",
+    });
+    setFormOpen(true);
     setAdminMsg("");
-    if (!token) return setAdminMsg("Няма токен. Влез първо.");
-    if (!isAdmin) return setAdminMsg("Нямаш админ права.");
+  }
 
-    setRecatLoading(true);
+  function closeForm() {
+    setFormOpen(false);
+    setEditingId("");
+    setProductForm(emptyProductForm());
+    setFormLoading(false);
+  }
+
+  function updateFormField(key, value) {
+    setProductForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }
+
+  async function submitProductForm(e) {
+    e?.preventDefault?.();
+    setFormLoading(true);
+    setAdminMsg("");
+
     try {
-      const r = await apiFetch(`/admin/products/recategorize-missing`, { method: "POST" });
-      setAdminMsg(
-        r?.message ||
-          `Рекатегоризация: проверени ${r?.scanned ?? "-"} / обновени ${r?.updated ?? "-"}`
-      );
+      const images = String(productForm.imagesText || "")
+        .split("\n")
+        .map((x) => x.trim())
+        .filter(Boolean);
+
+      const payload = {
+        title: String(productForm.title || "").trim(),
+        shortDescription: String(productForm.shortDescription || "").trim(),
+        description: String(productForm.description || "").trim(),
+        brand: String(productForm.brand || "").trim(),
+        sku: String(productForm.sku || "").trim(),
+        category: String(productForm.category || "other").trim(),
+        source: String(productForm.source || "manual").trim(),
+        sourceUrl: String(productForm.sourceUrl || "").trim(),
+        imageUrl: String(productForm.imageUrl || "").trim(),
+        images,
+        price: productForm.price === "" ? null : toNum(productForm.price),
+        basePrice:
+          productForm.basePrice === "" ? null : toNum(productForm.basePrice),
+        markupType: productForm.markupType || "none",
+        markupValue:
+          productForm.markupValue === "" ? 0 : toNum(productForm.markupValue),
+        finalPrice:
+          productForm.finalPrice === "" ? null : toNum(productForm.finalPrice),
+        currency: String(productForm.currency || "BGN").trim(),
+        shippingPrice:
+          productForm.shippingPrice === "" ? 0 : toNum(productForm.shippingPrice),
+        shippingToBG: !!productForm.shippingToBG,
+        shippingDays:
+          productForm.shippingDays === "" ? null : toNum(productForm.shippingDays),
+        stockStatus: productForm.stockStatus || "unknown",
+        stockQty:
+          productForm.stockQty === "" ? null : toNum(productForm.stockQty),
+        isActive: !!productForm.isActive,
+        isFeatured: !!productForm.isFeatured,
+        status: productForm.status || "new",
+      };
+
+      if (!payload.title) {
+        throw new Error("Заглавието е задължително");
+      }
+
+      if (!editingId) {
+        await apiFetch("/admin/products", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        setAdminMsg("Продуктът е добавен успешно.");
+      } else {
+        await apiFetch(`/admin/products/${editingId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+        setAdminMsg("Продуктът е редактиран успешно.");
+      }
+
+      closeForm();
       await loadAdmin();
-    } catch (e) {
-      setAdminMsg(e?.message || "Грешка при рекатегоризация");
+    } catch (e2) {
+      setAdminMsg(e2?.message || "Грешка при запис");
     } finally {
-      setRecatLoading(false);
+      setFormLoading(false);
     }
   }
 
@@ -810,32 +612,25 @@ function AppShell() {
       <div className="hg-topbar">
         <div className="hg-brand">
           <div>
-            <h1 className="hg-title">Home &amp; Garden</h1>
+            <h1 className="hg-title">Moto Аксесоари</h1>
             <div className="hg-sub">
-              {view === "public" ? (
-                <>
-                  Преглед:{" "}
-                  <b>
-                    {mode === "topProfit" ? "Най-добра печалба" : mode === "topClicks" ? "Най-кликвани" : "Най-нови"}
-                  </b>
-                </>
-              ) : (
-                <>
-                  Админ панел{" "}
-                  {meLoading ? (
-                    <b className="hg-pill">проверка…</b>
-                  ) : isAdmin ? (
-                    <b className="hg-pill hg-pill--ok">админ</b>
-                  ) : (
-                    <b className="hg-pill hg-pill--bad">няма права</b>
-                  )}
-                </>
-              )}
+              {view === "public"
+                ? "Визьори, механизми, пинове и аксесоари за каски"
+                : "Админ панел"}
             </div>
           </div>
         </div>
 
         <div className="hg-topActions">
+          {view === "public" && (
+            <button
+              className="hg-btn hg-btn--primary"
+              onClick={() => setCartOpen(true)}
+            >
+              Количка ({cartCount})
+            </button>
+          )}
+
           <div className="hg-switch">
             <button
               className={`hg-switchBtn ${view === "public" ? "is-active" : ""}`}
@@ -849,16 +644,15 @@ function AppShell() {
               className={`hg-switchBtn ${view === "admin" ? "is-active" : ""}`}
               onClick={() => setView("admin")}
               disabled={view === "admin"}
-              title={!token ? "Отвори админ вход" : isAdmin ? "Отвори админ панел" : "Нямаш админ права"}
             >
-              Админ{!token ? " (вход)" : ""}
+              Админ
             </button>
           </div>
 
           {token ? (
             <>
               <div className="hg-userChip">
-                роля: <b>{me?.role || (meLoading ? "проверка…" : "неизвестна")}</b>
+                роля: <b>{me?.role || (meLoading ? "проверка..." : "неизвестна")}</b>
               </div>
               <button className="hg-btn" onClick={doLogout}>
                 Изход
@@ -868,7 +662,7 @@ function AppShell() {
         </div>
       </div>
 
-      {/* ✅ ADMIN LOGIN */}
+      {/* ADMIN LOGIN */}
       {view === "admin" && !token && (
         <form className="hg-panel" onSubmit={doLogin}>
           <div className="hg-panelTitle">Админ вход</div>
@@ -889,7 +683,11 @@ function AppShell() {
               type="password"
               autoComplete="current-password"
             />
-            <button className="hg-btn hg-btn--primary" type="submit" disabled={authLoading}>
+            <button
+              className="hg-btn hg-btn--primary"
+              type="submit"
+              disabled={authLoading}
+            >
               {authLoading ? "..." : "Вход"}
             </button>
           </div>
@@ -898,20 +696,30 @@ function AppShell() {
         </form>
       )}
 
-      {view === "admin" && token && meLoading && <div className="hg-panel">Проверка на права…</div>}
-      {view === "admin" && token && authMsg && !meLoading && <div className="hg-panel">{authMsg}</div>}
+      {view === "admin" && token && meLoading && (
+        <div className="hg-panel">Проверка на права…</div>
+      )}
+      {view === "admin" && token && authMsg && !meLoading && (
+        <div className="hg-panel">{authMsg}</div>
+      )}
 
-      {/* ✅ ADMIN PANEL */}
+      {/* ADMIN PANEL */}
       {view === "admin" && (
         <div>
           {!token ? (
             <div className="hg-panel hg-panel--bad">Влез първо.</div>
           ) : meLoading ? null : !isAdmin ? (
-            <div className="hg-panel hg-panel--bad">Нямаш админ права (роля: {me?.role || "неизвестна"}).</div>
+            <div className="hg-panel hg-panel--bad">
+              Нямаш админ права.
+            </div>
           ) : (
             <>
               <div className="hg-toolbar">
-                <select className="hg-select" value={adminStatus} onChange={(e) => setAdminStatus(e.target.value)}>
+                <select
+                  className="hg-select"
+                  value={adminStatus}
+                  onChange={(e) => setAdminStatus(e.target.value)}
+                >
                   {ADMIN_STATUSES.map((s) => (
                     <option key={s} value={s}>
                       {ADMIN_STATUS_LABELS[s] || s}
@@ -919,30 +727,28 @@ function AppShell() {
                   ))}
                 </select>
 
-                <button className="hg-btn" onClick={loadAdmin} disabled={adminLoading}>
+                <button
+                  className="hg-btn"
+                  onClick={loadAdmin}
+                  disabled={adminLoading}
+                >
                   Обнови
                 </button>
 
-                <button className="hg-btn" onClick={approveExistingNew} disabled={adminLoading}>
-                  Одобри всички НОВИ
+                <button
+                  className="hg-btn"
+                  onClick={approveExistingNew}
+                  disabled={adminLoading}
+                >
+                  Одобри всички нови
                 </button>
 
                 <button
-                  className="hg-btn"
-                  onClick={seedCategories}
-                  disabled={seedCatsLoading || adminLoading}
-                  title="Създава стандартен каталог с категории"
+                  className="hg-btn hg-btn--primary"
+                  onClick={openCreateForm}
+                  disabled={adminLoading}
                 >
-                  {seedCatsLoading ? "Добавяне..." : "Добави категории"}
-                </button>
-
-                <button
-                  className="hg-btn"
-                  onClick={recategorizeMissing}
-                  disabled={recatLoading || adminLoading}
-                  title="Попълва categoryPath за продукти без категория"
-                >
-                  {recatLoading ? "Обработка..." : "Рекатегоризирай липсващи"}
+                  Нов продукт
                 </button>
 
                 <div className="hg-counter">
@@ -957,55 +763,322 @@ function AppShell() {
               {adminMsg && <div className="hg-panel">{adminMsg}</div>}
               {adminLoading && <div className="hg-panel">Зареждане…</div>}
 
+              {formOpen && (
+                <form className="hg-panel hg-productForm" onSubmit={submitProductForm}>
+                  <div className="hg-panelTitle">
+                    {editingId ? "Редакция на продукт" : "Нов продукт"}
+                  </div>
+
+                  <div className="hg-formGrid">
+                    <input
+                      className="hg-input"
+                      placeholder="Заглавие"
+                      value={productForm.title}
+                      onChange={(e) => updateFormField("title", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="Марка"
+                      value={productForm.brand}
+                      onChange={(e) => updateFormField("brand", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="SKU"
+                      value={productForm.sku}
+                      onChange={(e) => updateFormField("sku", e.target.value)}
+                    />
+
+                    <select
+                      className="hg-select"
+                      value={productForm.category}
+                      onChange={(e) => updateFormField("category", e.target.value)}
+                    >
+                      <option value="other">other</option>
+                      <option value="home">home</option>
+                      <option value="garden">garden</option>
+                      <option value="tools">tools</option>
+                      <option value="outdoor">outdoor</option>
+                      <option value="kitchen">kitchen</option>
+                      <option value="storage">storage</option>
+                    </select>
+
+                    <input
+                      className="hg-input"
+                      placeholder="Цена"
+                      value={productForm.price}
+                      onChange={(e) => updateFormField("price", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="Базова цена"
+                      value={productForm.basePrice}
+                      onChange={(e) => updateFormField("basePrice", e.target.value)}
+                    />
+
+                    <select
+                      className="hg-select"
+                      value={productForm.markupType}
+                      onChange={(e) => updateFormField("markupType", e.target.value)}
+                    >
+                      <option value="none">Без надценка</option>
+                      <option value="percent">Процент</option>
+                      <option value="fixed">Фиксирана</option>
+                    </select>
+
+                    <input
+                      className="hg-input"
+                      placeholder="Надценка"
+                      value={productForm.markupValue}
+                      onChange={(e) => updateFormField("markupValue", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="Крайна цена"
+                      value={productForm.finalPrice}
+                      onChange={(e) => updateFormField("finalPrice", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="Валута"
+                      value={productForm.currency}
+                      onChange={(e) => updateFormField("currency", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="Доставна цена"
+                      value={productForm.shippingPrice}
+                      onChange={(e) => updateFormField("shippingPrice", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="Дни за доставка"
+                      value={productForm.shippingDays}
+                      onChange={(e) => updateFormField("shippingDays", e.target.value)}
+                    />
+
+                    <select
+                      className="hg-select"
+                      value={productForm.stockStatus}
+                      onChange={(e) => updateFormField("stockStatus", e.target.value)}
+                    >
+                      <option value="unknown">Неизвестна наличност</option>
+                      <option value="in_stock">В наличност</option>
+                      <option value="out_of_stock">Изчерпан</option>
+                    </select>
+
+                    <input
+                      className="hg-input"
+                      placeholder="Количество"
+                      value={productForm.stockQty}
+                      onChange={(e) => updateFormField("stockQty", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="Главна снимка (URL)"
+                      value={productForm.imageUrl}
+                      onChange={(e) => updateFormField("imageUrl", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="Source"
+                      value={productForm.source}
+                      onChange={(e) => updateFormField("source", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="Source URL"
+                      value={productForm.sourceUrl}
+                      onChange={(e) => updateFormField("sourceUrl", e.target.value)}
+                    />
+
+                    <select
+                      className="hg-select"
+                      value={productForm.status}
+                      onChange={(e) => updateFormField("status", e.target.value)}
+                    >
+                      <option value="new">new</option>
+                      <option value="approved">approved</option>
+                      <option value="rejected">rejected</option>
+                      <option value="blacklisted">blacklisted</option>
+                    </select>
+
+                    <label className="hg-check">
+                      <input
+                        type="checkbox"
+                        checked={productForm.shippingToBG}
+                        onChange={(e) => updateFormField("shippingToBG", e.target.checked)}
+                      />
+                      Доставка до България
+                    </label>
+
+                    <label className="hg-check">
+                      <input
+                        type="checkbox"
+                        checked={productForm.isActive}
+                        onChange={(e) => updateFormField("isActive", e.target.checked)}
+                      />
+                      Активен продукт
+                    </label>
+
+                    <label className="hg-check">
+                      <input
+                        type="checkbox"
+                        checked={productForm.isFeatured}
+                        onChange={(e) => updateFormField("isFeatured", e.target.checked)}
+                      />
+                      Препоръчан
+                    </label>
+                  </div>
+
+                  <textarea
+                    className="hg-textarea"
+                    placeholder="Кратко описание"
+                    value={productForm.shortDescription}
+                    onChange={(e) => updateFormField("shortDescription", e.target.value)}
+                  />
+
+                  <textarea
+                    className="hg-textarea"
+                    placeholder="Описание"
+                    value={productForm.description}
+                    onChange={(e) => updateFormField("description", e.target.value)}
+                  />
+
+                  <textarea
+                    className="hg-textarea"
+                    placeholder="Допълнителни снимки (по един URL на ред)"
+                    value={productForm.imagesText}
+                    onChange={(e) => updateFormField("imagesText", e.target.value)}
+                  />
+
+                  <div className="hg-actions">
+                    <button
+                      className="hg-btn hg-btn--primary"
+                      type="submit"
+                      disabled={formLoading}
+                    >
+                      {formLoading
+                        ? "Запис..."
+                        : editingId
+                        ? "Запази промените"
+                        : "Добави продукт"}
+                    </button>
+
+                    <button
+                      className="hg-btn"
+                      type="button"
+                      onClick={closeForm}
+                      disabled={formLoading}
+                    >
+                      Отказ
+                    </button>
+                  </div>
+                </form>
+              )}
+
               <div className="hg-grid">
-                {!adminLoading && adminItems.length === 0 && <div className="hg-panel">Няма продукти за този филтър.</div>}
+                {!adminLoading && adminItems.length === 0 && (
+                  <div className="hg-panel">Няма продукти за този филтър.</div>
+                )}
 
                 {adminItems.map((p) => (
                   <div className="hg-card" key={p._id}>
-                    <div className="hg-cardTop">
+                    <div
+                      className="hg-thumb"
+                      style={{
+                        backgroundImage: productImage(p)
+                          ? `url("${productImage(p)}")`
+                          : "linear-gradient(135deg,#eee,#f7f7f7)",
+                      }}
+                    />
+
+                    <div className="hg-cardBody">
                       <h3 className="hg-cardTitle">{p.title}</h3>
+
                       <div className="hg-meta">
-                        <span className="hg-pill">{p.category}</span>
-                        <span className="hg-pill">{p.source}</span>
-                        <span className="hg-pill hg-pill--status">статус: {p.status}</span>
+                        <span className="hg-pill">
+                          {p.brand || "без марка"}
+                        </span>
+                        <span className="hg-pill">
+                          {p.stockStatus || "unknown"}
+                        </span>
+                        <span className="hg-pill hg-pill--status">
+                          статус: {p.status}
+                        </span>
                       </div>
-                    </div>
 
-                    <div className="hg-kpis">
-                      Каталог:{" "}
-                      <b>
-                        {Array.isArray(p.categoryPath) && p.categoryPath.length ? p.categoryPath.join(" / ") : "-"}
-                      </b>
-                    </div>
+                      <div className="hg-kpis">
+                        Каталог:{" "}
+                        <b>
+                          {Array.isArray(p.categoryPath) && p.categoryPath.length
+                            ? p.categoryPath.join(" / ")
+                            : p.category || "-"}
+                        </b>
+                      </div>
 
-                    <div className="hg-price">
-                      {p.price} {p.currency}
-                    </div>
+                      <div className="hg-kpis">
+                        SKU: <b>{p.sku || "-"}</b> • Наличност:{" "}
+                        <b>{p.stockQty ?? "-"}</b>
+                      </div>
 
-                    <div className="hg-kpis">
-                      Оценка: <b>{p.score ?? 0}</b> • ProfitScore: <b>{p.profitScore ?? 0}</b> • Преглеждания:{" "}
-                      <b>{p.views ?? 0}</b> • Кликове: <b>{p.clicks ?? 0}</b>
-                    </div>
+                      <div className="hg-price">
+                        {formatPrice(productPrice(p), p.currency)}
+                      </div>
 
-                    <div className="hg-url">{p.sourceUrl}</div>
+                      <div className="hg-kpis">
+                        Преглеждания: <b>{p.views ?? 0}</b> • Кликове:{" "}
+                        <b>{p.clicks ?? 0}</b>
+                      </div>
 
-                    <div className="hg-actions hg-actions--wrap">
-                      <button className="hg-btn" onClick={() => setStatus(p._id, "approved")} disabled={adminLoading}>
-                        Одобри
-                      </button>
-                      <button className="hg-btn" onClick={() => setStatus(p._id, "rejected")} disabled={adminLoading}>
-                        Откажи
-                      </button>
-                      <button className="hg-btn" onClick={() => setStatus(p._id, "blacklisted")} disabled={adminLoading}>
-                        Черен списък
-                      </button>
-                      <button className="hg-btn hg-btn--danger" onClick={() => deleteProduct(p._id)} disabled={adminLoading}>
-                        Изтрий
-                      </button>
+                      <div className="hg-actions hg-actions--wrap">
+                        <button
+                          className="hg-btn hg-btn--primary"
+                          onClick={() => openEditForm(p)}
+                          disabled={adminLoading}
+                        >
+                          Редактирай
+                        </button>
 
-                      <a className="hg-link" href={`${API}/products/${p._id}/click`} target="_blank" rel="noreferrer">
-                        Отвори оферта →
-                      </a>
+                        <button
+                          className="hg-btn"
+                          onClick={() => setStatus(p._id, "approved")}
+                          disabled={adminLoading}
+                        >
+                          Одобри
+                        </button>
+                        <button
+                          className="hg-btn"
+                          onClick={() => setStatus(p._id, "rejected")}
+                          disabled={adminLoading}
+                        >
+                          Откажи
+                        </button>
+                        <button
+                          className="hg-btn"
+                          onClick={() => setStatus(p._id, "blacklisted")}
+                          disabled={adminLoading}
+                        >
+                          Черен списък
+                        </button>
+                        <button
+                          className="hg-btn hg-btn--danger"
+                          onClick={() => deleteProduct(p._id)}
+                          disabled={adminLoading}
+                        >
+                          Изтрий
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1015,259 +1088,313 @@ function AppShell() {
         </div>
       )}
 
-      {/* ✅ PUBLIC */}
+      {/* PUBLIC */}
       {view === "public" && (
         <>
-          {/* Drawer */}
-          <div className={`hg-backdrop ${catsOpen ? "is-open" : ""}`} onClick={() => setCatsOpen(false)} aria-hidden={!catsOpen} />
-          <aside className={`hg-drawer ${catsOpen ? "is-open" : ""}`}>
-            <div className="hg-sideTitle">
-              <h3>Категории</h3>
-              <span className="hg-sideHint">{categoriesLoading ? "Зареждане…" : "Подкатегории"}</span>
-            </div>
+          <div className="hg-toolbar">
+            <input
+              className="hg-input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Търси по модел, марка или продукт..."
+            />
 
-            <div className="hg-catTop">
-              <button type="button" className={`hg-catBtn ${category === "all" ? "is-active" : ""}`} onClick={() => selectCategory("all")}>
-                <span className="hg-catDot" />
-                <span className="hg-catName">Всички категории</span>
+            <select
+              className="hg-select"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+            >
+              {SORTS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {loading && <div className="hg-panel">Зареждане…</div>}
+          {!loading && errMsg && (
+            <div className="hg-panel hg-panel--bad">{errMsg}</div>
+          )}
+
+          {!loading && (
+            <div className="hg-pager">
+              <button
+                className="hg-btn"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+              >
+                Назад
+              </button>
+              <div className="hg-counter">
+                Страница <b>{page}</b> / <b>{totalPages}</b> — Общо:{" "}
+                <b>{meta.total}</b>
+              </div>
+              <button
+                className="hg-btn"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+              >
+                Напред
               </button>
             </div>
+          )}
 
-            <CategoryTree nodes={categoryTree} />
-          </aside>
+          <div className="hg-grid">
+            {!loading && products.length === 0 && (
+              <div className="hg-panel">Няма продукти.</div>
+            )}
 
-          <div className="hg-main">
-            {/* Sidebar */}
-            <aside className="hg-side">
-              <div className="hg-sideTitle">
-                <h3>Категории</h3>
-                <span className="hg-sideHint">{categoriesLoading ? "Зареждане…" : "Подкатегории"}</span>
-              </div>
+            {products.map((p) => (
+              <div className="hg-card" key={p._id}>
+                <div
+                  className="hg-thumb"
+                  style={{
+                    backgroundImage: productImage(p)
+                      ? `url("${productImage(p)}")`
+                      : "linear-gradient(135deg,#eee,#f7f7f7)",
+                  }}
+                />
 
-              <div className="hg-catTop">
-                <button type="button" className={`hg-catBtn ${category === "all" ? "is-active" : ""}`} onClick={() => selectCategory("all")}>
-                  <span className="hg-catDot" />
-                  <span className="hg-catName">Всички категории</span>
-                </button>
-              </div>
+                <div className="hg-cardBody">
+                  <h3 className="hg-cardTitle">{p.title}</h3>
 
-              <CategoryTree nodes={categoryTree} />
-            </aside>
+                  <div className="hg-meta">
+                    {p.brand ? <span className="hg-pill">{p.brand}</span> : null}
 
-            {/* Content */}
-            <div>
-              {/* ✅ Breadcrumb */}
-              {breadcrumb.length ? (
-                <div className="hg-breadcrumb">
-                  <button className="hg-bcLink" type="button" onClick={() => selectCategory("all")}>
-                    Начало
-                  </button>
-                  {breadcrumb.map((c, idx) => (
-                    <span key={c.key} className="hg-bcItem">
-                      <span className="hg-bcSep">›</span>
-                      {idx === breadcrumb.length - 1 ? (
-                        <span className="hg-bcCurrent">{c.name}</span>
-                      ) : (
-                        <button className="hg-bcLink" type="button" onClick={() => selectCategory(c.key)}>
-                          {c.name}
-                        </button>
-                      )}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
+                    {p.stockStatus === "in_stock" ? (
+                      <span className="hg-pill hg-pill--ok">В наличност</span>
+                    ) : p.stockStatus === "out_of_stock" ? (
+                      <span className="hg-pill hg-pill--bad">Изчерпан</span>
+                    ) : (
+                      <span className="hg-pill">Наличност: неизвестна</span>
+                    )}
 
-              <div className="hg-toolbar">
-                <button type="button" className="hg-catOpenBtn" onClick={() => setCatsOpen(true)}>
-                  Категории
-                </button>
-
-                <input className="hg-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Търси продукти..." />
-
-                <select className="hg-select" value={category} onChange={(e) => selectCategory(e.target.value)}>
-                  {categoryOptions.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-
-                <select className="hg-select" value={sort} onChange={(e) => setSort(e.target.value)}>
-                  {SORTS.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-
-                <div className="hg-chips">
-                  <button type="button" className={`hg-chip ${fastShip ? "is-on" : ""}`} onClick={() => setFastShip((v) => !v)}>
-                    Бърза доставка
-                  </button>
-
-                  {token && isAdmin ? (
-                    <button
-                      type="button"
-                      className={`hg-chip ${showStats ? "is-on" : ""}`}
-                      onClick={() => setShowStats((v) => !v)}
-                      title="Покажи статистики (само за админ)"
-                    >
-                      Статистики
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="hg-modes">
-                <button className={`hg-btn ${mode === "topProfit" ? "hg-btn--primary" : ""}`} onClick={() => setMode("topProfit")}>
-                  Най-добра печалба
-                </button>
-                <button className={`hg-btn ${mode === "topClicks" ? "hg-btn--primary" : ""}`} onClick={() => setMode("topClicks")}>
-                  Най-кликвани
-                </button>
-                <button className={`hg-btn ${mode === "latest" ? "hg-btn--primary" : ""}`} onClick={() => setMode("latest")}>
-                  Най-нови
-                </button>
-              </div>
-
-              {loading && <div className="hg-panel">Зареждане…</div>}
-              {!loading && errMsg && <div className="hg-panel hg-panel--bad">{errMsg}</div>}
-
-              {!loading && mode === "latest" && (
-                <div className="hg-pager">
-                  <button className="hg-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
-                    Назад
-                  </button>
-                  <div className="hg-counter">
-                    Страница <b>{page}</b> / <b>{totalPages}</b> — Общо: <b>{meta.total}</b>
+                    {p.shippingDays ? (
+                      <span className="hg-pill">
+                        Доставка: {p.shippingDays} дни
+                      </span>
+                    ) : null}
                   </div>
-                  <button className="hg-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
-                    Напред
+
+                  <div className="hg-price">
+                    {formatPrice(productPrice(p), p.currency)}
+                  </div>
+
+                  <div className="hg-actions">
+                    <button
+                      className="hg-btn"
+                      type="button"
+                      onClick={() => openProduct(p)}
+                    >
+                      Детайли
+                    </button>
+
+                    <button
+                      className="hg-btn hg-btn--primary"
+                      type="button"
+                      onClick={() => addToCart(p)}
+                    >
+                      Добави в количката
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* PRODUCT MODAL */}
+          {selectedProduct ? (
+            <>
+              <div className="hg-modalBackdrop" onClick={closeProduct} />
+              <div className="hg-modal">
+                <div className="hg-modalHead">
+                  <div className="hg-modalTitle">Детайли за продукта</div>
+                  <button
+                    className="hg-modalClose"
+                    onClick={closeProduct}
+                    aria-label="Затвори"
+                  >
+                    ✕
                   </button>
                 </div>
-              )}
 
-              <div className="hg-grid">
-                {!loading && publicItems.length === 0 && <div className="hg-panel">Няма продукти.</div>}
+                <div className="hg-productModal">
+                  <div
+                    className="hg-productModal__image"
+                    style={{
+                      backgroundImage: productImage(selectedProduct)
+                        ? `url("${productImage(selectedProduct)}")`
+                        : "linear-gradient(135deg,#eee,#f7f7f7)",
+                    }}
+                  />
 
-                {publicItems.map((p) => (
-                  <div className="hg-card" key={p._id}>
-                    {/* ✅ Click on image -> offer */}
-                    <a
-                      className="hg-thumbLink"
-                      href={`${API}/products/${p._id}/click`}
-                      target="_blank"
-                      rel="noreferrer"
-                      title="Отвори оферта"
-                      style={{
-                        backgroundImage: p.imageUrl ? `url("${p.imageUrl}")` : "linear-gradient(135deg,#eee,#f7f7f7)",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        backgroundRepeat: "no-repeat",
-                      }}
-                    >
-                      <span className="hg-thumbOverlay">Отвори оферта →</span>
-                    </a>
+                  <div className="hg-productModal__content">
+                    <h2 className="hg-productModal__title">
+                      {selectedProduct.title}
+                    </h2>
 
-                    <div className="hg-cardBody">
-                      <h3 className="hg-cardTitle">{p.title}</h3>
-
-                      <div className="hg-meta">
-                        <span className="hg-pill">
-                          {Array.isArray(p.categoryPath) && p.categoryPath.length ? p.categoryPath.join(" / ") : p.category}
-                        </span>
-                        <span className="hg-pill">{p.source}</span>
-
-                        {toNum(p.shippingDays) > 0 && (
-                          <span className="hg-pill">
-                            {toNum(p.shippingDays)} ден{toNum(p.shippingDays) === 1 ? "" : "а"}
-                          </span>
-                        )}
-                      </div>
-
-                      {token && isAdmin && showStats ? (
-                        <div className="hg-kpis">
-                          Преглеждания: <b>{p.views ?? 0}</b> • Кликове: <b>{p.clicks ?? 0}</b> • ProfitScore:{" "}
-                          <b>{p.profitScore ?? 0}</b> • Оценка: <b>{p.score ?? 0}</b>
-                        </div>
+                    <div className="hg-meta">
+                      {selectedProduct.brand ? (
+                        <span className="hg-pill">{selectedProduct.brand}</span>
                       ) : null}
 
-                      <div className="hg-price">
-                        {p.price} {p.currency}
-                      </div>
+                      {selectedProduct.sku ? (
+                        <span className="hg-pill">SKU: {selectedProduct.sku}</span>
+                      ) : null}
 
-                      {/* ✅ Related link (NOT a details button) */}
-                      <button type="button" className="hg-relatedLink" onClick={() => openRelated(p)}>
-                        Подобни продукти
+                      <span className="hg-pill">
+                        {selectedProduct.stockStatus || "unknown"}
+                      </span>
+                    </div>
+
+                    <div className="hg-price">
+                      {formatPrice(
+                        productPrice(selectedProduct),
+                        selectedProduct.currency
+                      )}
+                    </div>
+
+                    {selectedProduct.shortDescription ? (
+                      <div className="hg-productModal__text">
+                        {selectedProduct.shortDescription}
+                      </div>
+                    ) : null}
+
+                    {selectedProduct.description ? (
+                      <div className="hg-productModal__text">
+                        {selectedProduct.description}
+                      </div>
+                    ) : null}
+
+                    <div className="hg-kpis">
+                      Наличност: <b>{selectedProduct.stockQty ?? "-"}</b> •
+                      Доставка:{" "}
+                      <b>
+                        {selectedProduct.shippingDays
+                          ? `${selectedProduct.shippingDays} дни`
+                          : "—"}
+                      </b>
+                    </div>
+
+                    <div className="hg-actions">
+                      <button
+                        className="hg-btn hg-btn--primary"
+                        onClick={() => addToCart(selectedProduct)}
+                      >
+                        Добави в количката
                       </button>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
+            </>
+          ) : null}
 
-              {/* ✅ Related modal */}
-              {relOpen ? (
-                <>
-                  <div className="hg-modalBackdrop" onClick={closeRelated} />
-                  <div className="hg-modal">
-                    <div className="hg-modalHead">
-                      <div className="hg-modalTitle">Подобни продукти</div>
-                      <button className="hg-modalClose" onClick={closeRelated} aria-label="Затвори">
-                        ✕
-                      </button>
-                    </div>
+          {/* CART DRAWER */}
+          {cartOpen ? (
+            <>
+              <div
+                className="hg-modalBackdrop"
+                onClick={() => setCartOpen(false)}
+              />
+              <div className="hg-cartDrawer">
+                <div className="hg-modalHead">
+                  <div className="hg-modalTitle">Количка</div>
+                  <button
+                    className="hg-modalClose"
+                    onClick={() => setCartOpen(false)}
+                    aria-label="Затвори"
+                  >
+                    ✕
+                  </button>
+                </div>
 
-                    {relFor ? <div className="hg-modalSub">{relFor.title}</div> : null}
-
-                    {relLoading ? <div className="hg-panel">Зареждане…</div> : null}
-                    {!relLoading && relErr ? <div className="hg-panel hg-panel--bad">{relErr}</div> : null}
-
-                    {!relLoading && !relErr && (
-                      <div className="hg-relGrid">
-                        {relItems.map((x) => (
-                          <a
-                            key={x._id}
-                            className="hg-relItem"
-                            href={`${API}/products/${x._id}/click`}
-                            target="_blank"
-                            rel="noreferrer"
-                            title="Отвори оферта"
-                          >
+                <div className="hg-cartBody">
+                  {!cart.length ? (
+                    <div className="hg-panel">Количката е празна.</div>
+                  ) : (
+                    <>
+                      <div className="hg-cartList">
+                        {cart.map((item) => (
+                          <div className="hg-cartItem" key={item._id}>
                             <div
-                              className="hg-relThumb"
+                              className="hg-cartItem__image"
                               style={{
-                                backgroundImage: x.imageUrl ? `url("${x.imageUrl}")` : "linear-gradient(135deg,#eee,#f7f7f7)",
+                                backgroundImage: item.imageUrl
+                                  ? `url("${item.imageUrl}")`
+                                  : "linear-gradient(135deg,#eee,#f7f7f7)",
                               }}
                             />
-                            <div className="hg-relName">{x.title}</div>
-                            <div className="hg-relPrice">
-                              {x.price} {x.currency}
+                            <div className="hg-cartItem__content">
+                              <div className="hg-cartItem__title">
+                                {item.title}
+                              </div>
+                              <div className="hg-cartItem__price">
+                                {formatPrice(item.price, item.currency)}
+                              </div>
+
+                              <div className="hg-cartQty">
+                                <button
+                                  className="hg-btn"
+                                  onClick={() => decreaseQty(item._id)}
+                                >
+                                  -
+                                </button>
+                                <span className="hg-cartQty__value">
+                                  {item.qty}
+                                </span>
+                                <button
+                                  className="hg-btn"
+                                  onClick={() => increaseQty(item._id)}
+                                >
+                                  +
+                                </button>
+                                <button
+                                  className="hg-btn hg-btn--danger"
+                                  onClick={() => removeFromCart(item._id)}
+                                >
+                                  Премахни
+                                </button>
+                              </div>
                             </div>
-                          </a>
+                          </div>
                         ))}
-                        {!relItems.length ? <div className="hg-panel">Няма намерени подобни продукти.</div> : null}
                       </div>
-                    )}
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </div>
+
+                      <div className="hg-cartFooter">
+                        <div className="hg-cartTotal">
+                          Общо: <b>{formatPrice(cartTotal, "BGN")}</b>
+                        </div>
+
+                        <div className="hg-note">
+                          Това е първа стъпка: количката вече работи. Следващият
+                          етап е backend за поръчки.
+                        </div>
+
+                        <div className="hg-actions">
+                          <button className="hg-btn" onClick={clearCart}>
+                            Изчисти количката
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : null}
         </>
       )}
     </div>
   );
 }
 
-/** ✅ Routes:
-    /                -> shop
-    /category/*      -> shop with category from URL (SEO)
-*/
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<AppShell />} />
-      <Route path="/category/*" element={<AppShell />} />
+      <Route path="*" element={<AppShell />} />
     </Routes>
   );
 }

@@ -9,6 +9,7 @@ const path = require("path");
 const authRoutes = require("./routes/auth");
 const adminProductsRoutes = require("./routes/admin.products");
 const productsRoutes = require("./routes/products");
+const ordersRoutes = require("./routes/orders");
 
 // ✅ Categories routes (safe require + show real error)
 let categoriesRoutes = null;
@@ -59,22 +60,24 @@ app.options(/.*/, cors({ origin: true, credentials: true }));
 app.get("/health", (req, res) => res.json({ ok: true }));
 
 /* =========================
-   API Routes (MUST be before React catch-all)
+   API Routes
 ========================= */
 app.use("/auth", authRoutes);
 app.use("/admin", adminProductsRoutes);
 app.use("/products", productsRoutes);
+app.use("/orders", ordersRoutes);
 
 // ✅ Categories
 if (categoriesRoutes) {
   app.use("/categories", categoriesRoutes);
 } else {
-  // IMPORTANT: don't let React catch-all eat these endpoints
   app.get("/categories", (req, res) =>
     res.status(503).json({
       ok: false,
       message: "Categories API disabled (failed to load routes/categories.js)",
-      error: categoriesLoadError ? (categoriesLoadError.message || String(categoriesLoadError)) : "unknown",
+      error: categoriesLoadError
+        ? categoriesLoadError.message || String(categoriesLoadError)
+        : "unknown",
     })
   );
 
@@ -82,16 +85,19 @@ if (categoriesRoutes) {
     res.status(503).json({
       ok: false,
       message: "Categories API disabled (failed to load routes/categories.js)",
-      error: categoriesLoadError ? (categoriesLoadError.message || String(categoriesLoadError)) : "unknown",
+      error: categoriesLoadError
+        ? categoriesLoadError.message || String(categoriesLoadError)
+        : "unknown",
     })
   );
 
-  // matches /categories/by-path/anything
   app.get("/categories/by-path/*", (req, res) =>
     res.status(503).json({
       ok: false,
       message: "Categories API disabled (failed to load routes/categories.js)",
-      error: categoriesLoadError ? (categoriesLoadError.message || String(categoriesLoadError)) : "unknown",
+      error: categoriesLoadError
+        ? categoriesLoadError.message || String(categoriesLoadError)
+        : "unknown",
     })
   );
 }
@@ -103,7 +109,6 @@ if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "client", "build");
   app.use(express.static(buildPath));
 
-  // ✅ keep catch-all LAST
   app.get(/.*/, (req, res) => {
     res.sendFile(path.join(buildPath, "index.html"));
   });
@@ -131,7 +136,7 @@ function startBotOnceAfterBoot() {
     } catch (err) {
       console.error("❌ Profitshare bot error:", err?.stack || err?.message || err);
     }
-  }, 15_000);
+  }, 15000);
 }
 
 /* =========================
