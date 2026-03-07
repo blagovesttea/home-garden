@@ -386,6 +386,75 @@ function AppShell() {
     [cart]
   );
 
+  const [checkoutForm, setCheckoutForm] = useState({
+    customerName: "",
+    phone: "",
+    city: "",
+    address: "",
+    note: "",
+  });
+
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderMsg, setOrderMsg] = useState("");
+
+  function updateCheckoutField(key, value) {
+    setCheckoutForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }
+
+  async function submitOrder(e) {
+    e?.preventDefault?.();
+    setOrderMsg("");
+
+    if (!cart.length) {
+      setOrderMsg("Количката е празна.");
+      return;
+    }
+
+    if (!checkoutForm.customerName.trim() || !checkoutForm.phone.trim()) {
+      setOrderMsg("Името и телефонът са задължителни.");
+      return;
+    }
+
+    setOrderLoading(true);
+
+    try {
+      const payload = {
+        customerName: checkoutForm.customerName.trim(),
+        phone: checkoutForm.phone.trim(),
+        city: checkoutForm.city.trim(),
+        address: checkoutForm.address.trim(),
+        note: checkoutForm.note.trim(),
+        items: cart.map((item) => ({
+          productId: item._id,
+          qty: item.qty,
+        })),
+      };
+
+      const data = await apiFetch("/orders", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      setOrderMsg(data?.message || "Поръчката е изпратена успешно.");
+      clearCart();
+
+      setCheckoutForm({
+        customerName: "",
+        phone: "",
+        city: "",
+        address: "",
+        note: "",
+      });
+    } catch (e2) {
+      setOrderMsg(e2?.message || "Грешка при изпращане на поръчката.");
+    } finally {
+      setOrderLoading(false);
+    }
+  }
+
   /* =========================
      ADMIN
   ========================== */
@@ -662,7 +731,6 @@ function AppShell() {
         </div>
       </div>
 
-      {/* ADMIN LOGIN */}
       {view === "admin" && !token && (
         <form className="hg-panel" onSubmit={doLogin}>
           <div className="hg-panelTitle">Админ вход</div>
@@ -703,15 +771,12 @@ function AppShell() {
         <div className="hg-panel">{authMsg}</div>
       )}
 
-      {/* ADMIN PANEL */}
       {view === "admin" && (
         <div>
           {!token ? (
             <div className="hg-panel hg-panel--bad">Влез първо.</div>
           ) : meLoading ? null : !isAdmin ? (
-            <div className="hg-panel hg-panel--bad">
-              Нямаш админ права.
-            </div>
+            <div className="hg-panel hg-panel--bad">Нямаш админ права.</div>
           ) : (
             <>
               <div className="hg-toolbar">
@@ -1088,7 +1153,6 @@ function AppShell() {
         </div>
       )}
 
-      {/* PUBLIC */}
       {view === "public" && (
         <>
           <div className="hg-toolbar">
@@ -1203,7 +1267,6 @@ function AppShell() {
             ))}
           </div>
 
-          {/* PRODUCT MODAL */}
           {selectedProduct ? (
             <>
               <div className="hg-modalBackdrop" onClick={closeProduct} />
@@ -1291,7 +1354,6 @@ function AppShell() {
             </>
           ) : null}
 
-          {/* CART DRAWER */}
           {cartOpen ? (
             <>
               <div
@@ -1367,16 +1429,76 @@ function AppShell() {
                           Общо: <b>{formatPrice(cartTotal, "BGN")}</b>
                         </div>
 
-                        <div className="hg-note">
-                          Това е първа стъпка: количката вече работи. Следващият
-                          етап е backend за поръчки.
-                        </div>
+                        <form className="hg-checkoutForm" onSubmit={submitOrder}>
+                          <div className="hg-checkoutGrid">
+                            <input
+                              className="hg-input"
+                              placeholder="Име и фамилия *"
+                              value={checkoutForm.customerName}
+                              onChange={(e) =>
+                                updateCheckoutField("customerName", e.target.value)
+                              }
+                            />
 
-                        <div className="hg-actions">
-                          <button className="hg-btn" onClick={clearCart}>
-                            Изчисти количката
-                          </button>
-                        </div>
+                            <input
+                              className="hg-input"
+                              placeholder="Телефон *"
+                              value={checkoutForm.phone}
+                              onChange={(e) =>
+                                updateCheckoutField("phone", e.target.value)
+                              }
+                            />
+
+                            <input
+                              className="hg-input"
+                              placeholder="Град"
+                              value={checkoutForm.city}
+                              onChange={(e) =>
+                                updateCheckoutField("city", e.target.value)
+                              }
+                            />
+
+                            <input
+                              className="hg-input"
+                              placeholder="Адрес"
+                              value={checkoutForm.address}
+                              onChange={(e) =>
+                                updateCheckoutField("address", e.target.value)
+                              }
+                            />
+                          </div>
+
+                          <textarea
+                            className="hg-textarea hg-textarea--light"
+                            placeholder="Бележка към поръчката"
+                            value={checkoutForm.note}
+                            onChange={(e) =>
+                              updateCheckoutField("note", e.target.value)
+                            }
+                          />
+
+                          {orderMsg ? (
+                            <div className="hg-note hg-note--order">{orderMsg}</div>
+                          ) : null}
+
+                          <div className="hg-actions">
+                            <button
+                              className="hg-btn hg-btn--primary"
+                              type="submit"
+                              disabled={orderLoading}
+                            >
+                              {orderLoading ? "Изпращане..." : "Изпрати поръчка"}
+                            </button>
+
+                            <button
+                              className="hg-btn"
+                              type="button"
+                              onClick={clearCart}
+                            >
+                              Изчисти количката
+                            </button>
+                          </div>
+                        </form>
                       </div>
                     </>
                   )}
