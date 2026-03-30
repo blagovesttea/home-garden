@@ -1,7 +1,11 @@
 const express = require("express");
 const Product = require("../models/Product");
+const Category = require("../models/Category");
 const auth = require("../middleware/auth");
 const adminOnly = require("../middleware/admin");
+
+// auto re-categorize
+const { categorizeProduct } = require("../services/categorizer");
 
 const router = express.Router();
 
@@ -27,6 +31,22 @@ const ALLOWED_CATEGORIES = [
 const ALLOWED_WEIGHT_UNITS = ["g", "kg", "ml", "l", "pcs", ""];
 const ALLOWED_ROAST_LEVELS = ["", "light", "medium", "medium-dark", "dark"];
 const ALLOWED_CAFFEINE_TYPES = ["", "regular", "decaf"];
+
+const MANUAL_CATEGORY_PATHS = {
+  "coffee-beans": ["kafe", "kafe-na-zarna"],
+  "ground-coffee": ["kafe", "mlyano-kafe"],
+  capsules: ["kafe", "kapsuli"],
+  pods: ["kafe", "dozi-i-pods"],
+  machines: ["kafemashini"],
+  grinders: ["aksesoari", "melachki"],
+  accessories: ["aksesoari", "barista-aksesoari"],
+  cups: ["aksesoari", "chashi-i-termosi"],
+  syrups: ["siropi-i-dobavki", "siropi"],
+  "gift-sets": ["kafe"],
+  "office-coffee": ["ofis-i-horeca", "kafe-za-ofisi"],
+  horeca: ["ofis-i-horeca"],
+  other: [],
+};
 
 /** helpers */
 function toSafeNumber(v, fallback = 0) {
@@ -96,6 +116,37 @@ function normalizePriceFields(data = {}) {
     markupValue,
     finalPrice: Number.isNaN(finalPrice) ? null : finalPrice,
     markupType,
+  };
+}
+
+async function resolveManualCategoryMeta(category) {
+  const normalizedCategory = normalizeCategory(category);
+  const mappedPath = MANUAL_CATEGORY_PATHS[normalizedCategory] || [];
+
+  if (!mappedPath.length) {
+    return {
+      categoryId: null,
+      categoryPath: [],
+    };
+  }
+
+  const exact = await Category.findOne({
+    path: mappedPath,
+    isActive: true,
+  })
+    .select("_id path")
+    .lean();
+
+  if (exact) {
+    return {
+      categoryId: exact._id,
+      categoryPath: exact.path || mappedPath,
+    };
+  }
+
+  return {
+    categoryId: null,
+    categoryPath: mappedPath,
   };
 }
 
@@ -211,6 +262,10 @@ router.post("/products", auth, adminOnly, async (req, res) => {
     }
 
     const payload = buildProductPayload(data, req.user.id);
+    const categoryMeta = await resolveManualCategoryMeta(payload.category);
+
+    payload.categoryId = categoryMeta.categoryId;
+    payload.categoryPath = categoryMeta.categoryPath;
 
     const product = await Product.create(payload);
     return res.status(201).json({ ok: true, product });
@@ -393,6 +448,11 @@ router.post("/products/seed", auth, adminOnly, async (req, res) => {
     for (const item of demo) {
       try {
         const payload = buildProductPayload(item, req.user.id);
+        const categoryMeta = await resolveManualCategoryMeta(payload.category);
+
+        payload.categoryId = categoryMeta.categoryId;
+        payload.categoryPath = categoryMeta.categoryPath;
+
         await Product.create(payload);
         created++;
       } catch (e) {
@@ -530,6 +590,12 @@ router.patch("/products/:id", auth, adminOnly, async (req, res) => {
     if (data.reviewsCount == null && data.reviewsCount !== "")
       delete patch.reviewsCount;
 
+    if (data.category != null) {
+      const categoryMeta = await resolveManualCategoryMeta(patch.category);
+      patch.categoryId = categoryMeta.categoryId;
+      patch.categoryPath = categoryMeta.categoryPath;
+    }
+
     const updated = await Product.findByIdAndUpdate(id, { $set: patch }, { new: true });
     if (!updated) return res.status(404).json({ message: "Не е намерен" });
 
@@ -594,6 +660,56 @@ router.post("/products/approve-existing", auth, adminOnly, async (req, res) => {
 });
 
 /**
+ * Auto re-categorize products missing categoryPath
+ */
+router.post("/products/recategorize-missing", auth, adminOnly, async (req, res) => {
+  try {
+    const query = {
+      $or: [
+        { categoryPath: { $exists: false } },
+        { categoryPath: { $type: "array", $size: 0 } },
+      ],
+    };
+
+    const items = await Product.find(query).limit(500).lean();
+    let updated = 0;
+
+    for (const p of items) {
+      const cat = await categorizeProduct({
+        title: p.title,
+        categoryText: p.categoryText || p.category,
+        description: p.description,
+        brand: p.brand,
+      });
+
+      const patch = {};
+      if (Array.isArray(cat.categoryPath) && cat.categoryPath.length) {
+        patch.categoryPath = cat.categoryPath;
+      }
+      if (cat.categoryId) patch.categoryId = cat.categoryId;
+      if (cat.legacyCategory) patch.category = cat.legacyCategory;
+
+      if (Object.keys(patch).length) {
+        await Product.updateOne({ _id: p._id }, { $set: patch });
+        updated++;
+      }
+    }
+
+    return res.json({
+      ok: true,
+      message: `Готово. Проверени: ${items.length} / обновени: ${updated}`,
+      scanned: items.length,
+      updated,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
+  }
+});
+
+/**
  * DELETE /admin/products/:id
  */
 router.delete("/products/:id", auth, adminOnly, async (req, res) => {
@@ -617,8 +733,6 @@ router.delete("/products/:id", auth, adminOnly, async (req, res) => {
  */
 router.post("/categories/seed", auth, adminOnly, async (req, res) => {
   try {
-    const Category = require("../models/Category");
-
     const existing = await Category.countDocuments();
     if (existing > 0) {
       return res.json({
