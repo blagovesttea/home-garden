@@ -7,11 +7,11 @@ const auth = require("../middleware/auth");
 const router = express.Router();
 
 /**
- * Password rules:
- * - min 8 chars
- * - at least 1 uppercase
- * - at least 1 lowercase
- * - at least 1 digit
+ * Правила за парола:
+ * - минимум 8 символа
+ * - поне 1 главна буква
+ * - поне 1 малка буква
+ * - поне 1 цифра
  */
 const PASS_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
@@ -19,8 +19,9 @@ function signToken(user) {
   if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET липсва в .env");
   }
+
   return jwt.sign(
-    { id: user._id, role: user.role },
+    { id: user._id, role: user.role, email: user.email },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -31,7 +32,9 @@ router.post("/register", async (req, res) => {
     const { email, password } = req.body || {};
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email и парола са задължителни." });
+      return res.status(400).json({
+        message: "Имейлът и паролата са задължителни.",
+      });
     }
 
     if (!PASS_RE.test(password)) {
@@ -42,12 +45,16 @@ router.post("/register", async (req, res) => {
     }
 
     const normalizedEmail = String(email).toLowerCase().trim();
+
     const exists = await User.findOne({ email: normalizedEmail });
     if (exists) {
-      return res.status(409).json({ message: "Този email вече е регистриран." });
+      return res.status(409).json({
+        message: "Този имейл вече е регистриран.",
+      });
     }
 
     const hash = await bcrypt.hash(password, 12);
+
     const user = await User.create({
       email: normalizedEmail,
       password: hash,
@@ -55,94 +62,133 @@ router.post("/register", async (req, res) => {
     });
 
     return res.status(201).json({
+      ok: true,
       message: "Регистрацията е успешна.",
-      user: { id: user._id, email: user.email, role: user.role },
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (err) {
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра.",
+      error: err.message,
+    });
   }
 });
 
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body || {};
+
     if (!email || !password) {
-      return res.status(400).json({ message: "Email и парола са задължителни." });
+      return res.status(400).json({
+        message: "Имейлът и паролата са задължителни.",
+      });
     }
 
     const normalizedEmail = String(email).toLowerCase().trim();
     const user = await User.findOne({ email: normalizedEmail });
+
     if (!user) {
-      return res.status(401).json({ message: "Грешен email или парола." });
+      return res.status(401).json({
+        message: "Грешен имейл или парола.",
+      });
     }
 
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) {
-      return res.status(401).json({ message: "Грешен email или парола." });
+      return res.status(401).json({
+        message: "Грешен имейл или парола.",
+      });
     }
 
     const token = signToken(user);
 
     return res.json({
-      message: "Login OK",
+      ok: true,
+      message: "Входът е успешен.",
       token,
-      user: { id: user._id, email: user.email, role: user.role },
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (err) {
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра.",
+      error: err.message,
+    });
   }
 });
 
-/** current user by token */
+/**
+ * Текущ потребител по токен
+ */
 router.get("/me", auth, async (req, res) => {
-  // auth middleware ти слага req.user (обикновено от JWT payload)
-  return res.json({ ok: true, user: req.user }); // { id, role, iat, exp }
+  return res.json({
+    ok: true,
+    user: req.user,
+  });
 });
 
 /**
- * ✅ Make current user admin (safe)
- * Requires:
+ * Прави текущия потребител админ
+ * Изисква:
  * - Bearer token
- * - ADMIN_MAKE_KEY in env
+ * - ADMIN_MAKE_KEY в env
  * - header: x-admin-make-key: <ADMIN_MAKE_KEY>
  *
- * Returns:
- * - new token with role=admin (важно!)
+ * Връща нов токен с обновена роля
  */
 router.post("/make-admin", auth, async (req, res) => {
   try {
-    // ✅ lock route with secret key
     const expected = process.env.ADMIN_MAKE_KEY;
+
     if (!expected) {
       return res.status(500).json({
-        message: "ADMIN_MAKE_KEY липсва в env (за да е безопасна тази функция).",
+        message: "ADMIN_MAKE_KEY липсва в env.",
       });
     }
 
     const provided = req.header("x-admin-make-key");
     if (!provided || provided !== expected) {
-      return res.status(403).json({ message: "Forbidden" });
+      return res.status(403).json({
+        message: "Нямаш достъп до тази функция.",
+      });
     }
 
     const me = await User.findById(req.user.id);
-    if (!me) return res.status(404).json({ message: "User not found" });
+    if (!me) {
+      return res.status(404).json({
+        message: "Потребителят не е намерен.",
+      });
+    }
 
     if (me.role !== "admin") {
       me.role = "admin";
       await me.save();
     }
 
-    // ✅ IMPORTANT: issue new token with updated role
     const token = signToken(me);
 
     return res.json({
       ok: true,
-      message: "You are admin now",
+      message: "Потребителят вече е администратор.",
       token,
-      user: { id: me._id, email: me.email, role: me.role },
+      user: {
+        id: me._id,
+        email: me.email,
+        role: me.role,
+      },
     });
   } catch (err) {
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра.",
+      error: err.message,
+    });
   }
 });
 

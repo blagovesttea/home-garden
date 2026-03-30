@@ -4,9 +4,9 @@ const Product = require("../models/Product");
 const router = express.Router();
 
 /**
- * ✅ Публичен филтър за магазин:
- * - само одобрени
- * - само активни
+ * Само публични продукти:
+ * - одобрени
+ * - активни
  */
 function publicMatch() {
   return {
@@ -16,28 +16,65 @@ function publicMatch() {
 }
 
 /**
- * ✅ Legacy single category -> catalog path
+ * Нормализира category/path за кафе магазина
+ * Пример:
+ * "Кафе на зърна" -> ["kafe-na-zarna"]
+ * "кафе/кафе-на-зърна" -> ["кафе","кафе-на-зърна"]
+ * "coffee-beans" -> ["coffee-beans"]
  */
-function legacyToCatalogPath(cat) {
-  const c = String(cat || "").trim().toLowerCase();
-  if (!c || c === "all") return null;
+function normalizeCategoryPath(input) {
+  const raw = String(input || "").trim().toLowerCase();
+  if (!raw || raw === "all") return null;
 
-  if (c.includes("/")) return c.split("/").filter(Boolean);
+  const map = {
+    "кафе": "kafe",
+    "кафе-на-зърна": "kafe-na-zarna",
+    "мляно-кафе": "mlyano-kafe",
+    "капсули": "kapsuli",
+    "дози": "dozi",
+    "pods": "pods",
+    "кафемашини": "kafemashini",
+    "машини": "kafemashini",
+    "мелачки": "melachki",
+    "аксесоари": "aksesoari",
+    "чаши": "chashi",
+    "сиропи": "siropi",
+    "подаръчни-комплекти": "podarachni-komplekti",
+    "офис": "ofis",
+    "horeca": "horeca",
 
-  if (["home", "garden", "tools", "outdoor", "kitchen", "storage", "other"].includes(c)) {
-    return [c];
+    "coffee-beans": "coffee-beans",
+    "ground-coffee": "ground-coffee",
+    "capsules": "capsules",
+    "pods": "pods",
+    "machines": "machines",
+    "grinders": "grinders",
+    "accessories": "accessories",
+    "cups": "cups",
+    "syrups": "syrups",
+    "gift-sets": "gift-sets",
+    "office-coffee": "office-coffee",
+    "other": "other",
+  };
+
+  if (raw.includes("/")) {
+    return raw
+      .split("/")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => map[s] || s);
   }
 
-  return [c];
+  return [map[raw] || raw];
 }
 
 /**
- * ✅ Категориен филтър:
- * - categoryPath ако има
- * - fallback към legacy category
+ * Категориен филтър:
+ * - първо categoryPath
+ * - fallback към category
  */
 function applyCategoryFilter(filter, category) {
-  const path = legacyToCatalogPath(category);
+  const path = normalizeCategoryPath(category);
   if (!path || !path.length) return;
 
   const prefixExpr = {
@@ -47,7 +84,6 @@ function applyCategoryFilter(filter, category) {
   };
 
   const allMatch = { categoryPath: { $all: path } };
-
   const legacyFallback = path.length === 1 ? { category: path[0] } : null;
 
   filter.$and = filter.$and || [];
@@ -61,10 +97,34 @@ function applyCategoryFilter(filter, category) {
 }
 
 /**
- * ✅ Сортиране за магазин
+ * По-силен search за магазин:
+ * търси в title, shortDescription, description, brand, sku
+ */
+function applySearchFilter(filter, query) {
+  const q = String(query || "").trim();
+  if (!q) return;
+
+  const rx = { $regex: q, $options: "i" };
+
+  filter.$and = filter.$and || [];
+  filter.$and.push({
+    $or: [
+      { title: rx },
+      { shortDescription: rx },
+      { description: rx },
+      { brand: rx },
+      { sku: rx },
+      { category: rx },
+      { categoryPath: rx },
+    ],
+  });
+}
+
+/**
+ * Сортиране за магазина
  */
 function getSort(sort) {
-  const s = String(sort || "newest").toLowerCase();
+  const s = String(sort || "featured").toLowerCase();
 
   switch (s) {
     case "priceasc":
@@ -74,78 +134,116 @@ function getSort(sort) {
       return { finalPrice: -1, price: -1, createdAt: -1 };
 
     case "popular":
-      return { views: -1, clicks: -1, createdAt: -1 };
-
-    case "featured":
-      return { isFeatured: -1, createdAt: -1 };
+      return { views: -1, clicks: -1, isFeatured: -1, createdAt: -1 };
 
     case "newest":
+      return { createdAt: -1, isFeatured: -1 };
+
+    case "featured":
     default:
-      return { createdAt: -1 };
+      return { isFeatured: -1, views: -1, createdAt: -1 };
   }
 }
 
 /**
- * ✅ TOP продукти
  * GET /products/top
  *
  * Query:
  * ?by=views
  * ?by=clicks
  * ?by=newest
+ * ?by=featured
  * ?limit=20
+ * ?category=coffee-beans
  */
 router.get("/top", async (req, res) => {
   try {
     const by = String(req.query.by || "views").toLowerCase();
-    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
+    const category = String(req.query.category || "").trim();
 
-    const baseMatch = publicMatch();
+    const filter = publicMatch();
 
-    let sort = { views: -1, clicks: -1, createdAt: -1 };
-
-    if (by === "clicks") {
-      sort = { clicks: -1, views: -1, createdAt: -1 };
-    } else if (by === "newest") {
-      sort = { createdAt: -1 };
+    if (category && category !== "all") {
+      applyCategoryFilter(filter, category);
     }
 
-    const items = await Product.find(baseMatch).sort(sort).limit(limit);
+    let sort = { views: -1, clicks: -1, isFeatured: -1, createdAt: -1 };
 
-    return res.json({ ok: true, by, limit, items });
+    if (by === "clicks") {
+      sort = { clicks: -1, views: -1, isFeatured: -1, createdAt: -1 };
+    } else if (by === "newest") {
+      sort = { createdAt: -1, isFeatured: -1 };
+    } else if (by === "featured") {
+      sort = { isFeatured: -1, views: -1, createdAt: -1 };
+    }
+
+    const items = await Product.find(filter).sort(sort).limit(limit);
+
+    return res.json({
+      ok: true,
+      by,
+      limit,
+      items,
+    });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
 /**
- * ✅ Публични продукти
  * GET /products
  *
  * Query params:
  * ?page=1
  * ?limit=20
  * ?q=search text
- * ?category=home
- * ?category=home/kitchen/cookware
+ * ?category=coffee-beans
+ * ?category=kafe/kafe-na-zarna
  * ?sort=newest|priceAsc|priceDesc|popular|featured
+ * ?featured=true
+ * ?brand=Lavazza
+ * ?stock=in_stock
  */
 router.get("/", async (req, res) => {
   try {
-    const page = Math.max(parseInt(req.query.page) || 1, 1);
-    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
     const skip = (page - 1) * limit;
 
-    const { q, category, sort } = req.query || {};
+    const {
+      q,
+      category,
+      sort,
+      featured,
+      brand,
+      stock,
+    } = req.query || {};
 
     const filter = publicMatch();
 
-    if (q && String(q).trim()) {
-      filter.title = { $regex: String(q).trim(), $options: "i" };
-    }
+    applySearchFilter(filter, q);
 
     if (category && category !== "all") {
       applyCategoryFilter(filter, category);
+    }
+
+    if (String(featured || "").toLowerCase() === "true") {
+      filter.isFeatured = true;
+    }
+
+    if (brand && String(brand).trim()) {
+      filter.brand = { $regex: String(brand).trim(), $options: "i" };
+    }
+
+    if (
+      stock &&
+      ["unknown", "in_stock", "out_of_stock"].includes(String(stock).trim())
+    ) {
+      filter.stockStatus = String(stock).trim();
     }
 
     const items = await Product.find(filter)
@@ -160,16 +258,20 @@ router.get("/", async (req, res) => {
       page,
       limit,
       total,
+      pages: Math.max(1, Math.ceil(total / limit)),
       items,
     });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
 /**
- * ✅ Детайли за продукт
  * GET /products/:id
+ * Детайли за продукт
  */
 router.get("/:id", async (req, res) => {
   try {
@@ -184,13 +286,16 @@ router.get("/:id", async (req, res) => {
 
     return res.json({ ok: true, item });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
 /**
- * ✅ Броене на прегледи
  * GET /products/:id/view
+ * Броене на прегледи
  */
 router.get("/:id/view", async (req, res) => {
   try {
@@ -206,16 +311,16 @@ router.get("/:id/view", async (req, res) => {
 
     return res.json({ ok: true, views: item.views });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
 /**
- * ✅ Броене на интерес / клик
  * GET /products/:id/click
- *
- * Вече НЕ правим redirect, защото сайтът става реален магазин.
- * Само увеличаваме clicks за статистика.
+ * Броене на интерес / клик
  */
 router.get("/:id/click", async (req, res) => {
   try {
@@ -235,7 +340,10 @@ router.get("/:id/click", async (req, res) => {
       message: "Кликът е отчетен",
     });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 

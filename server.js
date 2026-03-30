@@ -17,7 +17,7 @@ let categoriesLoadError = null;
 
 try {
   categoriesRoutes = require("./routes/categories");
-  console.log("✅ Categories routes loaded");
+  console.log("✅ Routes for categories loaded");
 } catch (e) {
   categoriesLoadError = e;
   console.error("❌ Categories routes failed to load:");
@@ -55,9 +55,24 @@ app.use(
 app.options(/.*/, cors({ origin: true, credentials: true }));
 
 /* =========================
-   Health
+   Health / Basic info
 ========================= */
-app.get("/health", (req, res) => res.json({ ok: true }));
+app.get("/health", (req, res) =>
+  res.json({
+    ok: true,
+    app: "coffee-shop-api",
+    message: "Сървърът работи успешно",
+  })
+);
+
+app.get("/api-info", (req, res) =>
+  res.json({
+    ok: true,
+    name: "Coffee Shop API",
+    description: "API за онлайн магазин за кафе продукти",
+    env: process.env.NODE_ENV || "development",
+  })
+);
 
 /* =========================
    API Routes
@@ -74,7 +89,7 @@ if (categoriesRoutes) {
   app.get("/categories", (req, res) =>
     res.status(503).json({
       ok: false,
-      message: "Categories API disabled (failed to load routes/categories.js)",
+      message: "Категориите временно не са достъпни",
       error: categoriesLoadError
         ? categoriesLoadError.message || String(categoriesLoadError)
         : "unknown",
@@ -84,17 +99,17 @@ if (categoriesRoutes) {
   app.get("/categories/flat", (req, res) =>
     res.status(503).json({
       ok: false,
-      message: "Categories API disabled (failed to load routes/categories.js)",
+      message: "Категориите временно не са достъпни",
       error: categoriesLoadError
         ? categoriesLoadError.message || String(categoriesLoadError)
         : "unknown",
     })
   );
 
-  app.get("/categories/by-path/*", (req, res) =>
+  app.get("/categories/by-path", (req, res) =>
     res.status(503).json({
       ok: false,
-      message: "Categories API disabled (failed to load routes/categories.js)",
+      message: "Категориите временно не са достъпни",
       error: categoriesLoadError
         ? categoriesLoadError.message || String(categoriesLoadError)
         : "unknown",
@@ -113,7 +128,9 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.join(buildPath, "index.html"));
   });
 } else {
-  app.get("/", (req, res) => res.send("API running (dev) ✅"));
+  app.get("/", (req, res) =>
+    res.send("Coffee shop API работи успешно (dev) ✅")
+  );
 }
 
 /* =========================
@@ -130,11 +147,11 @@ function startBotOnceAfterBoot() {
 
   setTimeout(async () => {
     try {
-      console.log("🤖 Profitshare bot starting...");
+      console.log("🤖 Product import bot starting...");
       await runProfitshareBot();
-      console.log("✅ Profitshare bot finished.");
+      console.log("✅ Product import bot finished.");
     } catch (err) {
-      console.error("❌ Profitshare bot error:", err?.stack || err?.message || err);
+      console.error("❌ Product import bot error:", err?.stack || err?.message || err);
     }
   }, 15000);
 }

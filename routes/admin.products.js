@@ -9,11 +9,51 @@ const { categorizeProduct } = require("../services/categorizer");
 const router = express.Router();
 
 const ALLOWED_STATUS = ["new", "approved", "rejected", "blacklisted"];
+const ALLOWED_MARKUP = ["none", "percent", "fixed"];
+const ALLOWED_STOCK = ["unknown", "in_stock", "out_of_stock"];
+const ALLOWED_CATEGORIES = [
+  "coffee-beans",
+  "ground-coffee",
+  "capsules",
+  "pods",
+  "machines",
+  "grinders",
+  "accessories",
+  "cups",
+  "syrups",
+  "gift-sets",
+  "office-coffee",
+  "horeca",
+  "other",
+];
+
+const ALLOWED_WEIGHT_UNITS = ["g", "kg", "ml", "l", "pcs", ""];
+const ALLOWED_ROAST_LEVELS = ["", "light", "medium", "medium-dark", "dark"];
+const ALLOWED_CAFFEINE_TYPES = ["", "regular", "decaf"];
 
 /** helpers */
 function toSafeNumber(v, fallback = 0) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function normalizeText(v, fallback = "") {
+  return String(v ?? fallback).trim();
+}
+
+function normalizeImages(images) {
+  if (!Array.isArray(images)) return [];
+  return images.map((x) => String(x || "").trim()).filter(Boolean);
+}
+
+function normalizeStringArray(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((x) => String(x || "").trim()).filter(Boolean);
+}
+
+function normalizeCategory(category) {
+  const c = normalizeText(category, "coffee-beans").toLowerCase();
+  return ALLOWED_CATEGORIES.includes(c) ? c : "coffee-beans";
 }
 
 function normalizePriceFields(data = {}) {
@@ -37,11 +77,15 @@ function normalizePriceFields(data = {}) {
       ? toSafeNumber(data.finalPrice, NaN)
       : null;
 
+  const markupType = ALLOWED_MARKUP.includes(data.markupType)
+    ? data.markupType
+    : "none";
+
   if (finalPrice == null || Number.isNaN(finalPrice)) {
     if (basePrice != null && !Number.isNaN(basePrice)) {
-      if (data.markupType === "percent") {
+      if (markupType === "percent") {
         finalPrice = +(basePrice + (basePrice * markupValue) / 100).toFixed(2);
-      } else if (data.markupType === "fixed") {
+      } else if (markupType === "fixed") {
         finalPrice = +(basePrice + markupValue).toFixed(2);
       } else {
         finalPrice = basePrice;
@@ -54,6 +98,104 @@ function normalizePriceFields(data = {}) {
     basePrice: Number.isNaN(basePrice) ? null : basePrice,
     markupValue,
     finalPrice: Number.isNaN(finalPrice) ? null : finalPrice,
+    markupType,
+  };
+}
+
+function buildProductPayload(data = {}, userId = null) {
+  const prices = normalizePriceFields(data);
+
+  const weightUnit = normalizeText(data.weightUnit);
+  const roastLevel = normalizeText(data.roastLevel);
+  const caffeineType = normalizeText(data.caffeineType);
+
+  return {
+    title: normalizeText(data.title),
+    shortDescription: normalizeText(data.shortDescription),
+    description: normalizeText(data.description),
+    sku: normalizeText(data.sku),
+    brand: normalizeText(data.brand),
+
+    category: normalizeCategory(data.category),
+
+    source: normalizeText(data.source, "manual"),
+    sourceUrl: normalizeText(data.sourceUrl),
+    affiliateUrl: "",
+
+    imageUrl: normalizeText(data.imageUrl),
+    images: normalizeImages(data.images),
+
+    currency: normalizeText(data.currency, "BGN") || "BGN",
+
+    shippingPrice: toSafeNumber(data.shippingPrice, 0),
+    shippingToBG:
+      typeof data.shippingToBG === "boolean" ? data.shippingToBG : true,
+    shippingDays:
+      data.shippingDays != null && data.shippingDays !== ""
+        ? toSafeNumber(data.shippingDays, null)
+        : null,
+
+    stockStatus: ALLOWED_STOCK.includes(data.stockStatus)
+      ? data.stockStatus
+      : "unknown",
+
+    stockQty:
+      data.stockQty != null && data.stockQty !== ""
+        ? toSafeNumber(data.stockQty, null)
+        : null,
+
+    isActive: typeof data.isActive === "boolean" ? data.isActive : true,
+    isFeatured: typeof data.isFeatured === "boolean" ? data.isFeatured : false,
+
+    status: ALLOWED_STATUS.includes(data.status) ? data.status : "new",
+
+    weight:
+      data.weight != null && data.weight !== ""
+        ? toSafeNumber(data.weight, null)
+        : null,
+
+    weightUnit: ALLOWED_WEIGHT_UNITS.includes(weightUnit) ? weightUnit : "",
+
+    packCount:
+      data.packCount != null && data.packCount !== ""
+        ? toSafeNumber(data.packCount, null)
+        : null,
+
+    roastLevel: ALLOWED_ROAST_LEVELS.includes(roastLevel) ? roastLevel : "",
+
+    intensity:
+      data.intensity != null && data.intensity !== ""
+        ? toSafeNumber(data.intensity, null)
+        : null,
+
+    caffeineType: ALLOWED_CAFFEINE_TYPES.includes(caffeineType)
+      ? caffeineType
+      : "",
+
+    compatibleWith: normalizeStringArray(data.compatibleWith),
+    badges: normalizeStringArray(data.badges),
+
+    isNew: typeof data.isNew === "boolean" ? data.isNew : false,
+    isOnSale: typeof data.isOnSale === "boolean" ? data.isOnSale : false,
+
+    oldPrice:
+      data.oldPrice != null && data.oldPrice !== ""
+        ? toSafeNumber(data.oldPrice, null)
+        : null,
+
+    rating:
+      data.rating != null && data.rating !== ""
+        ? toSafeNumber(data.rating, 0)
+        : 0,
+
+    reviewsCount:
+      data.reviewsCount != null && data.reviewsCount !== ""
+        ? toSafeNumber(data.reviewsCount, 0)
+        : 0,
+
+    ...prices,
+
+    ...(userId ? { createdBy: userId } : {}),
   };
 }
 
@@ -64,61 +206,14 @@ function normalizePriceFields(data = {}) {
 router.post("/products", auth, adminOnly, async (req, res) => {
   try {
     const data = req.body || {};
-    const { title } = data;
 
-    if (!title || !String(title).trim()) {
+    if (!data.title || !String(data.title).trim()) {
       return res.status(400).json({
         message: "Заглавието е задължително",
       });
     }
 
-    const prices = normalizePriceFields(data);
-
-    const payload = {
-      ...data,
-      title: String(title).trim(),
-      source: String(data.source || "manual").trim(),
-      sourceUrl: String(data.sourceUrl || "").trim(),
-      affiliateUrl: "",
-
-      shortDescription: String(data.shortDescription || "").trim(),
-      description: String(data.description || "").trim(),
-      sku: String(data.sku || "").trim(),
-      brand: String(data.brand || "").trim(),
-
-      imageUrl: String(data.imageUrl || "").trim(),
-      images: Array.isArray(data.images) ? data.images : [],
-
-      currency: String(data.currency || "BGN").trim(),
-      shippingPrice: toSafeNumber(data.shippingPrice, 0),
-      shippingToBG:
-        typeof data.shippingToBG === "boolean" ? data.shippingToBG : true,
-      shippingDays:
-        data.shippingDays != null && data.shippingDays !== ""
-          ? toSafeNumber(data.shippingDays, null)
-          : null,
-
-      markupType: ["none", "percent", "fixed"].includes(data.markupType)
-        ? data.markupType
-        : "none",
-
-      stockStatus: ["unknown", "in_stock", "out_of_stock"].includes(data.stockStatus)
-        ? data.stockStatus
-        : "unknown",
-
-      stockQty:
-        data.stockQty != null && data.stockQty !== ""
-          ? toSafeNumber(data.stockQty, null)
-          : null,
-
-      isActive: typeof data.isActive === "boolean" ? data.isActive : true,
-      isFeatured: typeof data.isFeatured === "boolean" ? data.isFeatured : false,
-
-      status: ALLOWED_STATUS.includes(data.status) ? data.status : "new",
-
-      ...prices,
-      createdBy: req.user.id,
-    };
+    const payload = buildProductPayload(data, req.user.id);
 
     const product = await Product.create(payload);
     return res.status(201).json({ ok: true, product });
@@ -138,67 +233,160 @@ router.post("/products", auth, adminOnly, async (req, res) => {
 
 /**
  * POST /admin/products/seed
- * Demo продукти за магазин
+ * Демо продукти за кафе магазин
  */
 router.post("/products/seed", auth, adminOnly, async (req, res) => {
   try {
     const demo = [
       {
-        title: "Визьор за каска LS2 FF353",
-        shortDescription: "Прозрачен визьор за модел LS2 FF353",
-        category: "other",
+        title: "Lavazza Qualità Oro – кафе на зърна 1 кг",
+        shortDescription: "Премиум италианско кафе на зърна с мек и балансиран вкус.",
+        description:
+          "Подходящо за еспресо, автоматични кафемашини и домашна употреба.",
+        brand: "Lavazza",
+        category: "coffee-beans",
         source: "manual",
-        price: 40,
-        basePrice: 20,
+        price: 44.9,
+        basePrice: 39.9,
         markupType: "fixed",
-        markupValue: 20,
-        finalPrice: 40,
+        markupValue: 5,
+        finalPrice: 44.9,
+        oldPrice: 49.9,
         currency: "BGN",
-        shippingDays: 2,
+        shippingDays: 1,
         shippingToBG: true,
-        imageUrl: "https://picsum.photos/600?seed=moto1",
+        imageUrl: "https://picsum.photos/900?seed=coffee1",
         status: "approved",
         stockStatus: "in_stock",
-        stockQty: 5,
+        stockQty: 12,
         isActive: true,
+        isFeatured: true,
+        isNew: true,
+        isOnSale: true,
+        weight: 1,
+        weightUnit: "kg",
+        roastLevel: "medium",
+        intensity: 8,
+        caffeineType: "regular",
+        badges: ["Ново", "Промо", "Топ продукт"],
+        rating: 4.8,
+        reviewsCount: 124,
       },
       {
-        title: "Механизъм за визьор HJC",
-        shortDescription: "Комплект механизъм за монтаж на визьор",
-        category: "other",
+        title: "illy Classico – мляно кафе 250 г",
+        shortDescription: "Фино мляно кафе с наситен аромат и мек послевкус.",
+        description:
+          "Идеално за домашна употреба, moka pot и класическо еспресо.",
+        brand: "illy",
+        category: "ground-coffee",
         source: "manual",
-        price: 25,
-        basePrice: 12,
+        price: 18.9,
+        basePrice: 15.9,
         markupType: "fixed",
-        markupValue: 13,
-        finalPrice: 25,
+        markupValue: 3,
+        finalPrice: 18.9,
         currency: "BGN",
-        shippingDays: 2,
+        shippingDays: 1,
         shippingToBG: true,
-        imageUrl: "https://picsum.photos/600?seed=moto2",
-        status: "approved",
-        stockStatus: "in_stock",
-        stockQty: 8,
-        isActive: true,
-      },
-      {
-        title: "Пинове за anti-fog визьор",
-        shortDescription: "Резервни пинове за anti-fog система",
-        category: "other",
-        source: "manual",
-        price: 10,
-        basePrice: 4,
-        markupType: "fixed",
-        markupValue: 6,
-        finalPrice: 10,
-        currency: "BGN",
-        shippingDays: 2,
-        shippingToBG: true,
-        imageUrl: "https://picsum.photos/600?seed=moto3",
+        imageUrl: "https://picsum.photos/900?seed=coffee2",
         status: "approved",
         stockStatus: "in_stock",
         stockQty: 20,
         isActive: true,
+        isFeatured: true,
+        weight: 250,
+        weightUnit: "g",
+        roastLevel: "medium",
+        intensity: 7,
+        caffeineType: "regular",
+        badges: ["Класика"],
+        rating: 4.7,
+        reviewsCount: 88,
+      },
+      {
+        title: "Nespresso съвместими капсули – Intenso",
+        shortDescription: "Капсули с плътен вкус и силен аромат за ежедневно кафе.",
+        description:
+          "Подходящи за бързо и удобно еспресо у дома или в офиса.",
+        brand: "Caffe Market",
+        category: "capsules",
+        source: "manual",
+        price: 12.5,
+        basePrice: 9.9,
+        markupType: "fixed",
+        markupValue: 2.6,
+        finalPrice: 12.5,
+        currency: "BGN",
+        shippingDays: 1,
+        shippingToBG: true,
+        imageUrl: "https://picsum.photos/900?seed=coffee3",
+        status: "approved",
+        stockStatus: "in_stock",
+        stockQty: 30,
+        isActive: true,
+        isFeatured: true,
+        packCount: 10,
+        intensity: 10,
+        compatibleWith: ["Nespresso"],
+        badges: ["Съвместими капсули"],
+        rating: 4.6,
+        reviewsCount: 57,
+      },
+      {
+        title: "Автоматична кафемашина DeLonghi Magnifica",
+        shortDescription: "Компактна автоматична кафемашина за дома и офиса.",
+        description:
+          "Приготвя ароматно еспресо с удобни настройки и лесна поддръжка.",
+        brand: "DeLonghi",
+        category: "machines",
+        source: "manual",
+        price: 899,
+        basePrice: 829,
+        markupType: "fixed",
+        markupValue: 70,
+        finalPrice: 899,
+        oldPrice: 949,
+        currency: "BGN",
+        shippingDays: 2,
+        shippingToBG: true,
+        imageUrl: "https://picsum.photos/900?seed=coffee4",
+        status: "approved",
+        stockStatus: "in_stock",
+        stockQty: 4,
+        isActive: true,
+        isFeatured: true,
+        isOnSale: true,
+        badges: ["Промо", "Топ продукт"],
+        rating: 4.9,
+        reviewsCount: 39,
+      },
+      {
+        title: "Сироп за кафе Ванилия 700 мл",
+        shortDescription: "Класически сироп за кафе, капучино и десертни напитки.",
+        description:
+          "Подходящ за домашни напитки, барове, офиси и HoReCa обекти.",
+        brand: "Monin",
+        category: "syrups",
+        source: "manual",
+        price: 16.9,
+        basePrice: 13.9,
+        markupType: "fixed",
+        markupValue: 3,
+        finalPrice: 16.9,
+        currency: "BGN",
+        shippingDays: 1,
+        shippingToBG: true,
+        imageUrl: "https://picsum.photos/900?seed=coffee5",
+        status: "approved",
+        stockStatus: "in_stock",
+        stockQty: 16,
+        isActive: true,
+        isFeatured: false,
+        weight: 700,
+        weightUnit: "ml",
+        badges: ["Бариста избор"],
+        rating: 4.5,
+        reviewsCount: 21,
       },
     ];
 
@@ -207,10 +395,8 @@ router.post("/products/seed", auth, adminOnly, async (req, res) => {
 
     for (const item of demo) {
       try {
-        await Product.create({
-          ...item,
-          createdBy: req.user.id,
-        });
+        const payload = buildProductPayload(item, req.user.id);
+        await Product.create(payload);
         created++;
       } catch (e) {
         skipped++;
@@ -263,7 +449,10 @@ router.get("/products", auth, adminOnly, async (req, res) => {
 
     return res.json({ ok: true, items, total, page, limit });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
@@ -284,7 +473,10 @@ router.patch("/products/:id/status", auth, adminOnly, async (req, res) => {
 
     return res.json({ ok: true, product: updated });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
@@ -297,36 +489,59 @@ router.patch("/products/:id", auth, adminOnly, async (req, res) => {
     const { id } = req.params;
     const data = req.body || {};
 
-    const prices = normalizePriceFields(data);
+    const patch = buildProductPayload(data);
 
-    const patch = {
-      ...data,
-      ...prices,
-    };
+    if (data.title != null) patch.title = normalizeText(data.title);
+    else delete patch.title;
 
-    if (patch.title != null) patch.title = String(patch.title).trim();
-    if (patch.shortDescription != null) patch.shortDescription = String(patch.shortDescription).trim();
-    if (patch.description != null) patch.description = String(patch.description).trim();
-    if (patch.sku != null) patch.sku = String(patch.sku).trim();
-    if (patch.brand != null) patch.brand = String(patch.brand).trim();
-    if (patch.source != null) patch.source = String(patch.source || "manual").trim();
-    if (patch.sourceUrl != null) patch.sourceUrl = String(patch.sourceUrl || "").trim();
-    if (patch.imageUrl != null) patch.imageUrl = String(patch.imageUrl || "").trim();
+    if (data.shortDescription == null) delete patch.shortDescription;
+    if (data.description == null) delete patch.description;
+    if (data.sku == null) delete patch.sku;
+    if (data.brand == null) delete patch.brand;
+    if (data.category == null) delete patch.category;
+    if (data.source == null) delete patch.source;
+    if (data.sourceUrl == null) delete patch.sourceUrl;
+    if (data.imageUrl == null) delete patch.imageUrl;
+    if (data.images == null) delete patch.images;
+    if (data.currency == null) delete patch.currency;
+    if (data.shippingPrice == null) delete patch.shippingPrice;
+    if (data.shippingToBG == null) delete patch.shippingToBG;
+    if (data.shippingDays == null) delete patch.shippingDays;
+    if (data.stockStatus == null) delete patch.stockStatus;
+    if (data.stockQty == null) delete patch.stockQty;
+    if (data.isActive == null) delete patch.isActive;
+    if (data.isFeatured == null) delete patch.isFeatured;
+    if (data.status == null) delete patch.status;
+    if (data.price == null && data.price !== "") delete patch.price;
+    if (data.basePrice == null && data.basePrice !== "") delete patch.basePrice;
+    if (data.markupValue == null && data.markupValue !== "") delete patch.markupValue;
+    if (data.finalPrice == null && data.finalPrice !== "") delete patch.finalPrice;
+    if (data.markupType == null) delete patch.markupType;
 
-    if (patch.markupType && !["none", "percent", "fixed"].includes(patch.markupType)) {
-      patch.markupType = "none";
-    }
-
-    if (patch.stockStatus && !["unknown", "in_stock", "out_of_stock"].includes(patch.stockStatus)) {
-      patch.stockStatus = "unknown";
-    }
+    if (data.weight == null) delete patch.weight;
+    if (data.weightUnit == null) delete patch.weightUnit;
+    if (data.packCount == null) delete patch.packCount;
+    if (data.roastLevel == null) delete patch.roastLevel;
+    if (data.intensity == null) delete patch.intensity;
+    if (data.caffeineType == null) delete patch.caffeineType;
+    if (data.compatibleWith == null) delete patch.compatibleWith;
+    if (data.badges == null) delete patch.badges;
+    if (data.isNew == null) delete patch.isNew;
+    if (data.isOnSale == null) delete patch.isOnSale;
+    if (data.oldPrice == null && data.oldPrice !== "") delete patch.oldPrice;
+    if (data.rating == null && data.rating !== "") delete patch.rating;
+    if (data.reviewsCount == null && data.reviewsCount !== "")
+      delete patch.reviewsCount;
 
     const updated = await Product.findByIdAndUpdate(id, { $set: patch }, { new: true });
     if (!updated) return res.status(404).json({ message: "Не е намерен" });
 
     return res.json({ ok: true, product: updated });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
@@ -351,7 +566,10 @@ router.patch("/products/approve-many", auth, adminOnly, async (req, res) => {
       modified: r.modifiedCount ?? r.nModified,
     });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
@@ -371,7 +589,10 @@ router.post("/products/approve-existing", auth, adminOnly, async (req, res) => {
       modified: r.modifiedCount ?? r.nModified,
     });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
@@ -418,7 +639,10 @@ router.post("/products/recategorize-missing", auth, adminOnly, async (req, res) 
       updated,
     });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
@@ -433,12 +657,16 @@ router.delete("/products/:id", auth, adminOnly, async (req, res) => {
 
     return res.json({ ok: true });
   } catch (err) {
-    return res.status(500).json({ message: "Грешка в сървъра", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
 /**
  * POST /admin/categories/seed
+ * Seed на главни категории за кафе магазин
  */
 router.post("/categories/seed", auth, adminOnly, async (req, res) => {
   try {
@@ -455,7 +683,19 @@ router.post("/categories/seed", auth, adminOnly, async (req, res) => {
 
     const now = new Date();
 
-    function make({ name, slug, path, level, parent = null, order = 0 }) {
+    function make({
+      name,
+      slug,
+      path,
+      level,
+      parent = null,
+      order = 0,
+      icon = "",
+      shortDescription = "",
+      imageUrl = "",
+      showOnHomepage = false,
+      isFeatured = false,
+    }) {
       return {
         name,
         slug,
@@ -464,16 +704,67 @@ router.post("/categories/seed", auth, adminOnly, async (req, res) => {
         parent,
         order,
         isActive: true,
+        icon,
+        shortDescription,
+        imageUrl,
+        showOnHomepage,
+        isFeatured,
         createdAt: now,
         updatedAt: now,
       };
     }
 
     const roots = await Category.insertMany([
-      make({ name: "Home", slug: "home", path: ["home"], level: 0, order: 1 }),
-      make({ name: "Garden", slug: "garden", path: ["garden"], level: 0, order: 2 }),
-      make({ name: "Tools", slug: "tools", path: ["tools"], level: 0, order: 3 }),
-      make({ name: "Outdoor", slug: "outdoor", path: ["outdoor"], level: 0, order: 4 }),
+      make({
+        name: "Кафе",
+        slug: "kafe",
+        path: ["kafe"],
+        level: 0,
+        order: 1,
+        icon: "☕",
+        showOnHomepage: true,
+        isFeatured: true,
+      }),
+      make({
+        name: "Кафемашини",
+        slug: "kafemashini",
+        path: ["kafemashini"],
+        level: 0,
+        order: 2,
+        icon: "☕",
+        showOnHomepage: true,
+        isFeatured: true,
+      }),
+      make({
+        name: "Аксесоари",
+        slug: "aksesoari",
+        path: ["aksesoari"],
+        level: 0,
+        order: 3,
+        icon: "🧋",
+        showOnHomepage: true,
+        isFeatured: true,
+      }),
+      make({
+        name: "Сиропи и добавки",
+        slug: "siropi-i-dobavki",
+        path: ["siropi-i-dobavki"],
+        level: 0,
+        order: 4,
+        icon: "🍯",
+        showOnHomepage: true,
+        isFeatured: false,
+      }),
+      make({
+        name: "Офис и HoReCa",
+        slug: "ofis-i-horeca",
+        path: ["ofis-i-horeca"],
+        level: 0,
+        order: 5,
+        icon: "🏢",
+        showOnHomepage: true,
+        isFeatured: true,
+      }),
     ]);
 
     const rootBySlug = {};
@@ -481,123 +772,126 @@ router.post("/categories/seed", auth, adminOnly, async (req, res) => {
 
     const lvl1 = await Category.insertMany([
       make({
-        name: "Kitchen",
-        slug: "kitchen",
-        path: ["home", "kitchen"],
+        name: "Кафе на зърна",
+        slug: "kafe-na-zarna",
+        path: ["kafe", "kafe-na-zarna"],
         level: 1,
-        parent: rootBySlug.home._id,
+        parent: rootBySlug.kafe._id,
         order: 1,
+        showOnHomepage: true,
       }),
       make({
-        name: "Bathroom",
-        slug: "bathroom",
-        path: ["home", "bathroom"],
+        name: "Мляно кафе",
+        slug: "mlyano-kafe",
+        path: ["kafe", "mlyano-kafe"],
         level: 1,
-        parent: rootBySlug.home._id,
+        parent: rootBySlug.kafe._id,
         order: 2,
+        showOnHomepage: true,
       }),
       make({
-        name: "Cleaning",
-        slug: "cleaning",
-        path: ["home", "cleaning"],
+        name: "Капсули",
+        slug: "kapsuli",
+        path: ["kafe", "kapsuli"],
         level: 1,
-        parent: rootBySlug.home._id,
+        parent: rootBySlug.kafe._id,
         order: 3,
+        showOnHomepage: true,
       }),
       make({
-        name: "Storage",
-        slug: "storage",
-        path: ["home", "storage"],
+        name: "Дози и Pods",
+        slug: "dozi-i-pods",
+        path: ["kafe", "dozi-i-pods"],
         level: 1,
-        parent: rootBySlug.home._id,
+        parent: rootBySlug.kafe._id,
         order: 4,
       }),
       make({
-        name: "Decor",
-        slug: "decor",
-        path: ["home", "decor"],
+        name: "Автоматични кафемашини",
+        slug: "avtomatichni-kafemashini",
+        path: ["kafemashini", "avtomatichni-kafemashini"],
         level: 1,
-        parent: rootBySlug.home._id,
-        order: 5,
-      }),
-      make({
-        name: "Watering",
-        slug: "watering",
-        path: ["garden", "watering"],
-        level: 1,
-        parent: rootBySlug.garden._id,
+        parent: rootBySlug.kafemashini._id,
         order: 1,
       }),
       make({
-        name: "Plants",
-        slug: "plants",
-        path: ["garden", "plants"],
+        name: "Капсулни машини",
+        slug: "kapsulni-mashini",
+        path: ["kafemashini", "kapsulni-mashini"],
         level: 1,
-        parent: rootBySlug.garden._id,
+        parent: rootBySlug.kafemashini._id,
         order: 2,
       }),
       make({
-        name: "Garden Furniture",
-        slug: "garden-furniture",
-        path: ["garden", "garden-furniture"],
+        name: "Професионални машини",
+        slug: "profesionalni-mashini",
+        path: ["kafemashini", "profesionalni-mashini"],
         level: 1,
-        parent: rootBySlug.garden._id,
+        parent: rootBySlug.kafemashini._id,
         order: 3,
       }),
       make({
-        name: "Garden Tools",
-        slug: "garden-tools",
-        path: ["garden", "garden-tools"],
+        name: "Чаши и термоси",
+        slug: "chashi-i-termosi",
+        path: ["aksesoari", "chashi-i-termosi"],
         level: 1,
-        parent: rootBySlug.garden._id,
-        order: 4,
-      }),
-      make({
-        name: "Power Tools",
-        slug: "power-tools",
-        path: ["tools", "power-tools"],
-        level: 1,
-        parent: rootBySlug.tools._id,
+        parent: rootBySlug.aksesoari._id,
         order: 1,
       }),
       make({
-        name: "Hand Tools",
-        slug: "hand-tools",
-        path: ["tools", "hand-tools"],
+        name: "Мелачки",
+        slug: "melachki",
+        path: ["aksesoari", "melachki"],
         level: 1,
-        parent: rootBySlug.tools._id,
+        parent: rootBySlug.aksesoari._id,
         order: 2,
       }),
       make({
-        name: "Tool Storage",
-        slug: "tool-storage",
-        path: ["tools", "tool-storage"],
+        name: "Бариста аксесоари",
+        slug: "barista-aksesoari",
+        path: ["aksesoari", "barista-aksesoari"],
         level: 1,
-        parent: rootBySlug.tools._id,
+        parent: rootBySlug.aksesoari._id,
         order: 3,
       }),
       make({
-        name: "Camping",
-        slug: "camping",
-        path: ["outdoor", "camping"],
+        name: "Сиропи",
+        slug: "siropi",
+        path: ["siropi-i-dobavki", "siropi"],
         level: 1,
-        parent: rootBySlug.outdoor._id,
+        parent: rootBySlug["siropi-i-dobavki"]._id,
         order: 1,
       }),
       make({
-        name: "BBQ",
-        slug: "bbq",
-        path: ["outdoor", "bbq"],
+        name: "Подсладители",
+        slug: "podsladiteli",
+        path: ["siropi-i-dobavki", "podsladiteli"],
         level: 1,
-        parent: rootBySlug.outdoor._id,
+        parent: rootBySlug["siropi-i-dobavki"]._id,
         order: 2,
       }),
       make({
-        name: "Lighting",
-        slug: "lighting",
-        path: ["outdoor", "lighting"],
+        name: "Кафе за офиси",
+        slug: "kafe-za-ofisi",
+        path: ["ofis-i-horeca", "kafe-za-ofisi"],
         level: 1,
-        parent: rootBySlug.outdoor._id,
+        parent: rootBySlug["ofis-i-horeca"]._id,
+        order: 1,
+      }),
+      make({
+        name: "Кафе за хотели",
+        slug: "kafe-za-hoteli",
+        path: ["ofis-i-horeca", "kafe-za-hoteli"],
+        level: 1,
+        parent: rootBySlug["ofis-i-horeca"]._id,
+        order: 2,
+      }),
+      make({
+        name: "Вендинг",
+        slug: "vending",
+        path: ["ofis-i-horeca", "vending"],
+        level: 1,
+        parent: rootBySlug["ofis-i-horeca"]._id,
         order: 3,
       }),
     ]);

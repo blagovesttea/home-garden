@@ -26,6 +26,77 @@ const SORTS = [
   { value: "priceDesc", label: "Цена (висока → ниска)" },
 ];
 
+const PUBLIC_CATEGORY_CHIPS = [
+  { label: "Кафе на зърна", value: "зърна" },
+  { label: "Мляно кафе", value: "мляно" },
+  { label: "Капсули", value: "капсули" },
+  { label: "Кафемашини", value: "машини" },
+  { label: "Аксесоари", value: "аксесоари" },
+  { label: "Подаръчни комплекти", value: "подарък" },
+];
+
+const HERO_FEATURES = [
+  {
+    title: "Премиум селекция",
+    text: "Подбрани кафе продукти за дома, офиса и професионалната употреба.",
+  },
+  {
+    title: "Лесна поръчка",
+    text: "Бързо добавяне в количка, удобна форма и лесен процес до финал.",
+  },
+  {
+    title: "Подходящо за бизнес",
+    text: "Решения за офиси, заведения, хотели и професионални обекти.",
+  },
+];
+
+const HERO_LINKS = [
+  "Кафе на зърна",
+  "Капсули и дози",
+  "Кафемашини",
+  "Аксесоари",
+  "Подаръчни комплекти",
+];
+
+const ADMIN_CATEGORY_OPTIONS = [
+  { value: "coffee-beans", label: "Кафе на зърна" },
+  { value: "ground-coffee", label: "Мляно кафе" },
+  { value: "capsules", label: "Капсули" },
+  { value: "pods", label: "Дози и Pods" },
+  { value: "machines", label: "Кафемашини" },
+  { value: "grinders", label: "Мелачки" },
+  { value: "accessories", label: "Аксесоари" },
+  { value: "cups", label: "Чаши и термоси" },
+  { value: "syrups", label: "Сиропи" },
+  { value: "gift-sets", label: "Подаръчни комплекти" },
+  { value: "office-coffee", label: "Офис кафе" },
+  { value: "horeca", label: "HoReCa" },
+  { value: "other", label: "Друго" },
+];
+
+const ROAST_OPTIONS = [
+  { value: "", label: "Без избор" },
+  { value: "light", label: "Светло изпечено" },
+  { value: "medium", label: "Средно изпечено" },
+  { value: "medium-dark", label: "Средно тъмно" },
+  { value: "dark", label: "Тъмно изпечено" },
+];
+
+const CAFFEINE_OPTIONS = [
+  { value: "", label: "Без избор" },
+  { value: "regular", label: "С кофеин" },
+  { value: "decaf", label: "Без кофеин" },
+];
+
+const WEIGHT_UNIT_OPTIONS = [
+  { value: "", label: "Без единица" },
+  { value: "g", label: "г" },
+  { value: "kg", label: "кг" },
+  { value: "ml", label: "мл" },
+  { value: "l", label: "л" },
+  { value: "pcs", label: "бр." },
+];
+
 function toNum(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -48,7 +119,19 @@ function productImage(p) {
 }
 
 function cartStorageKey() {
-  return "moto_cart_v1";
+  return "coffee_shop_cart_v1";
+}
+
+function stringToLines(value) {
+  if (Array.isArray(value)) return value.join("\n");
+  return "";
+}
+
+function linesToArray(value) {
+  return String(value || "")
+    .split("\n")
+    .map((x) => x.trim())
+    .filter(Boolean);
 }
 
 function emptyProductForm() {
@@ -58,13 +141,14 @@ function emptyProductForm() {
     description: "",
     brand: "",
     sku: "",
-    category: "other",
+    category: "coffee-beans",
     source: "manual",
     sourceUrl: "",
     imageUrl: "",
     imagesText: "",
     price: "",
     basePrice: "",
+    oldPrice: "",
     markupType: "none",
     markupValue: "",
     finalPrice: "",
@@ -74,6 +158,18 @@ function emptyProductForm() {
     shippingDays: "",
     stockStatus: "in_stock",
     stockQty: "",
+    weight: "",
+    weightUnit: "",
+    packCount: "",
+    roastLevel: "",
+    intensity: "",
+    caffeineType: "",
+    compatibleWithText: "",
+    badgesText: "",
+    rating: "",
+    reviewsCount: "",
+    isNew: false,
+    isOnSale: false,
     isActive: true,
     isFeatured: false,
     status: "new",
@@ -561,13 +657,14 @@ function AppShell() {
       description: product?.description || "",
       brand: product?.brand || "",
       sku: product?.sku || "",
-      category: product?.category || "other",
+      category: product?.category || "coffee-beans",
       source: product?.source || "manual",
       sourceUrl: product?.sourceUrl || "",
       imageUrl: product?.imageUrl || "",
       imagesText: Array.isArray(product?.images) ? product.images.join("\n") : "",
       price: product?.price ?? "",
       basePrice: product?.basePrice ?? "",
+      oldPrice: product?.oldPrice ?? "",
       markupType: product?.markupType || "none",
       markupValue: product?.markupValue ?? "",
       finalPrice: product?.finalPrice ?? "",
@@ -578,6 +675,19 @@ function AppShell() {
       shippingDays: product?.shippingDays ?? "",
       stockStatus: product?.stockStatus || "in_stock",
       stockQty: product?.stockQty ?? "",
+      weight: product?.weight ?? "",
+      weightUnit: product?.weightUnit || "",
+      packCount: product?.packCount ?? "",
+      roastLevel: product?.roastLevel || "",
+      intensity: product?.intensity ?? "",
+      caffeineType: product?.caffeineType || "",
+      compatibleWithText: stringToLines(product?.compatibleWith),
+      badgesText: stringToLines(product?.badges),
+      rating: product?.rating ?? "",
+      reviewsCount: product?.reviewsCount ?? "",
+      isNew: typeof product?.isNew === "boolean" ? product.isNew : false,
+      isOnSale:
+        typeof product?.isOnSale === "boolean" ? product.isOnSale : false,
       isActive:
         typeof product?.isActive === "boolean" ? product.isActive : true,
       isFeatured:
@@ -619,28 +729,51 @@ function AppShell() {
         description: String(productForm.description || "").trim(),
         brand: String(productForm.brand || "").trim(),
         sku: String(productForm.sku || "").trim(),
-        category: String(productForm.category || "other").trim(),
+        category: String(productForm.category || "coffee-beans").trim(),
         source: String(productForm.source || "manual").trim(),
         sourceUrl: String(productForm.sourceUrl || "").trim(),
         imageUrl: String(productForm.imageUrl || "").trim(),
         images,
+
         price: productForm.price === "" ? null : toNum(productForm.price),
         basePrice:
           productForm.basePrice === "" ? null : toNum(productForm.basePrice),
+        oldPrice:
+          productForm.oldPrice === "" ? null : toNum(productForm.oldPrice),
         markupType: productForm.markupType || "none",
         markupValue:
           productForm.markupValue === "" ? 0 : toNum(productForm.markupValue),
         finalPrice:
           productForm.finalPrice === "" ? null : toNum(productForm.finalPrice),
         currency: String(productForm.currency || "BGN").trim(),
+
         shippingPrice:
           productForm.shippingPrice === "" ? 0 : toNum(productForm.shippingPrice),
         shippingToBG: !!productForm.shippingToBG,
         shippingDays:
           productForm.shippingDays === "" ? null : toNum(productForm.shippingDays),
+
         stockStatus: productForm.stockStatus || "unknown",
         stockQty:
           productForm.stockQty === "" ? null : toNum(productForm.stockQty),
+
+        weight: productForm.weight === "" ? null : toNum(productForm.weight),
+        weightUnit: String(productForm.weightUnit || "").trim(),
+        packCount:
+          productForm.packCount === "" ? null : toNum(productForm.packCount),
+        roastLevel: String(productForm.roastLevel || "").trim(),
+        intensity:
+          productForm.intensity === "" ? null : toNum(productForm.intensity),
+        caffeineType: String(productForm.caffeineType || "").trim(),
+        compatibleWith: linesToArray(productForm.compatibleWithText),
+        badges: linesToArray(productForm.badgesText),
+
+        rating: productForm.rating === "" ? 0 : toNum(productForm.rating),
+        reviewsCount:
+          productForm.reviewsCount === "" ? 0 : toNum(productForm.reviewsCount),
+
+        isNew: !!productForm.isNew,
+        isOnSale: !!productForm.isOnSale,
         isActive: !!productForm.isActive,
         isFeatured: !!productForm.isFeatured,
         status: productForm.status || "new",
@@ -673,6 +806,11 @@ function AppShell() {
     }
   }
 
+  function applyQuickSearch(value) {
+    setQ(value);
+    setPage(1);
+  }
+
   /* =========================
      UI
   ========================== */
@@ -681,11 +819,13 @@ function AppShell() {
       <div className="hg-topbar">
         <div className="hg-brand">
           <div>
-            <h1 className="hg-title">Moto Аксесоари</h1>
+            <h1 className="hg-title">
+              {view === "public" ? "Кафе Маркет" : "Кафе Маркет Админ"}
+            </h1>
             <div className="hg-sub">
               {view === "public"
-                ? "Визьори, механизми, пинове и аксесоари за каски"
-                : "Админ панел"}
+                ? "Премиум кафе продукти, кафемашини, капсули и аксесоари за дома, офиса и професионалната среда."
+                : "Админ панел за управление на магазина"}
             </div>
           </div>
         </div>
@@ -740,14 +880,14 @@ function AppShell() {
               className="hg-input"
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
-              placeholder="имейл"
+              placeholder="Имейл"
               autoComplete="email"
             />
             <input
               className="hg-input"
               value={loginPass}
               onChange={(e) => setLoginPass(e.target.value)}
-              placeholder="парола"
+              placeholder="Парола"
               type="password"
               autoComplete="current-password"
             />
@@ -861,13 +1001,11 @@ function AppShell() {
                       value={productForm.category}
                       onChange={(e) => updateFormField("category", e.target.value)}
                     >
-                      <option value="other">other</option>
-                      <option value="home">home</option>
-                      <option value="garden">garden</option>
-                      <option value="tools">tools</option>
-                      <option value="outdoor">outdoor</option>
-                      <option value="kitchen">kitchen</option>
-                      <option value="storage">storage</option>
+                      {ADMIN_CATEGORY_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
 
                     <input
@@ -882,6 +1020,13 @@ function AppShell() {
                       placeholder="Базова цена"
                       value={productForm.basePrice}
                       onChange={(e) => updateFormField("basePrice", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="Стара цена"
+                      value={productForm.oldPrice}
+                      onChange={(e) => updateFormField("oldPrice", e.target.value)}
                     />
 
                     <select
@@ -917,7 +1062,7 @@ function AppShell() {
 
                     <input
                       className="hg-input"
-                      placeholder="Доставна цена"
+                      placeholder="Цена за доставка"
                       value={productForm.shippingPrice}
                       onChange={(e) => updateFormField("shippingPrice", e.target.value)}
                     />
@@ -948,6 +1093,77 @@ function AppShell() {
 
                     <input
                       className="hg-input"
+                      placeholder="Грамаж / количество"
+                      value={productForm.weight}
+                      onChange={(e) => updateFormField("weight", e.target.value)}
+                    />
+
+                    <select
+                      className="hg-select"
+                      value={productForm.weightUnit}
+                      onChange={(e) => updateFormField("weightUnit", e.target.value)}
+                    >
+                      {WEIGHT_UNIT_OPTIONS.map((option) => (
+                        <option key={option.value || "empty"} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      className="hg-input"
+                      placeholder="Брой в опаковка"
+                      value={productForm.packCount}
+                      onChange={(e) => updateFormField("packCount", e.target.value)}
+                    />
+
+                    <select
+                      className="hg-select"
+                      value={productForm.roastLevel}
+                      onChange={(e) => updateFormField("roastLevel", e.target.value)}
+                    >
+                      {ROAST_OPTIONS.map((option) => (
+                        <option key={option.value || "empty"} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      className="hg-input"
+                      placeholder="Интензитет"
+                      value={productForm.intensity}
+                      onChange={(e) => updateFormField("intensity", e.target.value)}
+                    />
+
+                    <select
+                      className="hg-select"
+                      value={productForm.caffeineType}
+                      onChange={(e) => updateFormField("caffeineType", e.target.value)}
+                    >
+                      {CAFFEINE_OPTIONS.map((option) => (
+                        <option key={option.value || "empty"} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      className="hg-input"
+                      placeholder="Рейтинг"
+                      value={productForm.rating}
+                      onChange={(e) => updateFormField("rating", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
+                      placeholder="Брой ревюта"
+                      value={productForm.reviewsCount}
+                      onChange={(e) => updateFormField("reviewsCount", e.target.value)}
+                    />
+
+                    <input
+                      className="hg-input"
                       placeholder="Главна снимка (URL)"
                       value={productForm.imageUrl}
                       onChange={(e) => updateFormField("imageUrl", e.target.value)}
@@ -955,14 +1171,14 @@ function AppShell() {
 
                     <input
                       className="hg-input"
-                      placeholder="Source"
+                      placeholder="Източник"
                       value={productForm.source}
                       onChange={(e) => updateFormField("source", e.target.value)}
                     />
 
                     <input
                       className="hg-input"
-                      placeholder="Source URL"
+                      placeholder="URL на източника"
                       value={productForm.sourceUrl}
                       onChange={(e) => updateFormField("sourceUrl", e.target.value)}
                     />
@@ -972,10 +1188,10 @@ function AppShell() {
                       value={productForm.status}
                       onChange={(e) => updateFormField("status", e.target.value)}
                     >
-                      <option value="new">new</option>
-                      <option value="approved">approved</option>
-                      <option value="rejected">rejected</option>
-                      <option value="blacklisted">blacklisted</option>
+                      <option value="new">Нова</option>
+                      <option value="approved">Одобрена</option>
+                      <option value="rejected">Отхвърлена</option>
+                      <option value="blacklisted">Черен списък</option>
                     </select>
 
                     <label className="hg-check">
@@ -985,6 +1201,24 @@ function AppShell() {
                         onChange={(e) => updateFormField("shippingToBG", e.target.checked)}
                       />
                       Доставка до България
+                    </label>
+
+                    <label className="hg-check">
+                      <input
+                        type="checkbox"
+                        checked={productForm.isNew}
+                        onChange={(e) => updateFormField("isNew", e.target.checked)}
+                      />
+                      Нов продукт
+                    </label>
+
+                    <label className="hg-check">
+                      <input
+                        type="checkbox"
+                        checked={productForm.isOnSale}
+                        onChange={(e) => updateFormField("isOnSale", e.target.checked)}
+                      />
+                      В промоция
                     </label>
 
                     <label className="hg-check">
@@ -1018,6 +1252,22 @@ function AppShell() {
                     placeholder="Описание"
                     value={productForm.description}
                     onChange={(e) => updateFormField("description", e.target.value)}
+                  />
+
+                  <textarea
+                    className="hg-textarea"
+                    placeholder="Съвместимост (по един ред, напр. Nespresso)"
+                    value={productForm.compatibleWithText}
+                    onChange={(e) =>
+                      updateFormField("compatibleWithText", e.target.value)
+                    }
+                  />
+
+                  <textarea
+                    className="hg-textarea"
+                    placeholder="Баджове (по един на ред, напр. Ново, Промо, Топ продукт)"
+                    value={productForm.badgesText}
+                    onChange={(e) => updateFormField("badgesText", e.target.value)}
                   />
 
                   <textarea
@@ -1072,9 +1322,7 @@ function AppShell() {
                       <h3 className="hg-cardTitle">{p.title}</h3>
 
                       <div className="hg-meta">
-                        <span className="hg-pill">
-                          {p.brand || "без марка"}
-                        </span>
+                        <span className="hg-pill">{p.brand || "без марка"}</span>
                         <span className="hg-pill">
                           {p.stockStatus || "unknown"}
                         </span>
@@ -1095,6 +1343,12 @@ function AppShell() {
                       <div className="hg-kpis">
                         SKU: <b>{p.sku || "-"}</b> • Наличност:{" "}
                         <b>{p.stockQty ?? "-"}</b>
+                      </div>
+
+                      <div className="hg-kpis">
+                        Грамаж: <b>{p.weight ?? "-"}</b>
+                        {p.weightUnit ? ` ${p.weightUnit}` : ""} • Интензитет:{" "}
+                        <b>{p.intensity ?? "-"}</b>
                       </div>
 
                       <div className="hg-price">
@@ -1155,25 +1409,184 @@ function AppShell() {
 
       {view === "public" && (
         <>
-          <div className="hg-toolbar">
-            <input
-              className="hg-input"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Търси по модел, марка или продукт..."
-            />
+          <section className="hg-publicShell">
+            <div className="hg-announcementBar">
+              <div className="hg-announcementBar__left">
+                <span className="hg-announcementPill">Премиум кафе магазин</span>
+                <span className="hg-announcementText">
+                  Кафе продукти за дома, офиса и професионалната среда
+                </span>
+              </div>
 
-            <select
-              className="hg-select"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              {SORTS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+              <div className="hg-announcementBar__right">
+                <span>☎ 02 812 99 99</span>
+                <span>Доставка в България</span>
+                <span>Онлайн поръчки</span>
+              </div>
+            </div>
+
+            <div className="hg-mainNav">
+              <div className="hg-mainNav__brand">
+                <div className="hg-mainNav__logo">Кафе Маркет</div>
+                <div className="hg-mainNav__caption">
+                  кафе • капсули • машини • аксесоари
+                </div>
+              </div>
+
+              <div className="hg-mainNav__menu">
+                <button className="hg-navLink" onClick={() => applyQuickSearch("")}>
+                  Начало
+                </button>
+                <button
+                  className="hg-navLink"
+                  onClick={() => applyQuickSearch("кафе")}
+                >
+                  Кафе
+                </button>
+                <button
+                  className="hg-navLink"
+                  onClick={() => applyQuickSearch("капсули")}
+                >
+                  Капсули
+                </button>
+                <button
+                  className="hg-navLink"
+                  onClick={() => applyQuickSearch("машина")}
+                >
+                  Машини
+                </button>
+                <button
+                  className="hg-navLink"
+                  onClick={() => applyQuickSearch("аксесоари")}
+                >
+                  Аксесоари
+                </button>
+                <button
+                  className="hg-navLink"
+                  onClick={() => applyQuickSearch("подарък")}
+                >
+                  Подаръчни комплекти
+                </button>
+              </div>
+
+              <div className="hg-mainNav__actions">
+                <button
+                  className="hg-btn hg-btn--primary"
+                  onClick={() => setCartOpen(true)}
+                >
+                  Количка ({cartCount})
+                </button>
+              </div>
+            </div>
+
+            <section className="hg-hero">
+              <div className="hg-hero__overlay" />
+
+              <div className="hg-hero__content">
+                <div className="hg-hero__eyebrow">Онлайн магазин за кафе продукти</div>
+
+                <h2 className="hg-hero__title">
+                  Премиум кафе атмосфера за твоя дом, офис или бизнес
+                </h2>
+
+                <p className="hg-hero__text">
+                  Подбрани продукти, модерна визия и бърза поръчка в стил истински
+                  специализиран магазин за кафе.
+                </p>
+
+                <div className="hg-hero__cta">
+                  <button
+                    className="hg-btn hg-btn--primary"
+                    onClick={() => {
+                      const section = document.getElementById("hg-products-section");
+                      if (section) section.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    Разгледай продуктите
+                  </button>
+
+                  <button
+                    className="hg-btn"
+                    onClick={() => applyQuickSearch("премиум кафе")}
+                  >
+                    Премиум селекция
+                  </button>
+                </div>
+
+                <div className="hg-hero__links">
+                  {HERO_LINKS.map((item) => (
+                    <button
+                      key={item}
+                      className="hg-heroLink"
+                      onClick={() => applyQuickSearch(item)}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="hg-heroCards">
+                {HERO_FEATURES.map((item) => (
+                  <div className="hg-heroCard" key={item.title}>
+                    <div className="hg-heroCard__title">{item.title}</div>
+                    <div className="hg-heroCard__text">{item.text}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="hg-chipSection">
+              <div className="hg-sectionHead">
+                <div>
+                  <div className="hg-sectionEyebrow">Популярни категории</div>
+                  <h3 className="hg-sectionTitle">Открий точния тип продукти</h3>
+                </div>
+              </div>
+
+              <div className="hg-chipGrid">
+                {PUBLIC_CATEGORY_CHIPS.map((chip) => (
+                  <button
+                    key={chip.label}
+                    className="hg-chipCard"
+                    onClick={() => applyQuickSearch(chip.value)}
+                  >
+                    <span className="hg-chipCard__title">{chip.label}</span>
+                    <span className="hg-chipCard__sub">Разгледай категорията</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </section>
+
+          <div className="hg-toolbarWrap" id="hg-products-section">
+            <div className="hg-sectionHead hg-sectionHead--toolbar">
+              <div>
+                <div className="hg-sectionEyebrow">Каталог</div>
+                <h3 className="hg-sectionTitle">Всички продукти</h3>
+              </div>
+            </div>
+
+            <div className="hg-toolbar">
+              <input
+                className="hg-input"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Търси кафе, капсули, машини, марка или продукт..."
+              />
+
+              <select
+                className="hg-select"
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+              >
+                {SORTS.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {loading && <div className="hg-panel">Зареждане…</div>}
@@ -1338,6 +1751,14 @@ function AppShell() {
                           ? `${selectedProduct.shippingDays} дни`
                           : "—"}
                       </b>
+                    </div>
+
+                    <div className="hg-kpis">
+                      Грамаж: <b>{selectedProduct.weight ?? "-"}</b>
+                      {selectedProduct.weightUnit
+                        ? ` ${selectedProduct.weightUnit}`
+                        : ""}{" "}
+                      • Интензитет: <b>{selectedProduct.intensity ?? "-"}</b>
                     </div>
 
                     <div className="hg-actions">

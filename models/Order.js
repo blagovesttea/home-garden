@@ -8,21 +8,67 @@ const OrderItemSchema = new mongoose.Schema(
       ref: "Product",
       required: true,
     },
-    title: { type: String, required: true, trim: true },
-    imageUrl: { type: String, default: "" },
-    price: { type: Number, required: true, min: 0 },
-    qty: { type: Number, required: true, min: 1, default: 1 },
+
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    imageUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    qty: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 1,
+    },
   },
   { _id: false }
 );
 
 const OrderSchema = new mongoose.Schema(
   {
-    customerName: { type: String, required: true, trim: true },
-    phone: { type: String, required: true, trim: true },
-    city: { type: String, default: "", trim: true },
-    address: { type: String, default: "", trim: true },
-    note: { type: String, default: "", trim: true },
+    customerName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    phone: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,
+    },
+
+    city: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    address: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    note: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
     items: {
       type: [OrderItemSchema],
@@ -33,8 +79,18 @@ const OrderSchema = new mongoose.Schema(
       },
     },
 
-    total: { type: Number, required: true, min: 0, default: 0 },
-    currency: { type: String, default: "BGN", trim: true },
+    total: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+
+    currency: {
+      type: String,
+      default: "BGN",
+      trim: true,
+    },
 
     status: {
       type: String,
@@ -54,6 +110,6 @@ const OrderSchema = new mongoose.Schema(
 
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ status: 1, createdAt: -1 });
-OrderSchema.index({ phone: 1 });
+OrderSchema.index({ phone: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Order", OrderSchema);

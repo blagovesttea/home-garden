@@ -7,9 +7,28 @@ const adminOnly = require("../middleware/admin");
 
 const router = express.Router();
 
+const ALLOWED_ORDER_STATUSES = [
+  "new",
+  "confirmed",
+  "shipped",
+  "delivered",
+  "cancelled",
+];
+
 function toSafeNumber(v, fallback = 0) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function normalizeText(v, fallback = "") {
+  return String(v ?? fallback).trim();
+}
+
+function getProductPrice(product) {
+  if (product?.finalPrice != null) {
+    return toSafeNumber(product.finalPrice, 0);
+  }
+  return toSafeNumber(product?.price, 0);
 }
 
 /**
@@ -19,11 +38,13 @@ function toSafeNumber(v, fallback = 0) {
 router.post("/", async (req, res) => {
   try {
     const body = req.body || {};
-    const customerName = String(body.customerName || "").trim();
-    const phone = String(body.phone || "").trim();
-    const city = String(body.city || "").trim();
-    const address = String(body.address || "").trim();
-    const note = String(body.note || "").trim();
+
+    const customerName = normalizeText(body.customerName);
+    const phone = normalizeText(body.phone);
+    const city = normalizeText(body.city);
+    const address = normalizeText(body.address);
+    const note = normalizeText(body.note);
+
     const items = Array.isArray(body.items) ? body.items : [];
 
     if (!customerName || !phone) {
@@ -40,7 +61,8 @@ router.post("/", async (req, res) => {
 
     const productIds = items
       .map((x) => x.productId || x._id)
-      .filter(Boolean);
+      .filter(Boolean)
+      .map((x) => String(x).trim());
 
     const products = await Product.find({
       _id: { $in: productIds },
@@ -60,10 +82,7 @@ router.post("/", async (req, res) => {
 
       if (!product) continue;
 
-      const price =
-        product.finalPrice != null
-          ? toSafeNumber(product.finalPrice, 0)
-          : toSafeNumber(product.price, 0);
+      const price = getProductPrice(product);
 
       normalizedItems.push({
         productId: product._id,
@@ -94,6 +113,7 @@ router.post("/", async (req, res) => {
       items: normalizedItems,
       total: +total.toFixed(2),
       currency: "BGN",
+      status: "new",
     });
 
     return res.status(201).json({
@@ -112,13 +132,22 @@ router.post("/", async (req, res) => {
 /**
  * GET /orders/admin
  * Списък с поръчки за админ
+ * Optional:
+ * ?status=all|new|confirmed|shipped|delivered|cancelled
  */
 router.get("/admin", auth, adminOnly, async (req, res) => {
   try {
-    const status = String(req.query.status || "all").trim().toLowerCase();
+    const status = normalizeText(req.query.status, "all").toLowerCase();
 
     const filter = {};
-    if (status !== "all") filter.status = status;
+    if (status !== "all") {
+      if (!ALLOWED_ORDER_STATUSES.includes(status)) {
+        return res.status(400).json({
+          message: "Невалиден статус.",
+        });
+      }
+      filter.status = status;
+    }
 
     const items = await Order.find(filter).sort({ createdAt: -1 });
 
@@ -141,19 +170,15 @@ router.get("/admin", auth, adminOnly, async (req, res) => {
 router.patch("/admin/:id/status", auth, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const status = String(req.body?.status || "").trim().toLowerCase();
+    const status = normalizeText(req.body?.status).toLowerCase();
 
-    if (!["new", "confirmed", "shipped", "delivered", "cancelled"].includes(status)) {
+    if (!ALLOWED_ORDER_STATUSES.includes(status)) {
       return res.status(400).json({
         message: "Невалиден статус.",
       });
     }
 
-    const updated = await Order.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
+    const updated = await Order.findByIdAndUpdate(id, { status }, { new: true });
 
     if (!updated) {
       return res.status(404).json({
@@ -164,6 +189,7 @@ router.patch("/admin/:id/status", auth, adminOnly, async (req, res) => {
     return res.json({
       ok: true,
       order: updated,
+      message: "Статусът на поръчката е обновен успешно.",
     });
   } catch (err) {
     return res.status(500).json({

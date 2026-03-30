@@ -1,11 +1,41 @@
 const mongoose = require("mongoose");
 
+const PRODUCT_CATEGORIES = [
+  "coffee-beans",
+  "ground-coffee",
+  "capsules",
+  "pods",
+  "machines",
+  "grinders",
+  "accessories",
+  "cups",
+  "syrups",
+  "gift-sets",
+  "office-coffee",
+  "horeca",
+  "other",
+];
+
 const ProductSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true, trim: true },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,
+    },
 
-    shortDescription: { type: String, default: "", trim: true },
-    description: { type: String, default: "", trim: true },
+    shortDescription: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
     sku: {
       type: String,
@@ -22,18 +52,18 @@ const ProductSchema = new mongoose.Schema(
     },
 
     /**
-     * Legacy simple category
+     * Главна магазинна категория
      */
     category: {
       type: String,
       required: true,
-      enum: ["home", "garden", "tools", "outdoor", "kitchen", "storage", "other"],
-      default: "other",
+      enum: PRODUCT_CATEGORIES,
+      default: "coffee-beans",
       index: true,
     },
 
     /**
-     * Catalog category
+     * Каталог / дърво с категории
      */
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -55,8 +85,74 @@ const ProductSchema = new mongoose.Schema(
     },
 
     /**
+     * Данни за продукта – полезни за кафе магазин
+     */
+    weight: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    weightUnit: {
+      type: String,
+      enum: ["g", "kg", "ml", "l", "pcs", ""],
+      default: "",
+    },
+
+    packCount: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    roastLevel: {
+      type: String,
+      enum: ["", "light", "medium", "medium-dark", "dark"],
+      default: "",
+      index: true,
+    },
+
+    intensity: {
+      type: Number,
+      default: null,
+      min: 1,
+      max: 12,
+    },
+
+    caffeineType: {
+      type: String,
+      enum: ["", "regular", "decaf"],
+      default: "",
+      index: true,
+    },
+
+    compatibleWith: {
+      type: [String],
+      default: [],
+    },
+
+    /**
+     * Баджове за UI
+     */
+    badges: {
+      type: [String],
+      default: [],
+    },
+
+    isNew: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    isOnSale: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    /**
      * Source info
-     * Оставяме го, защото може още да вкарваш продукти от външен source.
      */
     source: {
       type: String,
@@ -64,44 +160,77 @@ const ProductSchema = new mongoose.Schema(
       index: true,
     },
 
-    /**
-     * Вече НЕ е required и НЕ е unique,
-     * защото за реален магазин не трябва всеки продукт да идва от affiliate/source url.
-     */
     sourceUrl: {
       type: String,
       default: "",
       index: true,
     },
 
-    /**
-     * Legacy affiliate поле – оставяме го засега,
-     * но вече не е основна логика.
-     */
     affiliateUrl: {
       type: String,
       default: "",
     },
 
-    imageUrl: { type: String, default: "" },
+    /**
+     * Снимки
+     */
+    imageUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
     images: {
       type: [String],
       default: [],
     },
 
-    // pricing
-    price: { type: Number, default: null },
-    currency: { type: String, default: "BGN" },
+    /**
+     * Pricing
+     */
+    price: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
 
-    shippingPrice: { type: Number, default: 0 },
-    shippingToBG: { type: Boolean, default: true },
-    shippingDays: { type: Number, default: null },
+    currency: {
+      type: String,
+      default: "BGN",
+      trim: true,
+    },
+
+    shippingPrice: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    shippingToBG: {
+      type: Boolean,
+      default: true,
+    },
+
+    shippingDays: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
 
     /**
      * Store pricing
      */
-    basePrice: { type: Number, default: null },
+    basePrice: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    oldPrice: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
 
     markupType: {
       type: String,
@@ -109,9 +238,17 @@ const ProductSchema = new mongoose.Schema(
       default: "none",
     },
 
-    markupValue: { type: Number, default: 0 },
+    markupValue: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
 
-    finalPrice: { type: Number, default: null },
+    finalPrice: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
 
     /**
      * Stock
@@ -123,7 +260,27 @@ const ProductSchema = new mongoose.Schema(
       index: true,
     },
 
-    stockQty: { type: Number, default: null },
+    stockQty: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    /**
+     * Рейтинг / ревюта
+     */
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+
+    reviewsCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
 
     /**
      * Store flags
@@ -143,20 +300,41 @@ const ProductSchema = new mongoose.Schema(
     /**
      * Analytics
      */
-    views: { type: Number, default: 0 },
-    clicks: { type: Number, default: 0 },
+    views: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    clicks: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
 
     /**
-     * Legacy scoring – оставяме го засега,
+     * Legacy scoring – оставяме го,
      * за да не счупим стар код.
      */
-    profitScore: { type: Number, default: 0 },
-    score: { type: Number, default: 0 },
+    profitScore: {
+      type: Number,
+      default: 0,
+    },
 
-    notes: { type: String, default: "" },
+    score: {
+      type: Number,
+      default: 0,
+    },
+
+    notes: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
     /**
-     * Legacy BG check – оставяме го, но вече не е ключово.
+     * Legacy BG check – оставяме го,
+     * но вече не е ключово.
      */
     bg: {
       foundInBG: {
@@ -194,5 +372,10 @@ ProductSchema.index({ categoryPath: 1 });
 ProductSchema.index({ status: 1, categoryPath: 1 });
 ProductSchema.index({ isActive: 1, isFeatured: 1 });
 ProductSchema.index({ brand: 1, sku: 1 });
+ProductSchema.index({ category: 1, status: 1, isActive: 1 });
+ProductSchema.index({ isOnSale: 1, oldPrice: -1, finalPrice: 1 });
+ProductSchema.index({ isNew: 1, createdAt: -1 });
+ProductSchema.index({ rating: -1, reviewsCount: -1 });
+ProductSchema.index({ roastLevel: 1, caffeineType: 1 });
 
 module.exports = mongoose.model("Product", ProductSchema);

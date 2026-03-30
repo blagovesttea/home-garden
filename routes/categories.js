@@ -18,136 +18,204 @@ function slugify(input) {
 }
 
 /**
- * ✅ SEED categories (admin only)
  * POST /categories/seed
+ * Seed за кафе магазин
  */
 router.post("/seed", auth, adminOnly, async (req, res) => {
   try {
     const seed = [
       {
-        name: "Home",
+        name: "Кафе",
+        icon: "☕",
+        showOnHomepage: true,
+        isFeatured: true,
         children: [
           {
-            name: "Kitchen",
+            name: "Кафе на зърна",
+            icon: "🫘",
+            showOnHomepage: true,
             children: [
-              { name: "Cookware" },
-              { name: "Bakeware" },
-              { name: "Knives" },
-              { name: "Small Appliances" },
-              { name: "Kitchen Storage" },
-              { name: "Dish & Table" },
-              { name: "Coffee & Tea" },
+              { name: "100% Арабика" },
+              { name: "Бленд" },
+              { name: "Италианско кафе" },
+              { name: "Специално кафе" },
+              { name: "Био кафе" },
             ],
           },
           {
-            name: "Cleaning",
+            name: "Мляно кафе",
+            icon: "☕",
+            showOnHomepage: true,
             children: [
-              { name: "Cleaning Tools" },
-              { name: "Laundry" },
-              { name: "Bathroom Cleaning" },
-              { name: "Floor Care" },
+              { name: "Еспресо" },
+              { name: "Филтър кафе" },
+              { name: "Турско кафе" },
+              { name: "Кафе за джезве" },
             ],
           },
           {
-            name: "Storage",
+            name: "Капсули",
+            icon: "🟤",
+            showOnHomepage: true,
             children: [
-              { name: "Wardrobe" },
-              { name: "Shelving" },
-              { name: "Boxes & Bins" },
-              { name: "Organizers" },
-              { name: "Hooks & Hangers" },
+              { name: "Nespresso" },
+              { name: "Dolce Gusto" },
+              { name: "Lavazza" },
+              { name: "illy" },
             ],
           },
           {
-            name: "Bathroom",
+            name: "Дози и Pods",
+            icon: "📦",
             children: [
-              { name: "Bathroom Accessories" },
-              { name: "Shower" },
-              { name: "Towels & Rugs" },
-              { name: "Toilet Accessories" },
-            ],
-          },
-          {
-            name: "Bedroom",
-            children: [
-              { name: "Bedding" },
-              { name: "Pillows" },
-              { name: "Blankets" },
-              { name: "Closet Organizers" },
-            ],
-          },
-          {
-            name: "Living Room",
-            children: [
-              { name: "Decor" },
-              { name: "Lighting" },
-              { name: "Rugs" },
-              { name: "Curtains" },
-              { name: "Shelves & Stands" },
-            ],
-          },
-          {
-            name: "Home Office",
-            children: [
-              { name: "Desk Accessories" },
-              { name: "Cable Management" },
-              { name: "Organizers" },
-            ],
-          },
-          {
-            name: "Pets",
-            children: [
-              { name: "Pet Supplies" },
-              { name: "Pet Grooming" },
-              { name: "Pet Beds" },
+              { name: "Хартиени дози" },
+              { name: "ESE Pods" },
+              { name: "Професионални дози" },
             ],
           },
         ],
       },
       {
-        name: "Garden",
+        name: "Кафемашини",
+        icon: "☕",
+        showOnHomepage: true,
+        isFeatured: true,
         children: [
           {
-            name: "Tools",
+            name: "Автоматични кафемашини",
             children: [
-              { name: "Hand Tools" },
-              { name: "Power Tools" },
-              { name: "Pruners & Shears" },
+              { name: "DeLonghi" },
+              { name: "Saeco" },
+              { name: "Philips" },
+              { name: "Krups" },
             ],
           },
           {
-            name: "Watering",
+            name: "Капсулни машини",
             children: [
-              { name: "Hoses" },
-              { name: "Sprinklers" },
-              { name: "Irrigation" },
-              { name: "Watering Cans" },
+              { name: "Nespresso машини" },
+              { name: "Dolce Gusto машини" },
+              { name: "Lavazza машини" },
             ],
           },
           {
-            name: "Outdoor",
+            name: "Професионални машини",
             children: [
-              { name: "Outdoor Lighting" },
-              { name: "Camping" },
-              { name: "BBQ & Grilling" },
-              { name: "Outdoor Furniture" },
+              { name: "За офиси" },
+              { name: "За заведения" },
+              { name: "За хотели" },
             ],
           },
           {
-            name: "Plants",
+            name: "Ръчни еспресо машини",
             children: [
-              { name: "Planters & Pots" },
-              { name: "Soil & Fertilizers" },
-              { name: "Seeds" },
-              { name: "Greenhouse" },
+              { name: "Домашни" },
+              { name: "Премиум" },
+            ],
+          },
+        ],
+      },
+      {
+        name: "Аксесоари",
+        icon: "🧋",
+        showOnHomepage: true,
+        children: [
+          {
+            name: "Чаши и термоси",
+            children: [
+              { name: "Стъклени чаши" },
+              { name: "Термочаши" },
+              { name: "Порцеланови чаши" },
             ],
           },
           {
-            name: "Pest Control",
+            name: "Мелачки",
             children: [
-              { name: "Insect Control" },
-              { name: "Rodent Control" },
-              { name: "Repellents" },
+              { name: "Ръчни мелачки" },
+              { name: "Електрически мелачки" },
+            ],
+          },
+          {
+            name: "Почистващи препарати",
+            children: [
+              { name: "За кафемашини" },
+              { name: "Декалциране" },
+              { name: "Филтри за вода" },
+            ],
+          },
+          {
+            name: "Бариста аксесоари",
+            children: [
+              { name: "Тампери" },
+              { name: "Кани за мляко" },
+              { name: "Шейкъри" },
+            ],
+          },
+        ],
+      },
+      {
+        name: "Сиропи и добавки",
+        icon: "🍯",
+        showOnHomepage: true,
+        children: [
+          {
+            name: "Сиропи",
+            children: [
+              { name: "Ванилия" },
+              { name: "Карамел" },
+              { name: "Лешник" },
+              { name: "Шоколад" },
+            ],
+          },
+          {
+            name: "Подсладители",
+            children: [
+              { name: "Кафява захар" },
+              { name: "Стевия" },
+              { name: "Подсладители" },
+            ],
+          },
+          {
+            name: "Млека и сметани",
+            children: [
+              { name: "Растителни млека" },
+              { name: "Кондензирано мляко" },
+            ],
+          },
+        ],
+      },
+      {
+        name: "Офис и HoReCa",
+        icon: "🏢",
+        showOnHomepage: true,
+        isFeatured: true,
+        children: [
+          {
+            name: "Кафе за офиси",
+            children: [
+              { name: "Абонаменти" },
+              { name: "Пакети за офиси" },
+            ],
+          },
+          {
+            name: "Кафе за хотели",
+            children: [
+              { name: "Хотелски пакети" },
+              { name: "Мини бар решения" },
+            ],
+          },
+          {
+            name: "Кафе за ресторанти",
+            children: [
+              { name: "Професионални смеси" },
+              { name: "Бар решения" },
+            ],
+          },
+          {
+            name: "Вендинг",
+            children: [
+              { name: "Вендинг кафе" },
+              { name: "Консумативи" },
             ],
           },
         ],
@@ -180,6 +248,11 @@ router.post("/seed", auth, adminOnly, async (req, res) => {
             order: Number(order || 0),
             isActive: true,
             path,
+            icon: node.icon || "",
+            shortDescription: node.shortDescription || "",
+            imageUrl: node.imageUrl || "",
+            showOnHomepage: Boolean(node.showOnHomepage),
+            isFeatured: Boolean(node.isFeatured),
           },
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -189,6 +262,7 @@ router.post("/seed", auth, adminOnly, async (req, res) => {
       for (let i = 0; i < kids.length; i++) {
         await upsertNode(kids[i], doc, i);
       }
+
       return doc;
     }
 
@@ -197,9 +271,16 @@ router.post("/seed", auth, adminOnly, async (req, res) => {
     }
 
     const count = await Category.countDocuments({});
-    return res.json({ ok: true, message: "Categories seeded", count });
+    return res.json({
+      ok: true,
+      message: "Категориите са добавени успешно",
+      count,
+    });
   } catch (err) {
-    return res.status(500).json({ message: "Seed error", error: err.message });
+    return res.status(500).json({
+      message: "Грешка при добавяне на категориите",
+      error: err.message,
+    });
   }
 });
 
@@ -224,6 +305,11 @@ router.get("/", async (req, res) => {
         path: c.path || [],
         level: c.level,
         parent: c.parent || null,
+        icon: c.icon || "",
+        shortDescription: c.shortDescription || "",
+        imageUrl: c.imageUrl || "",
+        showOnHomepage: c.showOnHomepage || false,
+        isFeatured: c.isFeatured || false,
         children: [],
       });
     }
@@ -241,13 +327,15 @@ router.get("/", async (req, res) => {
 
     return res.json({ ok: true, items: roots });
   } catch (err) {
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
 /**
  * GET /categories/flat
- * Flat list for dropdowns
  */
 router.get("/flat", async (req, res) => {
   try {
@@ -257,30 +345,48 @@ router.get("/flat", async (req, res) => {
 
     return res.json({ ok: true, items });
   } catch (err) {
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
 /**
- * ✅ SAFE on Express 5 (NO wildcard routes)
- * GET /categories/by-path?path=home/kitchen/cookware
+ * GET /categories/by-path?path=kafe/kafe-na-zarna/100-arabika
  */
 router.get("/by-path", async (req, res) => {
   try {
     const pathStr = String(req.query.path || "").trim();
-    if (!pathStr) return res.status(400).json({ message: "path query required" });
+
+    if (!pathStr) {
+      return res.status(400).json({
+        message: "Липсва path параметър",
+      });
+    }
 
     const pathArr = pathStr
       .split("/")
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean);
 
-    const item = await Category.findOne({ path: pathArr, isActive: true }).lean();
-    if (!item) return res.status(404).json({ message: "Category not found" });
+    const item = await Category.findOne({
+      path: pathArr,
+      isActive: true,
+    }).lean();
+
+    if (!item) {
+      return res.status(404).json({
+        message: "Категорията не е намерена",
+      });
+    }
 
     return res.json({ ok: true, item });
   } catch (err) {
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
   }
 });
 
