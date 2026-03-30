@@ -27,12 +27,12 @@ const SORTS = [
 ];
 
 const PUBLIC_CATEGORY_CHIPS = [
-  { label: "Кафе на зърна", value: "зърна" },
-  { label: "Мляно кафе", value: "мляно" },
-  { label: "Капсули", value: "капсули" },
-  { label: "Кафемашини", value: "машини" },
-  { label: "Аксесоари", value: "аксесоари" },
-  { label: "Подаръчни комплекти", value: "подарък" },
+  { label: "Кафе на зърна", value: "coffee-beans" },
+  { label: "Мляно кафе", value: "ground-coffee" },
+  { label: "Капсули", value: "capsules" },
+  { label: "Кафемашини", value: "machines" },
+  { label: "Аксесоари", value: "accessories" },
+  { label: "Подаръчни комплекти", value: "gift-sets" },
 ];
 
 const HERO_FEATURES = [
@@ -51,11 +51,11 @@ const HERO_FEATURES = [
 ];
 
 const HERO_LINKS = [
-  "Кафе на зърна",
-  "Капсули и дози",
-  "Кафемашини",
-  "Аксесоари",
-  "Подаръчни комплекти",
+  { label: "Кафе на зърна", category: "coffee-beans" },
+  { label: "Капсули и дози", category: "capsules" },
+  { label: "Кафемашини", category: "machines" },
+  { label: "Аксесоари", category: "accessories" },
+  { label: "Подаръчни комплекти", category: "gift-sets" },
 ];
 
 const ADMIN_CATEGORY_OPTIONS = [
@@ -320,6 +320,7 @@ function AppShell() {
   ========================== */
   const [q, setQ] = useState("");
   const [qDebounced, setQDebounced] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [sort, setSort] = useState("featured");
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
@@ -336,7 +337,7 @@ function AppShell() {
 
   useEffect(() => {
     setPage(1);
-  }, [qDebounced, sort]);
+  }, [qDebounced, sort, selectedCategory]);
 
   useEffect(() => {
     let aborted = false;
@@ -353,6 +354,9 @@ function AppShell() {
         params.set("limit", String(limit));
         params.set("sort", sort);
         if (qDebounced) params.set("q", qDebounced);
+        if (selectedCategory && selectedCategory !== "all") {
+          params.set("category", selectedCategory);
+        }
 
         const data = await apiFetch(`/products?${params.toString()}`, {
           method: "GET",
@@ -381,7 +385,7 @@ function AppShell() {
     return () => {
       aborted = true;
     };
-  }, [view, qDebounced, sort, page, limit]);
+  }, [view, qDebounced, selectedCategory, sort, page, limit]);
 
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil((meta.total || 0) / (meta.limit || 20)));
@@ -936,6 +940,19 @@ function AppShell() {
 
   function applyQuickSearch(value) {
     setQ(value);
+    setSelectedCategory("all");
+    setPage(1);
+  }
+
+  function applyCategoryFilter(categoryValue) {
+    setSelectedCategory(categoryValue || "all");
+    setQ("");
+    setPage(1);
+  }
+
+  function clearPublicFilters() {
+    setQ("");
+    setSelectedCategory("all");
     setPage(1);
   }
 
@@ -1631,36 +1648,36 @@ function AppShell() {
               </div>
 
               <div className="hg-mainNav__menu">
-                <button className="hg-navLink" onClick={() => applyQuickSearch("")}>
+                <button className="hg-navLink" onClick={clearPublicFilters}>
                   Начало
                 </button>
                 <button
                   className="hg-navLink"
-                  onClick={() => applyQuickSearch("кафе")}
+                  onClick={() => applyCategoryFilter("coffee-beans")}
                 >
                   Кафе
                 </button>
                 <button
                   className="hg-navLink"
-                  onClick={() => applyQuickSearch("капсули")}
+                  onClick={() => applyCategoryFilter("capsules")}
                 >
                   Капсули
                 </button>
                 <button
                   className="hg-navLink"
-                  onClick={() => applyQuickSearch("машина")}
+                  onClick={() => applyCategoryFilter("machines")}
                 >
                   Машини
                 </button>
                 <button
                   className="hg-navLink"
-                  onClick={() => applyQuickSearch("аксесоари")}
+                  onClick={() => applyCategoryFilter("accessories")}
                 >
                   Аксесоари
                 </button>
                 <button
                   className="hg-navLink"
-                  onClick={() => applyQuickSearch("подарък")}
+                  onClick={() => applyCategoryFilter("gift-sets")}
                 >
                   Подаръчни комплекти
                 </button>
@@ -1704,7 +1721,12 @@ function AppShell() {
 
                   <button
                     className="hg-btn"
-                    onClick={() => applyQuickSearch("премиум кафе")}
+                    onClick={() => {
+                      setSort("featured");
+                      setSelectedCategory("all");
+                      setQ("премиум кафе");
+                      setPage(1);
+                    }}
                   >
                     Премиум селекция
                   </button>
@@ -1713,11 +1735,11 @@ function AppShell() {
                 <div className="hg-hero__links">
                   {HERO_LINKS.map((item) => (
                     <button
-                      key={item}
+                      key={item.label}
                       className="hg-heroLink"
-                      onClick={() => applyQuickSearch(item)}
+                      onClick={() => applyCategoryFilter(item.category)}
                     >
-                      {item}
+                      {item.label}
                     </button>
                   ))}
                 </div>
@@ -1746,7 +1768,7 @@ function AppShell() {
                   <button
                     key={chip.label}
                     className="hg-chipCard"
-                    onClick={() => applyQuickSearch(chip.value)}
+                    onClick={() => applyCategoryFilter(chip.value)}
                   >
                     <span className="hg-chipCard__title">{chip.label}</span>
                     <span className="hg-chipCard__sub">Разгледай категорията</span>
@@ -1774,6 +1796,22 @@ function AppShell() {
 
               <select
                 className="hg-select"
+                value={selectedCategory}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="all">Всички категории</option>
+                {ADMIN_CATEGORY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className="hg-select"
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
               >
@@ -1783,6 +1821,12 @@ function AppShell() {
                   </option>
                 ))}
               </select>
+
+              {(selectedCategory !== "all" || q) && (
+                <button className="hg-btn" onClick={clearPublicFilters}>
+                  Изчисти филтрите
+                </button>
+              )}
             </div>
           </div>
 
