@@ -24,13 +24,6 @@ try {
   console.error(e && (e.stack || e.message || e));
 }
 
-let runProfitshareBot = null;
-try {
-  runProfitshareBot = require("./jobs/runBot");
-} catch (e) {
-  console.log("ℹ️ jobs/runBot.js not found (bot disabled).");
-}
-
 const app = express();
 
 /* =========================
@@ -134,29 +127,6 @@ if (process.env.NODE_ENV === "production") {
 }
 
 /* =========================
-   Bot runner (safe, non-blocking)
-========================= */
-function startBotOnceAfterBoot() {
-  if (!runProfitshareBot) return;
-
-  const feedUrl = process.env.PROFITSHARE_FEED_URL;
-  if (!feedUrl) {
-    console.log("ℹ️ PROFITSHARE_FEED_URL missing (bot disabled).");
-    return;
-  }
-
-  setTimeout(async () => {
-    try {
-      console.log("🤖 Product import bot starting...");
-      await runProfitshareBot();
-      console.log("✅ Product import bot finished.");
-    } catch (err) {
-      console.error("❌ Product import bot error:", err?.stack || err?.message || err);
-    }
-  }, 15000);
-}
-
-/* =========================
    Start server
 ========================= */
 async function start() {
@@ -171,7 +141,6 @@ async function start() {
     const PORT = process.env.PORT || 8000;
     app.listen(PORT, () => {
       console.log("✅ Server running on port " + PORT);
-      startBotOnceAfterBoot();
     });
   } catch (err) {
     console.error("❌ Boot error:", err?.stack || err?.message || err);

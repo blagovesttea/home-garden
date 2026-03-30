@@ -3,9 +3,6 @@ const Product = require("../models/Product");
 const auth = require("../middleware/auth");
 const adminOnly = require("../middleware/admin");
 
-// auto re-categorize
-const { categorizeProduct } = require("../services/categorizer");
-
 const router = express.Router();
 
 const ALLOWED_STATUS = ["new", "approved", "rejected", "blacklisted"];
@@ -587,56 +584,6 @@ router.post("/products/approve-existing", auth, adminOnly, async (req, res) => {
       ok: true,
       matched: r.matchedCount ?? r.n,
       modified: r.modifiedCount ?? r.nModified,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      message: "Грешка в сървъра",
-      error: err.message,
-    });
-  }
-});
-
-/**
- * Auto re-categorize products missing categoryPath
- */
-router.post("/products/recategorize-missing", auth, adminOnly, async (req, res) => {
-  try {
-    const query = {
-      $or: [
-        { categoryPath: { $exists: false } },
-        { categoryPath: { $type: "array", $size: 0 } },
-      ],
-    };
-
-    const items = await Product.find(query).limit(500).lean();
-    let updated = 0;
-
-    for (const p of items) {
-      const cat = await categorizeProduct({
-        title: p.title,
-        categoryText: p.categoryText || p.category,
-        description: p.description,
-        brand: p.brand,
-      });
-
-      const patch = {};
-      if (Array.isArray(cat.categoryPath) && cat.categoryPath.length) {
-        patch.categoryPath = cat.categoryPath;
-      }
-      if (cat.categoryId) patch.categoryId = cat.categoryId;
-      if (cat.legacyCategory) patch.category = cat.legacyCategory;
-
-      if (Object.keys(patch).length) {
-        await Product.updateOne({ _id: p._id }, { $set: patch });
-        updated++;
-      }
-    }
-
-    return res.json({
-      ok: true,
-      message: `Готово. Проверени: ${items.length} / обновени: ${updated}`,
-      scanned: items.length,
-      updated,
     });
   } catch (err) {
     return res.status(500).json({
