@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const Product = require("../models/Product");
 const Category = require("../models/Category");
 const auth = require("../middleware/auth");
@@ -73,6 +74,62 @@ function normalizeCategory(category) {
   return ALLOWED_CATEGORIES.includes(c) ? c : "coffee-beans";
 }
 
+function normalizeCategoryPath(value) {
+  if (Array.isArray(value)) {
+    return value.map((x) => String(x || "").trim()).filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+
+    if (trimmed.includes(">")) {
+      return trimmed
+        .split(">")
+        .map((x) => x.trim())
+        .filter(Boolean);
+    }
+
+    if (trimmed.includes("/")) {
+      return trimmed
+        .split("/")
+        .map((x) => x.trim())
+        .filter(Boolean);
+    }
+
+    if (trimmed.includes(",")) {
+      return trimmed
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+    }
+
+    return [trimmed];
+  }
+
+  return [];
+}
+
+function isValidObjectId(value) {
+  return mongoose.Types.ObjectId.isValid(String(value || ""));
+}
+
+function normalizeBoolean(value, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    if (v === "true") return true;
+    if (v === "false") return false;
+  }
+  return fallback;
+}
+
+function normalizeNullableNumber(value) {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 function normalizePriceFields(data = {}) {
   const price =
     data.price != null && data.price !== ""
@@ -125,6 +182,7 @@ async function resolveManualCategoryMeta(category) {
 
   if (!mappedPath.length) {
     return {
+      category: normalizedCategory,
       categoryId: null,
       categoryPath: [],
     };
@@ -134,20 +192,74 @@ async function resolveManualCategoryMeta(category) {
     path: mappedPath,
     isActive: true,
   })
-    .select("_id path")
+    .select("_id path slug")
     .lean();
 
   if (exact) {
     return {
+      category: normalizedCategory,
       categoryId: exact._id,
       categoryPath: exact.path || mappedPath,
     };
   }
 
   return {
+    category: normalizedCategory,
     categoryId: null,
     categoryPath: mappedPath,
   };
+}
+
+async function resolveCategoryMeta(input = {}) {
+  const rawCategory = normalizeText(input.category, "");
+  const rawCategoryId = normalizeText(input.categoryId, "");
+  const rawCategoryPath = normalizeCategoryPath(input.categoryPath);
+
+  if (rawCategoryId && isValidObjectId(rawCategoryId)) {
+    const byId = await Category.findOne({
+      _id: rawCategoryId,
+      isActive: true,
+    })
+      .select("_id path slug")
+      .lean();
+
+    if (byId) {
+      return {
+        category: rawCategory && ALLOWED_CATEGORIES.includes(rawCategory)
+          ? rawCategory
+          : normalizeCategory(byId.slug || rawCategory || "coffee-beans"),
+        categoryId: byId._id,
+        categoryPath: Array.isArray(byId.path) ? byId.path : [],
+      };
+    }
+  }
+
+  if (rawCategoryPath.length) {
+    const byPath = await Category.findOne({
+      path: rawCategoryPath,
+      isActive: true,
+    })
+      .select("_id path slug")
+      .lean();
+
+    if (byPath) {
+      return {
+        category: rawCategory && ALLOWED_CATEGORIES.includes(rawCategory)
+          ? rawCategory
+          : normalizeCategory(byPath.slug || rawCategory || "coffee-beans"),
+        categoryId: byPath._id,
+        categoryPath: Array.isArray(byPath.path) ? byPath.path : rawCategoryPath,
+      };
+    }
+
+    return {
+      category: normalizeCategory(rawCategory || "coffee-beans"),
+      categoryId: null,
+      categoryPath: rawCategoryPath,
+    };
+  }
+
+  return resolveManualCategoryMeta(rawCategory || "coffee-beans");
 }
 
 function buildProductPayload(data = {}, userId = null) {
@@ -176,45 +288,29 @@ function buildProductPayload(data = {}, userId = null) {
     currency: normalizeText(data.currency, "BGN") || "BGN",
 
     shippingPrice: toSafeNumber(data.shippingPrice, 0),
-    shippingToBG:
-      typeof data.shippingToBG === "boolean" ? data.shippingToBG : true,
-    shippingDays:
-      data.shippingDays != null && data.shippingDays !== ""
-        ? toSafeNumber(data.shippingDays, null)
-        : null,
+    shippingToBG: normalizeBoolean(data.shippingToBG, true),
+    shippingDays: normalizeNullableNumber(data.shippingDays),
 
     stockStatus: ALLOWED_STOCK.includes(data.stockStatus)
       ? data.stockStatus
       : "unknown",
 
-    stockQty:
-      data.stockQty != null && data.stockQty !== ""
-        ? toSafeNumber(data.stockQty, null)
-        : null,
+    stockQty: normalizeNullableNumber(data.stockQty),
 
-    isActive: typeof data.isActive === "boolean" ? data.isActive : true,
-    isFeatured: typeof data.isFeatured === "boolean" ? data.isFeatured : false,
+    isActive: normalizeBoolean(data.isActive, true),
+    isFeatured: normalizeBoolean(data.isFeatured, false),
 
     status: ALLOWED_STATUS.includes(data.status) ? data.status : "new",
 
-    weight:
-      data.weight != null && data.weight !== ""
-        ? toSafeNumber(data.weight, null)
-        : null,
+    weight: normalizeNullableNumber(data.weight),
 
     weightUnit: ALLOWED_WEIGHT_UNITS.includes(weightUnit) ? weightUnit : "",
 
-    packCount:
-      data.packCount != null && data.packCount !== ""
-        ? toSafeNumber(data.packCount, null)
-        : null,
+    packCount: normalizeNullableNumber(data.packCount),
 
     roastLevel: ALLOWED_ROAST_LEVELS.includes(roastLevel) ? roastLevel : "",
 
-    intensity:
-      data.intensity != null && data.intensity !== ""
-        ? toSafeNumber(data.intensity, null)
-        : null,
+    intensity: normalizeNullableNumber(data.intensity),
 
     caffeineType: ALLOWED_CAFFEINE_TYPES.includes(caffeineType)
       ? caffeineType
@@ -223,13 +319,10 @@ function buildProductPayload(data = {}, userId = null) {
     compatibleWith: normalizeStringArray(data.compatibleWith),
     badges: normalizeStringArray(data.badges),
 
-    isNew: typeof data.isNew === "boolean" ? data.isNew : false,
-    isOnSale: typeof data.isOnSale === "boolean" ? data.isOnSale : false,
+    isNew: normalizeBoolean(data.isNew, false),
+    isOnSale: normalizeBoolean(data.isOnSale, false),
 
-    oldPrice:
-      data.oldPrice != null && data.oldPrice !== ""
-        ? toSafeNumber(data.oldPrice, null)
-        : null,
+    oldPrice: normalizeNullableNumber(data.oldPrice),
 
     rating:
       data.rating != null && data.rating !== ""
@@ -262,8 +355,9 @@ router.post("/products", auth, adminOnly, async (req, res) => {
     }
 
     const payload = buildProductPayload(data, req.user.id);
-    const categoryMeta = await resolveManualCategoryMeta(payload.category);
+    const categoryMeta = await resolveCategoryMeta(data);
 
+    payload.category = categoryMeta.category;
     payload.categoryId = categoryMeta.categoryId;
     payload.categoryPath = categoryMeta.categoryPath;
 
@@ -448,8 +542,9 @@ router.post("/products/seed", auth, adminOnly, async (req, res) => {
     for (const item of demo) {
       try {
         const payload = buildProductPayload(item, req.user.id);
-        const categoryMeta = await resolveManualCategoryMeta(payload.category);
+        const categoryMeta = await resolveCategoryMeta(item);
 
+        payload.category = categoryMeta.category;
         payload.categoryId = categoryMeta.categoryId;
         payload.categoryPath = categoryMeta.categoryPath;
 
@@ -480,28 +575,45 @@ router.post("/products/seed", auth, adminOnly, async (req, res) => {
  * Optional:
  * - ?status=new|approved|rejected|blacklisted|all
  * - ?page=1&limit=100
+ * - ?featured=true|false
+ * - ?q=текст
  */
 router.get("/products", auth, adminOnly, async (req, res) => {
   try {
-    const { status } = req.query || {};
+    const { status, featured, q } = req.query || {};
     const page = Math.max(1, parseInt(req.query.page || "1", 10) || 1);
     const limitRaw = parseInt(req.query.limit || "200", 10) || 200;
     const limit = Math.max(1, Math.min(500, limitRaw));
 
-    let q = {};
+    const query = {};
+
     if (status && status !== "all") {
       if (!ALLOWED_STATUS.includes(status)) {
         return res.status(400).json({ message: "Невалиден статус" });
       }
-      q = { status };
+      query.status = status;
+    }
+
+    if (featured === "true") query.isFeatured = true;
+    if (featured === "false") query.isFeatured = false;
+
+    if (q && String(q).trim()) {
+      const rx = new RegExp(String(q).trim(), "i");
+      query.$or = [
+        { title: rx },
+        { brand: rx },
+        { sku: rx },
+        { shortDescription: rx },
+        { description: rx },
+      ];
     }
 
     const [items, total] = await Promise.all([
-      Product.find(q)
+      Product.find(query)
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit),
-      Product.countDocuments(q),
+      Product.countDocuments(query),
     ]);
 
     return res.json({ ok: true, items, total, page, limit });
@@ -590,8 +702,12 @@ router.patch("/products/:id", auth, adminOnly, async (req, res) => {
     if (data.reviewsCount == null && data.reviewsCount !== "")
       delete patch.reviewsCount;
 
-    if (data.category != null) {
-      const categoryMeta = await resolveManualCategoryMeta(patch.category);
+    const hasCategoryInput =
+      data.category != null || data.categoryId != null || data.categoryPath != null;
+
+    if (hasCategoryInput) {
+      const categoryMeta = await resolveCategoryMeta(data);
+      patch.category = categoryMeta.category;
       patch.categoryId = categoryMeta.categoryId;
       patch.categoryPath = categoryMeta.categoryPath;
     }
@@ -627,6 +743,83 @@ router.patch("/products/approve-many", auth, adminOnly, async (req, res) => {
       ok: true,
       matched: r.matchedCount ?? r.n,
       modified: r.modifiedCount ?? r.nModified,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
+  }
+});
+
+/**
+ * PATCH /admin/products/feature-many
+ * Маркиране на избрани продукти като препоръчани
+ */
+router.patch("/products/feature-many", auth, adminOnly, async (req, res) => {
+  try {
+    const { ids, isFeatured } = req.body || {};
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "ids трябва да е непразен масив" });
+    }
+
+    if (typeof isFeatured !== "boolean") {
+      return res.status(400).json({
+        message: "isFeatured трябва да е boolean стойност",
+      });
+    }
+
+    const r = await Product.updateMany(
+      { _id: { $in: ids } },
+      { $set: { isFeatured } }
+    );
+
+    return res.json({
+      ok: true,
+      isFeatured,
+      matched: r.matchedCount ?? r.n,
+      modified: r.modifiedCount ?? r.nModified,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
+  }
+});
+
+/**
+ * DELETE /admin/products/delete-many
+ * Изтриване на избрани продукти наведнъж
+ */
+router.delete("/products/delete-many", auth, adminOnly, async (req, res) => {
+  try {
+    const { ids } = req.body || {};
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        message: "ids трябва да е непразен масив",
+      });
+    }
+
+    const validIds = ids
+      .map((x) => String(x || "").trim())
+      .filter((x) => isValidObjectId(x));
+
+    if (validIds.length === 0) {
+      return res.status(400).json({
+        message: "Няма валидни ID за изтриване",
+      });
+    }
+
+    const r = await Product.deleteMany({
+      _id: { $in: validIds },
+    });
+
+    return res.json({
+      ok: true,
+      deleted: r.deletedCount ?? 0,
     });
   } catch (err) {
     return res.status(500).json({

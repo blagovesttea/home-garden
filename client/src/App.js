@@ -558,11 +558,18 @@ function AppShell() {
   const [adminItems, setAdminItems] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminMsg, setAdminMsg] = useState("");
+  const [selectedAdminIds, setSelectedAdminIds] = useState([]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState("");
   const [productForm, setProductForm] = useState(emptyProductForm());
   const [formLoading, setFormLoading] = useState(false);
+
+  const selectedCount = selectedAdminIds.length;
+
+  const allVisibleSelected =
+    adminItems.length > 0 &&
+    adminItems.every((item) => selectedAdminIds.includes(item._id));
 
   async function loadAdmin() {
     if (!token) {
@@ -585,10 +592,15 @@ function AppShell() {
         method: "GET",
       });
 
-      setAdminItems(Array.isArray(data?.items) ? data.items : []);
+      const items = Array.isArray(data?.items) ? data.items : [];
+      setAdminItems(items);
+      setSelectedAdminIds((prev) =>
+        prev.filter((id) => items.some((item) => item._id === id))
+      );
     } catch (e) {
       setAdminMsg(e?.message || "Грешка при зареждане");
       setAdminItems([]);
+      setSelectedAdminIds([]);
     } finally {
       setAdminLoading(false);
     }
@@ -617,10 +629,38 @@ function AppShell() {
     }
   }
 
+  async function setSingleFeatured(id, isFeatured) {
+    setAdminMsg("");
+    try {
+      const r = await apiFetch(`/admin/products/feature-many`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          ids: [id],
+          isFeatured,
+        }),
+      });
+
+      setAdminMsg(
+        isFeatured
+          ? `Продуктът е маркиран като препоръчан. Обновени: ${r?.modified ?? 0}`
+          : `Продуктът е премахнат от препоръчани. Обновени: ${r?.modified ?? 0}`
+      );
+
+      await loadAdmin();
+    } catch (e) {
+      setAdminMsg(e?.message || "Грешка при промяна на препоръчан продукт");
+    }
+  }
+
   async function deleteProduct(id) {
+    if (!window.confirm("Сигурен ли си, че искаш да изтриеш този продукт?")) {
+      return;
+    }
+
     setAdminMsg("");
     try {
       await apiFetch(`/admin/products/${id}`, { method: "DELETE" });
+      setSelectedAdminIds((prev) => prev.filter((x) => x !== id));
       await loadAdmin();
     } catch (e) {
       setAdminMsg(e?.message || "Грешка при изтриване");
@@ -710,6 +750,94 @@ function AppShell() {
       ...prev,
       [key]: value,
     }));
+  }
+
+  function toggleAdminSelection(id) {
+    setSelectedAdminIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }
+
+  function toggleSelectAllVisible() {
+    if (!adminItems.length) return;
+
+    if (allVisibleSelected) {
+      setSelectedAdminIds((prev) =>
+        prev.filter((id) => !adminItems.some((item) => item._id === id))
+      );
+      return;
+    }
+
+    setSelectedAdminIds((prev) => {
+      const set = new Set(prev);
+      adminItems.forEach((item) => set.add(item._id));
+      return Array.from(set);
+    });
+  }
+
+  function clearSelectedAdminItems() {
+    setSelectedAdminIds([]);
+  }
+
+  async function bulkSetFeatured(isFeatured) {
+    if (!selectedAdminIds.length) {
+      setAdminMsg("Няма избрани продукти.");
+      return;
+    }
+
+    setAdminMsg("");
+
+    try {
+      const r = await apiFetch("/admin/products/feature-many", {
+        method: "PATCH",
+        body: JSON.stringify({
+          ids: selectedAdminIds,
+          isFeatured,
+        }),
+      });
+
+      setAdminMsg(
+        isFeatured
+          ? `Маркирани като препоръчани: ${r?.modified ?? 0}`
+          : `Премахнати от препоръчани: ${r?.modified ?? 0}`
+      );
+      await loadAdmin();
+    } catch (e) {
+      setAdminMsg(e?.message || "Грешка при масово маркиране");
+    }
+  }
+
+  async function bulkDeleteSelected() {
+    if (!selectedAdminIds.length) {
+      setAdminMsg("Няма избрани продукти.");
+      return;
+    }
+
+    const confirmText =
+      selectedAdminIds.length === 1
+        ? "Сигурен ли си, че искаш да изтриеш избрания продукт?"
+        : `Сигурен ли си, че искаш да изтриеш ${selectedAdminIds.length} продукта?`;
+
+    if (!window.confirm(confirmText)) {
+      return;
+    }
+
+    setAdminMsg("");
+
+    try {
+      const r = await apiFetch("/admin/products/delete-many", {
+        method: "DELETE",
+        body: JSON.stringify({
+          ids: selectedAdminIds,
+        }),
+      });
+
+      setAdminMsg(`Изтрити продукти: ${r?.deleted ?? 0}`);
+      setSelectedAdminIds([]);
+      await loadAdmin();
+    } catch (e) {
+      setAdminMsg(e?.message || "Грешка при масово изтриване");
+    }
   }
 
   async function submitProductForm(e) {
@@ -949,6 +1077,38 @@ function AppShell() {
                 </button>
 
                 <button
+                  className="hg-btn"
+                  onClick={toggleSelectAllVisible}
+                  disabled={adminLoading || adminItems.length === 0}
+                >
+                  {allVisibleSelected ? "Размаркирай всички" : "Маркирай всички"}
+                </button>
+
+                <button
+                  className="hg-btn"
+                  onClick={() => bulkSetFeatured(true)}
+                  disabled={adminLoading || selectedCount === 0}
+                >
+                  Избраните → препоръчани
+                </button>
+
+                <button
+                  className="hg-btn"
+                  onClick={() => bulkSetFeatured(false)}
+                  disabled={adminLoading || selectedCount === 0}
+                >
+                  Махни от препоръчани
+                </button>
+
+                <button
+                  className="hg-btn hg-btn--danger"
+                  onClick={bulkDeleteSelected}
+                  disabled={adminLoading || selectedCount === 0}
+                >
+                  Изтрий избраните
+                </button>
+
+                <button
                   className="hg-btn hg-btn--primary"
                   onClick={openCreateForm}
                   disabled={adminLoading}
@@ -959,6 +1119,16 @@ function AppShell() {
                 <div className="hg-counter">
                   Продукти: <b>{adminItems.length}</b>
                 </div>
+
+                <div className="hg-counter">
+                  Избрани: <b>{selectedCount}</b>
+                </div>
+
+                {selectedCount > 0 ? (
+                  <button className="hg-btn" onClick={clearSelectedAdminItems}>
+                    Изчисти избора
+                  </button>
+                ) : null}
 
                 <button className="hg-btn" onClick={doLogout}>
                   Изход
@@ -1307,100 +1477,127 @@ function AppShell() {
                   <div className="hg-panel">Няма продукти за този филтър.</div>
                 )}
 
-                {adminItems.map((p) => (
-                  <div className="hg-card" key={p._id}>
-                    <div
-                      className="hg-thumb"
-                      style={{
-                        backgroundImage: productImage(p)
-                          ? `url("${productImage(p)}")`
-                          : "linear-gradient(135deg,#eee,#f7f7f7)",
-                      }}
-                    />
+                {adminItems.map((p) => {
+                  const isSelected = selectedAdminIds.includes(p._id);
 
-                    <div className="hg-cardBody">
-                      <h3 className="hg-cardTitle">{p.title}</h3>
+                  return (
+                    <div className="hg-card" key={p._id}>
+                      <div
+                        className="hg-thumb"
+                        style={{
+                          backgroundImage: productImage(p)
+                            ? `url("${productImage(p)}")`
+                            : "linear-gradient(135deg,#eee,#f7f7f7)",
+                        }}
+                      />
 
-                      <div className="hg-meta">
-                        <span className="hg-pill">{p.brand || "без марка"}</span>
-                        <span className="hg-pill">
-                          {p.stockStatus || "unknown"}
-                        </span>
-                        <span className="hg-pill hg-pill--status">
-                          статус: {p.status}
-                        </span>
-                      </div>
+                      <div className="hg-cardBody">
+                        <label className="hg-check" style={{ marginBottom: 10 }}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleAdminSelection(p._id)}
+                          />
+                          Избери продукта
+                        </label>
 
-                      <div className="hg-kpis">
-                        Каталог:{" "}
-                        <b>
-                          {Array.isArray(p.categoryPath) && p.categoryPath.length
-                            ? p.categoryPath.join(" / ")
-                            : p.category || "-"}
-                        </b>
-                      </div>
+                        <h3 className="hg-cardTitle">{p.title}</h3>
 
-                      <div className="hg-kpis">
-                        SKU: <b>{p.sku || "-"}</b> • Наличност:{" "}
-                        <b>{p.stockQty ?? "-"}</b>
-                      </div>
+                        <div className="hg-meta">
+                          <span className="hg-pill">{p.brand || "без марка"}</span>
+                          <span className="hg-pill">
+                            {p.stockStatus || "unknown"}
+                          </span>
+                          <span className="hg-pill hg-pill--status">
+                            статус: {p.status}
+                          </span>
+                          {p.isFeatured ? (
+                            <span className="hg-pill hg-pill--ok">препоръчан</span>
+                          ) : null}
+                        </div>
 
-                      <div className="hg-kpis">
-                        Грамаж: <b>{p.weight ?? "-"}</b>
-                        {p.weightUnit ? ` ${p.weightUnit}` : ""} • Интензитет:{" "}
-                        <b>{p.intensity ?? "-"}</b>
-                      </div>
+                        <div className="hg-kpis">
+                          Каталог:{" "}
+                          <b>
+                            {Array.isArray(p.categoryPath) && p.categoryPath.length
+                              ? p.categoryPath.join(" / ")
+                              : p.category || "-"}
+                          </b>
+                        </div>
 
-                      <div className="hg-price">
-                        {formatPrice(productPrice(p), p.currency)}
-                      </div>
+                        <div className="hg-kpis">
+                          SKU: <b>{p.sku || "-"}</b> • Наличност:{" "}
+                          <b>{p.stockQty ?? "-"}</b>
+                        </div>
 
-                      <div className="hg-kpis">
-                        Преглеждания: <b>{p.views ?? 0}</b> • Кликове:{" "}
-                        <b>{p.clicks ?? 0}</b>
-                      </div>
+                        <div className="hg-kpis">
+                          Грамаж: <b>{p.weight ?? "-"}</b>
+                          {p.weightUnit ? ` ${p.weightUnit}` : ""} • Интензитет:{" "}
+                          <b>{p.intensity ?? "-"}</b>
+                        </div>
 
-                      <div className="hg-actions hg-actions--wrap">
-                        <button
-                          className="hg-btn hg-btn--primary"
-                          onClick={() => openEditForm(p)}
-                          disabled={adminLoading}
-                        >
-                          Редактирай
-                        </button>
+                        <div className="hg-price">
+                          {formatPrice(productPrice(p), p.currency)}
+                        </div>
 
-                        <button
-                          className="hg-btn"
-                          onClick={() => setStatus(p._id, "approved")}
-                          disabled={adminLoading}
-                        >
-                          Одобри
-                        </button>
-                        <button
-                          className="hg-btn"
-                          onClick={() => setStatus(p._id, "rejected")}
-                          disabled={adminLoading}
-                        >
-                          Откажи
-                        </button>
-                        <button
-                          className="hg-btn"
-                          onClick={() => setStatus(p._id, "blacklisted")}
-                          disabled={adminLoading}
-                        >
-                          Черен списък
-                        </button>
-                        <button
-                          className="hg-btn hg-btn--danger"
-                          onClick={() => deleteProduct(p._id)}
-                          disabled={adminLoading}
-                        >
-                          Изтрий
-                        </button>
+                        <div className="hg-kpis">
+                          Преглеждания: <b>{p.views ?? 0}</b> • Кликове:{" "}
+                          <b>{p.clicks ?? 0}</b>
+                        </div>
+
+                        <div className="hg-actions hg-actions--wrap">
+                          <button
+                            className="hg-btn hg-btn--primary"
+                            onClick={() => openEditForm(p)}
+                            disabled={adminLoading}
+                          >
+                            Редактирай
+                          </button>
+
+                          <button
+                            className="hg-btn"
+                            onClick={() => setStatus(p._id, "approved")}
+                            disabled={adminLoading}
+                          >
+                            Одобри
+                          </button>
+
+                          <button
+                            className="hg-btn"
+                            onClick={() => setStatus(p._id, "rejected")}
+                            disabled={adminLoading}
+                          >
+                            Откажи
+                          </button>
+
+                          <button
+                            className="hg-btn"
+                            onClick={() => setStatus(p._id, "blacklisted")}
+                            disabled={adminLoading}
+                          >
+                            Черен списък
+                          </button>
+
+                          <button
+                            className="hg-btn"
+                            onClick={() => setSingleFeatured(p._id, !p.isFeatured)}
+                            disabled={adminLoading}
+                          >
+                            {p.isFeatured ? "Махни препоръчан" : "Препоръчай"}
+                          </button>
+
+                          <button
+                            className="hg-btn hg-btn--danger"
+                            onClick={() => deleteProduct(p._id)}
+                            disabled={adminLoading}
+                          >
+                            Изтрий
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
