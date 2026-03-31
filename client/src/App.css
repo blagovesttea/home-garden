@@ -279,11 +279,11 @@ button{
   max-width: var(--wrap);
   width: 100%;
   margin: 0 auto;
-  padding: 8px 2px 80px;
+  padding: 0 2px 80px;
 }
 
 .hg-publicHeader{
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 .hg-publicUtility{
@@ -356,6 +356,7 @@ button{
   background: linear-gradient(180deg, #d32030, #c31d2c);
   color: #fff;
   box-shadow: 0 18px 36px rgba(207,32,47,.20);
+  margin-bottom: 0;
 }
 
 .hg-publicNav__menu{
@@ -435,7 +436,7 @@ button{
 .hg-publicShell{
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
 }
 
 .hg-hero{
@@ -447,6 +448,7 @@ button{
   grid-template-columns: minmax(0, 1.2fr);
   align-items: stretch;
   margin-top: 0;
+  padding-top: 0;
   background:
     linear-gradient(90deg, rgba(18,11,8,.54) 0%, rgba(18,11,8,.34) 38%, rgba(18,11,8,.14) 100%),
     url("https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=2200&q=80");
@@ -465,8 +467,8 @@ button{
 
 .hg-hero__content{
   position: relative;
-  z-index: 1;
-  padding: 58px 56px 54px;
+  z-index: 2;
+  padding: 58px 56px 220px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -530,10 +532,7 @@ button{
 }
 
 .hg-hero__links{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 22px;
+  display: none;
 }
 
 .hg-heroLink{
@@ -554,6 +553,114 @@ button{
 .hg-heroLink:hover{
   background: rgba(255,255,255,.18);
   transform: translateY(-1px);
+}
+
+.hg-heroCategories{
+  position: absolute;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  width: calc(100% - 72px);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
+  z-index: 3;
+}
+
+.hg-heroCategory{
+  position: relative;
+  min-height: 154px;
+  padding: 22px 18px 20px;
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255,.16);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06)),
+    rgba(28,20,15,.24);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 18px 48px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  transition:
+    transform .26s ease,
+    box-shadow .26s ease,
+    border-color .26s ease,
+    background .26s ease;
+}
+
+.hg-heroCategory::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top center, rgba(255,255,255,.12), transparent 58%);
+  pointer-events: none;
+}
+
+.hg-heroCategory:hover{
+  transform: translateY(-8px);
+  border-color: rgba(255,255,255,.28);
+  box-shadow:
+    0 26px 66px rgba(0,0,0,.30),
+    inset 0 1px 0 rgba(255,255,255,.12);
+}
+
+.hg-heroCategoryIcon{
+  position: relative;
+  z-index: 1;
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.16);
+  color: #fff;
+  font-size: 30px;
+  font-weight: 900;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 10px 28px rgba(0,0,0,.18);
+}
+
+.hg-heroCategoryTitle{
+  position: relative;
+  z-index: 1;
+  max-width: 180px;
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.hg-heroCategoryLine{
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 54%;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff4d4d, #cf202f);
+  opacity: 0;
+  transition: opacity .26s ease, width .26s ease;
+}
+
+.hg-heroCategory:hover .hg-heroCategoryLine{
+  opacity: 1;
+  width: 72%;
 }
 
 .hg-heroCards{
@@ -592,7 +699,7 @@ button{
 }
 
 .hg-chipSection{
-  padding: 2px 0 0;
+  padding: 24px 0 0;
 }
 
 .hg-sectionHead{
@@ -1314,7 +1421,12 @@ button{
   }
 
   .hg-hero{
-    min-height: 620px;
+    min-height: 760px;
+  }
+
+  .hg-heroCategories{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: calc(100% - 56px);
   }
 }
 
@@ -1344,7 +1456,7 @@ button{
   }
 
   .hg-hero{
-    min-height: 560px;
+    min-height: 760px;
   }
 
   .hg--admin .hg-topbar{
@@ -1354,7 +1466,7 @@ button{
 
 @media (max-width: 980px){
   .hg--public{
-    padding: 10px 10px 80px;
+    padding: 0 10px 80px;
   }
 
   .hg-topActions{
@@ -1362,7 +1474,7 @@ button{
   }
 
   .hg-publicHeader{
-    margin-bottom: 4px;
+    margin-bottom: 0;
   }
 
   .hg-publicUtility{
@@ -1382,7 +1494,7 @@ button{
   }
 
   .hg-publicShell{
-    gap: 8px;
+    gap: 0;
   }
 
   .hg-chipGrid{
@@ -1419,15 +1531,39 @@ button{
   }
 
   .hg-hero{
-    min-height: 520px;
+    min-height: 860px;
   }
 
   .hg-hero__content{
-    padding: 42px 28px;
+    padding: 42px 28px 280px;
   }
 
   .hg-hero__title{
     font-size: clamp(34px, 8vw, 54px);
+  }
+
+  .hg-heroCategories{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: calc(100% - 36px);
+    bottom: 20px;
+    gap: 14px;
+  }
+
+  .hg-heroCategory{
+    min-height: 132px;
+    padding: 18px 14px 18px;
+    border-radius: 22px;
+  }
+
+  .hg-heroCategoryIcon{
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    font-size: 24px;
+  }
+
+  .hg-heroCategoryTitle{
+    font-size: 13px;
   }
 }
 
@@ -1488,36 +1624,52 @@ button{
   }
 
   .hg-hero{
-    min-height: 480px;
+    min-height: 980px;
   }
 
   .hg-hero__content{
-    padding: 32px 20px;
+    padding: 32px 20px 380px;
   }
 
   .hg-btn{
     width: auto;
   }
-}
-.hg-hero{
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-}
 
-.hg-heroWrap{
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-}
+  .hg-heroCategories{
+    grid-template-columns: 1fr;
+    width: calc(100% - 24px);
+    bottom: 14px;
+  }
 
-.hg-publicShell{
-  gap: 0 !important;
-}
+  .hg-heroCategory{
+    min-height: 104px;
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+    gap: 14px;
+    padding: 16px 16px 18px;
+  }
 
-.hg-header + .hg-hero,
-.hg-nav + .hg-hero{
-  margin-top: 0 !important;
-}
+  .hg-heroCategoryIcon{
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    font-size: 22px;
+  }
 
-.hg-public{
-  padding-top: 0 !important;
+  .hg-heroCategoryTitle{
+    max-width: none;
+    font-size: 13px;
+  }
+
+  .hg-heroCategoryLine{
+    width: 42%;
+    left: 16px;
+    transform: none;
+  }
+
+  .hg-heroCategory:hover .hg-heroCategoryLine{
+    width: 58%;
+  }
 }

@@ -36,11 +36,11 @@ const PUBLIC_CATEGORY_CHIPS = [
 ];
 
 const HERO_LINKS = [
-  { label: "Кафе на зърна", category: "coffee-beans" },
-  { label: "Капсули и дози", category: "capsules" },
-  { label: "Кафемашини", category: "machines" },
-  { label: "Аксесоари", category: "accessories" },
-  { label: "Подаръчни комплекти", category: "gift-sets" },
+  { label: "Кафе на зърна", category: "coffee-beans", icon: "☕" },
+  { label: "Капсули и дози", category: "capsules", icon: "◉" },
+  { label: "Кафемашини", category: "machines", icon: "▣" },
+  { label: "Аксесоари", category: "accessories", icon: "✦" },
+  { label: "Подаръчни комплекти", category: "gift-sets", icon: "🎁" },
 ];
 
 const ADMIN_CATEGORY_OPTIONS = [
@@ -1726,18 +1726,23 @@ function AppShell() {
                     Премиум селекция
                   </button>
                 </div>
+              </div>
 
-                <div className="hg-hero__links">
-                  {HERO_LINKS.map((item) => (
-                    <button
-                      key={item.label}
-                      className="hg-heroLink"
-                      onClick={() => applyCategoryFilter(item.category)}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
+              <div className="hg-heroCategories">
+                {HERO_LINKS.map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    className="hg-heroCategory"
+                    onClick={() => applyCategoryFilter(item.category)}
+                  >
+                    <div className="hg-heroCategoryIcon" aria-hidden="true">
+                      {item.icon}
+                    </div>
+                    <div className="hg-heroCategoryTitle">{item.label}</div>
+                    <div className="hg-heroCategoryLine" />
+                  </button>
+                ))}
               </div>
             </section>
 
