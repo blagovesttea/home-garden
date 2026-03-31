@@ -18,6 +18,24 @@ const ADMIN_STATUS_LABELS = {
   blacklisted: "Черен списък",
 };
 
+const ADMIN_ORDER_STATUSES = [
+  "all",
+  "new",
+  "confirmed",
+  "shipped",
+  "delivered",
+  "cancelled",
+];
+
+const ADMIN_ORDER_STATUS_LABELS = {
+  all: "Всички поръчки",
+  new: "Нови",
+  confirmed: "Потвърдени",
+  shipped: "Изпратени",
+  delivered: "Доставени",
+  cancelled: "Отказани",
+};
+
 const SORTS = [
   { value: "featured", label: "Препоръчани" },
   { value: "newest", label: "Най-нови" },
@@ -161,11 +179,25 @@ function emptyProductForm() {
   };
 }
 
+function formatDateTime(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("bg-BG", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function AppShell() {
   /* =========================
      AUTH / ADMIN
   ========================== */
   const [view, setView] = useState("public");
+  const [adminSection, setAdminSection] = useState("products");
 
   const [token, setToken] = useState(() => {
     try {
@@ -281,6 +313,7 @@ function AppShell() {
       } catch {}
 
       setView("admin");
+      setAdminSection("products");
       setAuthMsg("Успешен вход");
     } catch (e2) {
       setAuthMsg(e2?.message || "Грешка при вход");
@@ -295,6 +328,7 @@ function AppShell() {
     setAuthMsg("");
     setMeLoading(false);
     setView("public");
+    setAdminSection("products");
     try {
       localStorage.removeItem("token");
     } catch {}
@@ -541,7 +575,7 @@ function AppShell() {
   }
 
   /* =========================
-     ADMIN
+     ADMIN PRODUCTS
   ========================== */
   const [adminStatus, setAdminStatus] = useState("new");
   const [adminItems, setAdminItems] = useState([]);
@@ -600,10 +634,11 @@ function AppShell() {
     if (!token) return;
     if (meLoading) return;
     if (!isAdmin) return;
+    if (adminSection !== "products") return;
 
     loadAdmin();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, token, meLoading, isAdmin, adminStatus]);
+  }, [view, token, meLoading, isAdmin, adminStatus, adminSection]);
 
   async function setStatus(id, status) {
     setAdminMsg("");
@@ -923,6 +958,74 @@ function AppShell() {
     }
   }
 
+  /* =========================
+     ADMIN ORDERS
+  ========================== */
+  const [orderStatusFilter, setOrderStatusFilter] = useState("all");
+  const [adminOrders, setAdminOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersMsg, setOrdersMsg] = useState("");
+
+  async function loadAdminOrders() {
+    if (!token) {
+      setOrdersMsg("Няма токен. Влез първо.");
+      return;
+    }
+    if (!isAdmin) {
+      setOrdersMsg("Нямаш админ права.");
+      return;
+    }
+
+    setOrdersLoading(true);
+    setOrdersMsg("");
+
+    try {
+      const qs = new URLSearchParams();
+      if (orderStatusFilter && orderStatusFilter !== "all") {
+        qs.set("status", orderStatusFilter);
+      }
+
+      const data = await apiFetch(
+        `/orders/admin${qs.toString() ? `?${qs.toString()}` : ""}`,
+        {
+          method: "GET",
+        }
+      );
+
+      setAdminOrders(Array.isArray(data?.items) ? data.items : []);
+    } catch (e) {
+      setOrdersMsg(e?.message || "Грешка при зареждане на поръчките.");
+      setAdminOrders([]);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (view !== "admin") return;
+    if (!token) return;
+    if (meLoading) return;
+    if (!isAdmin) return;
+    if (adminSection !== "orders") return;
+
+    loadAdminOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, token, meLoading, isAdmin, adminSection, orderStatusFilter]);
+
+  async function updateOrderStatus(orderId, status) {
+    setOrdersMsg("");
+
+    try {
+      await apiFetch(`/orders/admin/${orderId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      await loadAdminOrders();
+    } catch (e) {
+      setOrdersMsg(e?.message || "Грешка при промяна на статуса на поръчката.");
+    }
+  }
+
   function applyQuickSearch(value) {
     setQ(value);
     setSelectedCategory("all");
@@ -1134,557 +1237,767 @@ function AppShell() {
           ) : (
             <>
               <div className="hg-toolbar">
-                <select
-                  className="hg-select"
-                  value={adminStatus}
-                  onChange={(e) => setAdminStatus(e.target.value)}
-                >
-                  {ADMIN_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {ADMIN_STATUS_LABELS[s] || s}
-                    </option>
-                  ))}
-                </select>
-
                 <button
-                  className="hg-btn"
-                  onClick={loadAdmin}
-                  disabled={adminLoading}
+                  className={`hg-btn ${
+                    adminSection === "products" ? "hg-btn--primary" : ""
+                  }`}
+                  onClick={() => setAdminSection("products")}
                 >
-                  Обнови
+                  Продукти
                 </button>
 
                 <button
-                  className="hg-btn"
-                  onClick={approveExistingNew}
-                  disabled={adminLoading}
+                  className={`hg-btn ${
+                    adminSection === "orders" ? "hg-btn--primary" : ""
+                  }`}
+                  onClick={() => setAdminSection("orders")}
                 >
-                  Одобри всички нови
+                  Поръчки
                 </button>
-
-                <button
-                  className="hg-btn"
-                  onClick={toggleSelectAllVisible}
-                  disabled={adminLoading || adminItems.length === 0}
-                >
-                  {allVisibleSelected ? "Размаркирай всички" : "Маркирай всички"}
-                </button>
-
-                <button
-                  className="hg-btn"
-                  onClick={() => bulkSetFeatured(true)}
-                  disabled={adminLoading || selectedCount === 0}
-                >
-                  Избраните → препоръчани
-                </button>
-
-                <button
-                  className="hg-btn"
-                  onClick={() => bulkSetFeatured(false)}
-                  disabled={adminLoading || selectedCount === 0}
-                >
-                  Махни от препоръчани
-                </button>
-
-                <button
-                  className="hg-btn hg-btn--danger"
-                  onClick={bulkDeleteSelected}
-                  disabled={adminLoading || selectedCount === 0}
-                >
-                  Изтрий избраните
-                </button>
-
-                <button
-                  className="hg-btn hg-btn--primary"
-                  onClick={openCreateForm}
-                  disabled={adminLoading}
-                >
-                  Нов продукт
-                </button>
-
-                <div className="hg-counter">
-                  Продукти: <b>{adminItems.length}</b>
-                </div>
-
-                <div className="hg-counter">
-                  Избрани: <b>{selectedCount}</b>
-                </div>
-
-                {selectedCount > 0 ? (
-                  <button className="hg-btn" onClick={clearSelectedAdminItems}>
-                    Изчисти избора
-                  </button>
-                ) : null}
 
                 <button className="hg-btn" onClick={doLogout}>
                   Изход
                 </button>
               </div>
 
-              {adminMsg && <div className="hg-panel">{adminMsg}</div>}
-              {adminLoading && <div className="hg-panel">Зареждане…</div>}
-
-              {formOpen && (
-                <form className="hg-panel hg-productForm" onSubmit={submitProductForm}>
-                  <div className="hg-panelTitle">
-                    {editingId ? "Редакция на продукт" : "Нов продукт"}
-                  </div>
-
-                  <div className="hg-formGrid">
-                    <input
-                      className="hg-input"
-                      placeholder="Заглавие"
-                      value={productForm.title}
-                      onChange={(e) => updateFormField("title", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="Марка"
-                      value={productForm.brand}
-                      onChange={(e) => updateFormField("brand", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="SKU"
-                      value={productForm.sku}
-                      onChange={(e) => updateFormField("sku", e.target.value)}
-                    />
-
+              {adminSection === "products" && (
+                <>
+                  <div className="hg-toolbar">
                     <select
                       className="hg-select"
-                      value={productForm.category}
-                      onChange={(e) => updateFormField("category", e.target.value)}
+                      value={adminStatus}
+                      onChange={(e) => setAdminStatus(e.target.value)}
                     >
-                      {ADMIN_CATEGORY_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
+                      {ADMIN_STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {ADMIN_STATUS_LABELS[s] || s}
                         </option>
                       ))}
                     </select>
 
-                    <input
-                      className="hg-input"
-                      placeholder="Цена"
-                      value={productForm.price}
-                      onChange={(e) => updateFormField("price", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="Базова цена"
-                      value={productForm.basePrice}
-                      onChange={(e) => updateFormField("basePrice", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="Стара цена"
-                      value={productForm.oldPrice}
-                      onChange={(e) => updateFormField("oldPrice", e.target.value)}
-                    />
-
-                    <select
-                      className="hg-select"
-                      value={productForm.markupType}
-                      onChange={(e) => updateFormField("markupType", e.target.value)}
-                    >
-                      <option value="none">Без надценка</option>
-                      <option value="percent">Процент</option>
-                      <option value="fixed">Фиксирана</option>
-                    </select>
-
-                    <input
-                      className="hg-input"
-                      placeholder="Надценка"
-                      value={productForm.markupValue}
-                      onChange={(e) => updateFormField("markupValue", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="Крайна цена"
-                      value={productForm.finalPrice}
-                      onChange={(e) => updateFormField("finalPrice", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="Валута"
-                      value={productForm.currency}
-                      onChange={(e) => updateFormField("currency", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="Цена за доставка"
-                      value={productForm.shippingPrice}
-                      onChange={(e) => updateFormField("shippingPrice", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="Дни за доставка"
-                      value={productForm.shippingDays}
-                      onChange={(e) => updateFormField("shippingDays", e.target.value)}
-                    />
-
-                    <select
-                      className="hg-select"
-                      value={productForm.stockStatus}
-                      onChange={(e) => updateFormField("stockStatus", e.target.value)}
-                    >
-                      <option value="unknown">Неизвестна наличност</option>
-                      <option value="in_stock">В наличност</option>
-                      <option value="out_of_stock">Изчерпан</option>
-                    </select>
-
-                    <input
-                      className="hg-input"
-                      placeholder="Количество"
-                      value={productForm.stockQty}
-                      onChange={(e) => updateFormField("stockQty", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="Грамаж / количество"
-                      value={productForm.weight}
-                      onChange={(e) => updateFormField("weight", e.target.value)}
-                    />
-
-                    <select
-                      className="hg-select"
-                      value={productForm.weightUnit}
-                      onChange={(e) => updateFormField("weightUnit", e.target.value)}
-                    >
-                      {WEIGHT_UNIT_OPTIONS.map((option) => (
-                        <option key={option.value || "empty"} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-
-                    <input
-                      className="hg-input"
-                      placeholder="Брой в опаковка"
-                      value={productForm.packCount}
-                      onChange={(e) => updateFormField("packCount", e.target.value)}
-                    />
-
-                    <select
-                      className="hg-select"
-                      value={productForm.roastLevel}
-                      onChange={(e) => updateFormField("roastLevel", e.target.value)}
-                    >
-                      {ROAST_OPTIONS.map((option) => (
-                        <option key={option.value || "empty"} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-
-                    <input
-                      className="hg-input"
-                      placeholder="Интензитет"
-                      value={productForm.intensity}
-                      onChange={(e) => updateFormField("intensity", e.target.value)}
-                    />
-
-                    <select
-                      className="hg-select"
-                      value={productForm.caffeineType}
-                      onChange={(e) => updateFormField("caffeineType", e.target.value)}
-                    >
-                      {CAFFEINE_OPTIONS.map((option) => (
-                        <option key={option.value || "empty"} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-
-                    <input
-                      className="hg-input"
-                      placeholder="Рейтинг"
-                      value={productForm.rating}
-                      onChange={(e) => updateFormField("rating", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="Брой ревюта"
-                      value={productForm.reviewsCount}
-                      onChange={(e) => updateFormField("reviewsCount", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="Главна снимка (URL)"
-                      value={productForm.imageUrl}
-                      onChange={(e) => updateFormField("imageUrl", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="Източник"
-                      value={productForm.source}
-                      onChange={(e) => updateFormField("source", e.target.value)}
-                    />
-
-                    <input
-                      className="hg-input"
-                      placeholder="URL на източника"
-                      value={productForm.sourceUrl}
-                      onChange={(e) => updateFormField("sourceUrl", e.target.value)}
-                    />
-
-                    <select
-                      className="hg-select"
-                      value={productForm.status}
-                      onChange={(e) => updateFormField("status", e.target.value)}
-                    >
-                      <option value="new">Нова</option>
-                      <option value="approved">Одобрена</option>
-                      <option value="rejected">Отхвърлена</option>
-                      <option value="blacklisted">Черен списък</option>
-                    </select>
-
-                    <label className="hg-check">
-                      <input
-                        type="checkbox"
-                        checked={productForm.shippingToBG}
-                        onChange={(e) => updateFormField("shippingToBG", e.target.checked)}
-                      />
-                      Доставка до България
-                    </label>
-
-                    <label className="hg-check">
-                      <input
-                        type="checkbox"
-                        checked={productForm.isNew}
-                        onChange={(e) => updateFormField("isNew", e.target.checked)}
-                      />
-                      Нов продукт
-                    </label>
-
-                    <label className="hg-check">
-                      <input
-                        type="checkbox"
-                        checked={productForm.isOnSale}
-                        onChange={(e) => updateFormField("isOnSale", e.target.checked)}
-                      />
-                      В промоция
-                    </label>
-
-                    <label className="hg-check">
-                      <input
-                        type="checkbox"
-                        checked={productForm.isActive}
-                        onChange={(e) => updateFormField("isActive", e.target.checked)}
-                      />
-                      Активен продукт
-                    </label>
-
-                    <label className="hg-check">
-                      <input
-                        type="checkbox"
-                        checked={productForm.isFeatured}
-                        onChange={(e) => updateFormField("isFeatured", e.target.checked)}
-                      />
-                      Препоръчан
-                    </label>
-                  </div>
-
-                  <textarea
-                    className="hg-textarea"
-                    placeholder="Кратко описание"
-                    value={productForm.shortDescription}
-                    onChange={(e) => updateFormField("shortDescription", e.target.value)}
-                  />
-
-                  <textarea
-                    className="hg-textarea"
-                    placeholder="Описание"
-                    value={productForm.description}
-                    onChange={(e) => updateFormField("description", e.target.value)}
-                  />
-
-                  <textarea
-                    className="hg-textarea"
-                    placeholder="Съвместимост (по един ред, напр. Nespresso)"
-                    value={productForm.compatibleWithText}
-                    onChange={(e) =>
-                      updateFormField("compatibleWithText", e.target.value)
-                    }
-                  />
-
-                  <textarea
-                    className="hg-textarea"
-                    placeholder="Баджове (по един на ред, напр. Ново, Промо, Топ продукт)"
-                    value={productForm.badgesText}
-                    onChange={(e) => updateFormField("badgesText", e.target.value)}
-                  />
-
-                  <textarea
-                    className="hg-textarea"
-                    placeholder="Допълнителни снимки (по един URL на ред)"
-                    value={productForm.imagesText}
-                    onChange={(e) => updateFormField("imagesText", e.target.value)}
-                  />
-
-                  <div className="hg-actions">
                     <button
-                      className="hg-btn hg-btn--primary"
-                      type="submit"
-                      disabled={formLoading}
+                      className="hg-btn"
+                      onClick={loadAdmin}
+                      disabled={adminLoading}
                     >
-                      {formLoading
-                        ? "Запис..."
-                        : editingId
-                        ? "Запази промените"
-                        : "Добави продукт"}
+                      Обнови
                     </button>
 
                     <button
                       className="hg-btn"
-                      type="button"
-                      onClick={closeForm}
-                      disabled={formLoading}
+                      onClick={approveExistingNew}
+                      disabled={adminLoading}
                     >
-                      Отказ
+                      Одобри всички нови
                     </button>
+
+                    <button
+                      className="hg-btn"
+                      onClick={toggleSelectAllVisible}
+                      disabled={adminLoading || adminItems.length === 0}
+                    >
+                      {allVisibleSelected ? "Размаркирай всички" : "Маркирай всички"}
+                    </button>
+
+                    <button
+                      className="hg-btn"
+                      onClick={() => bulkSetFeatured(true)}
+                      disabled={adminLoading || selectedCount === 0}
+                    >
+                      Избраните → препоръчани
+                    </button>
+
+                    <button
+                      className="hg-btn"
+                      onClick={() => bulkSetFeatured(false)}
+                      disabled={adminLoading || selectedCount === 0}
+                    >
+                      Махни от препоръчани
+                    </button>
+
+                    <button
+                      className="hg-btn hg-btn--danger"
+                      onClick={bulkDeleteSelected}
+                      disabled={adminLoading || selectedCount === 0}
+                    >
+                      Изтрий избраните
+                    </button>
+
+                    <button
+                      className="hg-btn hg-btn--primary"
+                      onClick={openCreateForm}
+                      disabled={adminLoading}
+                    >
+                      Нов продукт
+                    </button>
+
+                    <div className="hg-counter">
+                      Продукти: <b>{adminItems.length}</b>
+                    </div>
+
+                    <div className="hg-counter">
+                      Избрани: <b>{selectedCount}</b>
+                    </div>
+
+                    {selectedCount > 0 ? (
+                      <button className="hg-btn" onClick={clearSelectedAdminItems}>
+                        Изчисти избора
+                      </button>
+                    ) : null}
                   </div>
-                </form>
-              )}
 
-              <div className="hg-grid">
-                {!adminLoading && adminItems.length === 0 && (
-                  <div className="hg-panel">Няма продукти за този филтър.</div>
-                )}
+                  {adminMsg && <div className="hg-panel">{adminMsg}</div>}
+                  {adminLoading && <div className="hg-panel">Зареждане…</div>}
 
-                {adminItems.map((p) => {
-                  const isSelected = selectedAdminIds.includes(p._id);
+                  {formOpen && (
+                    <form
+                      className="hg-panel hg-productForm"
+                      onSubmit={submitProductForm}
+                    >
+                      <div className="hg-panelTitle">
+                        {editingId ? "Редакция на продукт" : "Нов продукт"}
+                      </div>
 
-                  return (
-                    <div className="hg-card" key={p._id}>
-                      <div
-                        className="hg-thumb"
-                        style={{
-                          backgroundImage: productImage(p)
-                            ? `url("${productImage(p)}")`
-                            : "linear-gradient(135deg,#eee,#f7f7f7)",
-                        }}
-                      />
+                      <div className="hg-formGrid">
+                        <input
+                          className="hg-input"
+                          placeholder="Заглавие"
+                          value={productForm.title}
+                          onChange={(e) => updateFormField("title", e.target.value)}
+                        />
 
-                      <div className="hg-cardBody">
-                        <label className="hg-check" style={{ marginBottom: 10 }}>
+                        <input
+                          className="hg-input"
+                          placeholder="Марка"
+                          value={productForm.brand}
+                          onChange={(e) => updateFormField("brand", e.target.value)}
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="SKU"
+                          value={productForm.sku}
+                          onChange={(e) => updateFormField("sku", e.target.value)}
+                        />
+
+                        <select
+                          className="hg-select"
+                          value={productForm.category}
+                          onChange={(e) => updateFormField("category", e.target.value)}
+                        >
+                          {ADMIN_CATEGORY_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        <input
+                          className="hg-input"
+                          placeholder="Цена"
+                          value={productForm.price}
+                          onChange={(e) => updateFormField("price", e.target.value)}
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="Базова цена"
+                          value={productForm.basePrice}
+                          onChange={(e) => updateFormField("basePrice", e.target.value)}
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="Стара цена"
+                          value={productForm.oldPrice}
+                          onChange={(e) => updateFormField("oldPrice", e.target.value)}
+                        />
+
+                        <select
+                          className="hg-select"
+                          value={productForm.markupType}
+                          onChange={(e) => updateFormField("markupType", e.target.value)}
+                        >
+                          <option value="none">Без надценка</option>
+                          <option value="percent">Процент</option>
+                          <option value="fixed">Фиксирана</option>
+                        </select>
+
+                        <input
+                          className="hg-input"
+                          placeholder="Надценка"
+                          value={productForm.markupValue}
+                          onChange={(e) => updateFormField("markupValue", e.target.value)}
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="Крайна цена"
+                          value={productForm.finalPrice}
+                          onChange={(e) => updateFormField("finalPrice", e.target.value)}
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="Валута"
+                          value={productForm.currency}
+                          onChange={(e) => updateFormField("currency", e.target.value)}
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="Цена за доставка"
+                          value={productForm.shippingPrice}
+                          onChange={(e) => updateFormField("shippingPrice", e.target.value)}
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="Дни за доставка"
+                          value={productForm.shippingDays}
+                          onChange={(e) => updateFormField("shippingDays", e.target.value)}
+                        />
+
+                        <select
+                          className="hg-select"
+                          value={productForm.stockStatus}
+                          onChange={(e) => updateFormField("stockStatus", e.target.value)}
+                        >
+                          <option value="unknown">Неизвестна наличност</option>
+                          <option value="in_stock">В наличност</option>
+                          <option value="out_of_stock">Изчерпан</option>
+                        </select>
+
+                        <input
+                          className="hg-input"
+                          placeholder="Количество"
+                          value={productForm.stockQty}
+                          onChange={(e) => updateFormField("stockQty", e.target.value)}
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="Грамаж / количество"
+                          value={productForm.weight}
+                          onChange={(e) => updateFormField("weight", e.target.value)}
+                        />
+
+                        <select
+                          className="hg-select"
+                          value={productForm.weightUnit}
+                          onChange={(e) => updateFormField("weightUnit", e.target.value)}
+                        >
+                          {WEIGHT_UNIT_OPTIONS.map((option) => (
+                            <option key={option.value || "empty"} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        <input
+                          className="hg-input"
+                          placeholder="Брой в опаковка"
+                          value={productForm.packCount}
+                          onChange={(e) => updateFormField("packCount", e.target.value)}
+                        />
+
+                        <select
+                          className="hg-select"
+                          value={productForm.roastLevel}
+                          onChange={(e) => updateFormField("roastLevel", e.target.value)}
+                        >
+                          {ROAST_OPTIONS.map((option) => (
+                            <option key={option.value || "empty"} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        <input
+                          className="hg-input"
+                          placeholder="Интензитет"
+                          value={productForm.intensity}
+                          onChange={(e) => updateFormField("intensity", e.target.value)}
+                        />
+
+                        <select
+                          className="hg-select"
+                          value={productForm.caffeineType}
+                          onChange={(e) =>
+                            updateFormField("caffeineType", e.target.value)
+                          }
+                        >
+                          {CAFFEINE_OPTIONS.map((option) => (
+                            <option key={option.value || "empty"} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        <input
+                          className="hg-input"
+                          placeholder="Рейтинг"
+                          value={productForm.rating}
+                          onChange={(e) => updateFormField("rating", e.target.value)}
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="Брой ревюта"
+                          value={productForm.reviewsCount}
+                          onChange={(e) =>
+                            updateFormField("reviewsCount", e.target.value)
+                          }
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="Главна снимка (URL)"
+                          value={productForm.imageUrl}
+                          onChange={(e) => updateFormField("imageUrl", e.target.value)}
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="Източник"
+                          value={productForm.source}
+                          onChange={(e) => updateFormField("source", e.target.value)}
+                        />
+
+                        <input
+                          className="hg-input"
+                          placeholder="URL на източника"
+                          value={productForm.sourceUrl}
+                          onChange={(e) =>
+                            updateFormField("sourceUrl", e.target.value)
+                          }
+                        />
+
+                        <select
+                          className="hg-select"
+                          value={productForm.status}
+                          onChange={(e) => updateFormField("status", e.target.value)}
+                        >
+                          <option value="new">Нова</option>
+                          <option value="approved">Одобрена</option>
+                          <option value="rejected">Отхвърлена</option>
+                          <option value="blacklisted">Черен списък</option>
+                        </select>
+
+                        <label className="hg-check">
                           <input
                             type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleAdminSelection(p._id)}
+                            checked={productForm.shippingToBG}
+                            onChange={(e) =>
+                              updateFormField("shippingToBG", e.target.checked)
+                            }
                           />
-                          Избери продукта
+                          Доставка до България
                         </label>
 
-                        <h3 className="hg-cardTitle">{p.title}</h3>
+                        <label className="hg-check">
+                          <input
+                            type="checkbox"
+                            checked={productForm.isNew}
+                            onChange={(e) => updateFormField("isNew", e.target.checked)}
+                          />
+                          Нов продукт
+                        </label>
 
-                        <div className="hg-meta">
-                          <span className="hg-pill">{p.brand || "без марка"}</span>
+                        <label className="hg-check">
+                          <input
+                            type="checkbox"
+                            checked={productForm.isOnSale}
+                            onChange={(e) =>
+                              updateFormField("isOnSale", e.target.checked)
+                            }
+                          />
+                          В промоция
+                        </label>
+
+                        <label className="hg-check">
+                          <input
+                            type="checkbox"
+                            checked={productForm.isActive}
+                            onChange={(e) =>
+                              updateFormField("isActive", e.target.checked)
+                            }
+                          />
+                          Активен продукт
+                        </label>
+
+                        <label className="hg-check">
+                          <input
+                            type="checkbox"
+                            checked={productForm.isFeatured}
+                            onChange={(e) =>
+                              updateFormField("isFeatured", e.target.checked)
+                            }
+                          />
+                          Препоръчан
+                        </label>
+                      </div>
+
+                      <textarea
+                        className="hg-textarea"
+                        placeholder="Кратко описание"
+                        value={productForm.shortDescription}
+                        onChange={(e) =>
+                          updateFormField("shortDescription", e.target.value)
+                        }
+                      />
+
+                      <textarea
+                        className="hg-textarea"
+                        placeholder="Описание"
+                        value={productForm.description}
+                        onChange={(e) =>
+                          updateFormField("description", e.target.value)
+                        }
+                      />
+
+                      <textarea
+                        className="hg-textarea"
+                        placeholder="Съвместимост (по един ред, напр. Nespresso)"
+                        value={productForm.compatibleWithText}
+                        onChange={(e) =>
+                          updateFormField("compatibleWithText", e.target.value)
+                        }
+                      />
+
+                      <textarea
+                        className="hg-textarea"
+                        placeholder="Баджове (по един на ред, напр. Ново, Промо, Топ продукт)"
+                        value={productForm.badgesText}
+                        onChange={(e) => updateFormField("badgesText", e.target.value)}
+                      />
+
+                      <textarea
+                        className="hg-textarea"
+                        placeholder="Допълнителни снимки (по един URL на ред)"
+                        value={productForm.imagesText}
+                        onChange={(e) => updateFormField("imagesText", e.target.value)}
+                      />
+
+                      <div className="hg-actions">
+                        <button
+                          className="hg-btn hg-btn--primary"
+                          type="submit"
+                          disabled={formLoading}
+                        >
+                          {formLoading
+                            ? "Запис..."
+                            : editingId
+                            ? "Запази промените"
+                            : "Добави продукт"}
+                        </button>
+
+                        <button
+                          className="hg-btn"
+                          type="button"
+                          onClick={closeForm}
+                          disabled={formLoading}
+                        >
+                          Отказ
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  <div className="hg-grid">
+                    {!adminLoading && adminItems.length === 0 && (
+                      <div className="hg-panel">Няма продукти за този филтър.</div>
+                    )}
+
+                    {adminItems.map((p) => {
+                      const isSelected = selectedAdminIds.includes(p._id);
+
+                      return (
+                        <div className="hg-card" key={p._id}>
+                          <div
+                            className="hg-thumb"
+                            style={{
+                              backgroundImage: productImage(p)
+                                ? `url("${productImage(p)}")`
+                                : "linear-gradient(135deg,#eee,#f7f7f7)",
+                            }}
+                          />
+
+                          <div className="hg-cardBody">
+                            <label className="hg-check" style={{ marginBottom: 10 }}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleAdminSelection(p._id)}
+                              />
+                              Избери продукта
+                            </label>
+
+                            <h3 className="hg-cardTitle">{p.title}</h3>
+
+                            <div className="hg-meta">
+                              <span className="hg-pill">{p.brand || "без марка"}</span>
+                              <span className="hg-pill">
+                                {p.stockStatus || "unknown"}
+                              </span>
+                              <span className="hg-pill hg-pill--status">
+                                статус: {p.status}
+                              </span>
+                              {p.isFeatured ? (
+                                <span className="hg-pill hg-pill--ok">препоръчан</span>
+                              ) : null}
+                            </div>
+
+                            <div className="hg-kpis">
+                              Каталог:{" "}
+                              <b>
+                                {Array.isArray(p.categoryPath) && p.categoryPath.length
+                                  ? p.categoryPath.join(" / ")
+                                  : p.category || "-"}
+                              </b>
+                            </div>
+
+                            <div className="hg-kpis">
+                              SKU: <b>{p.sku || "-"}</b> • Наличност:{" "}
+                              <b>{p.stockQty ?? "-"}</b>
+                            </div>
+
+                            <div className="hg-kpis">
+                              Грамаж: <b>{p.weight ?? "-"}</b>
+                              {p.weightUnit ? ` ${p.weightUnit}` : ""} • Интензитет:{" "}
+                              <b>{p.intensity ?? "-"}</b>
+                            </div>
+
+                            <div className="hg-price">
+                              {formatPrice(productPrice(p), p.currency)}
+                            </div>
+
+                            <div className="hg-kpis">
+                              Преглеждания: <b>{p.views ?? 0}</b> • Кликове:{" "}
+                              <b>{p.clicks ?? 0}</b>
+                            </div>
+
+                            <div className="hg-actions hg-actions--wrap">
+                              <button
+                                className="hg-btn hg-btn--primary"
+                                onClick={() => openEditForm(p)}
+                                disabled={adminLoading}
+                              >
+                                Редактирай
+                              </button>
+
+                              <button
+                                className="hg-btn"
+                                onClick={() => setStatus(p._id, "approved")}
+                                disabled={adminLoading}
+                              >
+                                Одобри
+                              </button>
+
+                              <button
+                                className="hg-btn"
+                                onClick={() => setStatus(p._id, "rejected")}
+                                disabled={adminLoading}
+                              >
+                                Откажи
+                              </button>
+
+                              <button
+                                className="hg-btn"
+                                onClick={() => setStatus(p._id, "blacklisted")}
+                                disabled={adminLoading}
+                              >
+                                Черен списък
+                              </button>
+
+                              <button
+                                className="hg-btn"
+                                onClick={() =>
+                                  setSingleFeatured(p._id, !p.isFeatured)
+                                }
+                                disabled={adminLoading}
+                              >
+                                {p.isFeatured ? "Махни препоръчан" : "Препоръчай"}
+                              </button>
+
+                              <button
+                                className="hg-btn hg-btn--danger"
+                                onClick={() => deleteProduct(p._id)}
+                                disabled={adminLoading}
+                              >
+                                Изтрий
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {adminSection === "orders" && (
+                <>
+                  <div className="hg-toolbar">
+                    <select
+                      className="hg-select"
+                      value={orderStatusFilter}
+                      onChange={(e) => setOrderStatusFilter(e.target.value)}
+                    >
+                      {ADMIN_ORDER_STATUSES.map((status) => (
+                        <option key={status} value={status}>
+                          {ADMIN_ORDER_STATUS_LABELS[status] || status}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      className="hg-btn"
+                      onClick={loadAdminOrders}
+                      disabled={ordersLoading}
+                    >
+                      Обнови поръчките
+                    </button>
+
+                    <div className="hg-counter">
+                      Поръчки: <b>{adminOrders.length}</b>
+                    </div>
+                  </div>
+
+                  {ordersMsg && <div className="hg-panel">{ordersMsg}</div>}
+                  {ordersLoading && <div className="hg-panel">Зареждане…</div>}
+
+                  {!ordersLoading && adminOrders.length === 0 && (
+                    <div className="hg-panel">Няма поръчки за този филтър.</div>
+                  )}
+
+                  {!ordersLoading &&
+                    adminOrders.map((order) => (
+                      <div className="hg-panel" key={order._id}>
+                        <div className="hg-panelTitle" style={{ marginBottom: 12 }}>
+                          Поръчка #{String(order._id || "").slice(-6).toUpperCase()}
+                        </div>
+
+                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
+                          Дата: <b>{formatDateTime(order.createdAt)}</b>
+                        </div>
+
+                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
+                          Клиент: <b>{order.customerName || "—"}</b>
+                        </div>
+
+                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
+                          Телефон: <b>{order.phone || "—"}</b>
+                        </div>
+
+                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
+                          Град: <b>{order.city || "—"}</b> • Адрес:{" "}
+                          <b>{order.address || "—"}</b>
+                        </div>
+
+                        {order.note ? (
+                          <div className="hg-kpis" style={{ marginBottom: 10 }}>
+                            Бележка: <b>{order.note}</b>
+                          </div>
+                        ) : null}
+
+                        <div className="hg-meta" style={{ marginBottom: 12 }}>
                           <span className="hg-pill">
-                            {p.stockStatus || "unknown"}
+                            статус:{" "}
+                            {ADMIN_ORDER_STATUS_LABELS[order.status] || order.status}
                           </span>
-                          <span className="hg-pill hg-pill--status">
-                            статус: {p.status}
+                          <span className="hg-pill">
+                            общо: {formatPrice(order.total, order.currency || "BGN")}
                           </span>
-                          {p.isFeatured ? (
-                            <span className="hg-pill hg-pill--ok">препоръчан</span>
-                          ) : null}
+                          <span className="hg-pill">
+                            артикули:{" "}
+                            {Array.isArray(order.items)
+                              ? order.items.reduce(
+                                  (sum, item) => sum + toNum(item?.qty),
+                                  0
+                                )
+                              : 0}
+                          </span>
                         </div>
 
-                        <div className="hg-kpis">
-                          Каталог:{" "}
-                          <b>
-                            {Array.isArray(p.categoryPath) && p.categoryPath.length
-                              ? p.categoryPath.join(" / ")
-                              : p.category || "-"}
-                          </b>
-                        </div>
-
-                        <div className="hg-kpis">
-                          SKU: <b>{p.sku || "-"}</b> • Наличност:{" "}
-                          <b>{p.stockQty ?? "-"}</b>
-                        </div>
-
-                        <div className="hg-kpis">
-                          Грамаж: <b>{p.weight ?? "-"}</b>
-                          {p.weightUnit ? ` ${p.weightUnit}` : ""} • Интензитет:{" "}
-                          <b>{p.intensity ?? "-"}</b>
-                        </div>
-
-                        <div className="hg-price">
-                          {formatPrice(productPrice(p), p.currency)}
-                        </div>
-
-                        <div className="hg-kpis">
-                          Преглеждания: <b>{p.views ?? 0}</b> • Кликове:{" "}
-                          <b>{p.clicks ?? 0}</b>
-                        </div>
-
-                        <div className="hg-actions hg-actions--wrap">
-                          <button
-                            className="hg-btn hg-btn--primary"
-                            onClick={() => openEditForm(p)}
-                            disabled={adminLoading}
-                          >
-                            Редактирай
-                          </button>
-
+                        <div className="hg-actions" style={{ marginBottom: 14 }}>
                           <button
                             className="hg-btn"
-                            onClick={() => setStatus(p._id, "approved")}
-                            disabled={adminLoading}
+                            onClick={() => updateOrderStatus(order._id, "new")}
                           >
-                            Одобри
+                            Нова
                           </button>
-
                           <button
                             className="hg-btn"
-                            onClick={() => setStatus(p._id, "rejected")}
-                            disabled={adminLoading}
+                            onClick={() =>
+                              updateOrderStatus(order._id, "confirmed")
+                            }
+                          >
+                            Потвърди
+                          </button>
+                          <button
+                            className="hg-btn"
+                            onClick={() => updateOrderStatus(order._id, "shipped")}
+                          >
+                            Изпрати
+                          </button>
+                          <button
+                            className="hg-btn"
+                            onClick={() =>
+                              updateOrderStatus(order._id, "delivered")
+                            }
+                          >
+                            Доставена
+                          </button>
+                          <button
+                            className="hg-btn hg-btn--danger"
+                            onClick={() =>
+                              updateOrderStatus(order._id, "cancelled")
+                            }
                           >
                             Откажи
                           </button>
+                        </div>
 
-                          <button
-                            className="hg-btn"
-                            onClick={() => setStatus(p._id, "blacklisted")}
-                            disabled={adminLoading}
-                          >
-                            Черен списък
-                          </button>
+                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
+                          <b>Продукти в поръчката:</b>
+                        </div>
 
-                          <button
-                            className="hg-btn"
-                            onClick={() => setSingleFeatured(p._id, !p.isFeatured)}
-                            disabled={adminLoading}
-                          >
-                            {p.isFeatured ? "Махни препоръчан" : "Препоръчай"}
-                          </button>
-
-                          <button
-                            className="hg-btn hg-btn--danger"
-                            onClick={() => deleteProduct(p._id)}
-                            disabled={adminLoading}
-                          >
-                            Изтрий
-                          </button>
+                        <div className="hg-actions--wrap" style={{ display: "grid", gap: 10 }}>
+                          {Array.isArray(order.items) && order.items.length > 0 ? (
+                            order.items.map((item, idx) => (
+                              <div
+                                key={`${order._id}-${item?.productId || idx}`}
+                                className="hg-check"
+                                style={{
+                                  minHeight: "auto",
+                                  alignItems: "flex-start",
+                                  flexDirection: "column",
+                                  padding: "12px 14px",
+                                }}
+                              >
+                                <div>
+                                  <b>{item?.title || "Продукт"}</b>
+                                </div>
+                                <div className="hg-kpis">
+                                  Количество: <b>{item?.qty ?? 0}</b> • Цена:{" "}
+                                  <b>
+                                    {formatPrice(
+                                      item?.price,
+                                      order.currency || "BGN"
+                                    )}
+                                  </b>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="hg-kpis">Няма артикули.</div>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    ))}
+                </>
+              )}
             </>
           )}
         </div>
