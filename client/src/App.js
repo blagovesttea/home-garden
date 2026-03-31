@@ -35,21 +35,6 @@ const PUBLIC_CATEGORY_CHIPS = [
   { label: "Подаръчни комплекти", value: "gift-sets" },
 ];
 
-const HERO_FEATURES = [
-  {
-    title: "Премиум селекция",
-    text: "Подбрани кафе продукти за дома, офиса и професионалната употреба.",
-  },
-  {
-    title: "Лесна поръчка",
-    text: "Бързо добавяне в количка, удобна форма и лесен процес до финал.",
-  },
-  {
-    title: "Подходящо за бизнес",
-    text: "Решения за офиси, заведения, хотели и професионални обекти.",
-  },
-];
-
 const HERO_LINKS = [
   { label: "Кафе на зърна", category: "coffee-beans" },
   { label: "Капсули и дози", category: "capsules" },
@@ -1753,15 +1738,6 @@ function AppShell() {
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <div className="hg-heroCards">
-                {HERO_FEATURES.map((item) => (
-                  <div className="hg-heroCard" key={item.title}>
-                    <div className="hg-heroCard__title">{item.title}</div>
-                    <div className="hg-heroCard__text">{item.text}</div>
-                  </div>
-                ))}
               </div>
             </section>
 
