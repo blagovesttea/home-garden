@@ -961,60 +961,144 @@ function AppShell() {
   ========================== */
   return (
     <div className={`hg ${view === "public" ? "hg--public" : "hg--admin"}`}>
-      <div className="hg-topbar">
-        <div className="hg-brand">
-          <div>
-            <h1 className="hg-title">
-              {view === "public" ? "Кафе Маркет" : "Кафе Маркет Админ"}
-            </h1>
-            <div className="hg-sub">
-              {view === "public"
-                ? "Премиум кафе продукти, кафемашини, капсули и аксесоари за дома, офиса и професионалната среда."
-                : "Админ панел за управление на магазина"}
+      {view === "public" ? (
+        <header className="hg-publicHeader">
+          <div className="hg-publicUtility">
+            <div className="hg-publicUtility__brand">
+              <button
+                className="hg-publicUtility__logoBtn"
+                onClick={clearPublicFilters}
+                type="button"
+              >
+                <span className="hg-publicUtility__logo">Кафе Маркет</span>
+              </button>
+
+              <div className="hg-publicUtility__copy">
+                Премиум кафе продукти, кафемашини, капсули и аксесоари за дома,
+                офиса и професионалната среда.
+              </div>
+            </div>
+
+            <div className="hg-publicUtility__info">
+              <span>☎ 02 812 99 99</span>
+              <span>Доставка в България</span>
+              <span>Онлайн поръчки</span>
             </div>
           </div>
-        </div>
 
-        <div className="hg-topActions">
-          {view === "public" && (
-            <button
-              className="hg-btn hg-btn--primary"
-              onClick={() => setCartOpen(true)}
-            >
-              Количка ({cartCount})
-            </button>
-          )}
+          <div className="hg-publicNav">
+            <div className="hg-publicNav__menu">
+              <button className="hg-navLink" onClick={clearPublicFilters}>
+                Начало
+              </button>
+              <button
+                className="hg-navLink"
+                onClick={() => applyCategoryFilter("coffee-beans")}
+              >
+                Кафе
+              </button>
+              <button
+                className="hg-navLink"
+                onClick={() => applyCategoryFilter("capsules")}
+              >
+                Капсули
+              </button>
+              <button
+                className="hg-navLink"
+                onClick={() => applyCategoryFilter("machines")}
+              >
+                Машини
+              </button>
+              <button
+                className="hg-navLink"
+                onClick={() => applyCategoryFilter("accessories")}
+              >
+                Аксесоари
+              </button>
+              <button
+                className="hg-navLink"
+                onClick={() => applyCategoryFilter("gift-sets")}
+              >
+                Подаръчни комплекти
+              </button>
+            </div>
 
-          <div className="hg-switch">
-            <button
-              className={`hg-switchBtn ${view === "public" ? "is-active" : ""}`}
-              onClick={() => setView("public")}
-              disabled={view === "public"}
-            >
-              Магазин
-            </button>
+            <div className="hg-publicNav__actions">
+              <button
+                className="hg-btn hg-btn--primary"
+                onClick={() => setCartOpen(true)}
+              >
+                Количка ({cartCount})
+              </button>
 
-            <button
-              className={`hg-switchBtn ${view === "admin" ? "is-active" : ""}`}
-              onClick={() => setView("admin")}
-              disabled={view === "admin"}
-            >
-              Админ
-            </button>
+              <button
+                className="hg-btn"
+                onClick={() => setView("admin")}
+                type="button"
+              >
+                {token ? "Админ" : "Вход"}
+              </button>
+
+              {token ? (
+                <>
+                  <div className="hg-userChip">
+                    роля:{" "}
+                    <b>{me?.role || (meLoading ? "проверка..." : "неизвестна")}</b>
+                  </div>
+                  <button className="hg-btn" onClick={doLogout}>
+                    Изход
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </header>
+      ) : (
+        <div className="hg-topbar">
+          <div className="hg-brand">
+            <div>
+              <h1 className="hg-title">Кафе Маркет Админ</h1>
+              <div className="hg-sub">Админ панел за управление на магазина</div>
+            </div>
           </div>
 
-          {token ? (
-            <>
-              <div className="hg-userChip">
-                роля: <b>{me?.role || (meLoading ? "проверка..." : "неизвестна")}</b>
-              </div>
-              <button className="hg-btn" onClick={doLogout}>
-                Изход
+          <div className="hg-topActions">
+            <div className="hg-switch">
+              <button
+                className={`hg-switchBtn ${view === "public" ? "is-active" : ""}`}
+                onClick={() => setView("public")}
+                disabled={view === "public"}
+              >
+                Магазин
               </button>
-            </>
-          ) : null}
+
+              <button
+                className={`hg-switchBtn ${view === "admin" ? "is-active" : ""}`}
+                onClick={() => setView("admin")}
+                disabled={view === "admin"}
+              >
+                Админ
+              </button>
+            </div>
+
+            {token ? (
+              <>
+                <div className="hg-userChip">
+                  роля:{" "}
+                  <b>{me?.role || (meLoading ? "проверка..." : "неизвестна")}</b>
+                </div>
+                <button className="hg-btn" onClick={doLogout}>
+                  Изход
+                </button>
+              </>
+            ) : (
+              <button className="hg-btn" onClick={() => setView("public")}>
+                Към магазина
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {view === "admin" && !token && (
         <form className="hg-panel" onSubmit={doLogin}>
@@ -1624,75 +1708,6 @@ function AppShell() {
       {view === "public" && (
         <>
           <section className="hg-publicShell">
-            <div className="hg-announcementBar">
-              <div className="hg-announcementBar__left">
-                <span className="hg-announcementPill">Премиум кафе магазин</span>
-                <span className="hg-announcementText">
-                  Кафе продукти за дома, офиса и професионалната среда
-                </span>
-              </div>
-
-              <div className="hg-announcementBar__right">
-                <span>☎ 02 812 99 99</span>
-                <span>Доставка в България</span>
-                <span>Онлайн поръчки</span>
-              </div>
-            </div>
-
-            <div className="hg-mainNav">
-              <div className="hg-mainNav__brand">
-                <div className="hg-mainNav__logo">Кафе Маркет</div>
-                <div className="hg-mainNav__caption">
-                  кафе • капсули • машини • аксесоари
-                </div>
-              </div>
-
-              <div className="hg-mainNav__menu">
-                <button className="hg-navLink" onClick={clearPublicFilters}>
-                  Начало
-                </button>
-                <button
-                  className="hg-navLink"
-                  onClick={() => applyCategoryFilter("coffee-beans")}
-                >
-                  Кафе
-                </button>
-                <button
-                  className="hg-navLink"
-                  onClick={() => applyCategoryFilter("capsules")}
-                >
-                  Капсули
-                </button>
-                <button
-                  className="hg-navLink"
-                  onClick={() => applyCategoryFilter("machines")}
-                >
-                  Машини
-                </button>
-                <button
-                  className="hg-navLink"
-                  onClick={() => applyCategoryFilter("accessories")}
-                >
-                  Аксесоари
-                </button>
-                <button
-                  className="hg-navLink"
-                  onClick={() => applyCategoryFilter("gift-sets")}
-                >
-                  Подаръчни комплекти
-                </button>
-              </div>
-
-              <div className="hg-mainNav__actions">
-                <button
-                  className="hg-btn hg-btn--primary"
-                  onClick={() => setCartOpen(true)}
-                >
-                  Количка ({cartCount})
-                </button>
-              </div>
-            </div>
-
             <section className="hg-hero">
               <div className="hg-hero__overlay" />
 
@@ -1704,7 +1719,7 @@ function AppShell() {
                 </h2>
 
                 <p className="hg-hero__text">
-                  Подбрани продукти, модерна визия и бърза поръчка в стил истински
+                  Подбрани продукти, силна визия и лесна поръчка в стил модерен
                   специализиран магазин за кафе.
                 </p>
 
@@ -1721,12 +1736,7 @@ function AppShell() {
 
                   <button
                     className="hg-btn"
-                    onClick={() => {
-                      setSort("featured");
-                      setSelectedCategory("all");
-                      setQ("премиум кафе");
-                      setPage(1);
-                    }}
+                    onClick={() => applyQuickSearch("премиум кафе")}
                   >
                     Премиум селекция
                   </button>
@@ -1758,8 +1768,8 @@ function AppShell() {
             <section className="hg-chipSection">
               <div className="hg-sectionHead">
                 <div>
-                  <div className="hg-sectionEyebrow">Популярни категории</div>
-                  <h3 className="hg-sectionTitle">Открий точния тип продукти</h3>
+                  <div className="hg-sectionEyebrow">Категории</div>
+                  <h3 className="hg-sectionTitle">Избери какво търсиш</h3>
                 </div>
               </div>
 
