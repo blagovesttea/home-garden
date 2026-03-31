@@ -1499,3 +1499,25 @@ button{
     width: auto;
   }
 }
+.hg-hero{
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.hg-heroWrap{
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.hg-publicShell{
+  gap: 0 !important;
+}
+
+.hg-header + .hg-hero,
+.hg-nav + .hg-hero{
+  margin-top: 0 !important;
+}
+
+.hg-public{
+  padding-top: 0 !important;
+}
