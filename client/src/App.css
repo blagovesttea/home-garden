@@ -1,48 +1,48 @@
 /* =========================================================
-   КАФЕ МАРКЕТ – ПЪЛЕН РЕДИЗАЙН
-   Premium coffee shop / ecommerce feel
+   КАФЕ МАРКЕТ – CORPORATE COFFEE BRAND REDESIGN
+   По-близо до Zagatto референцията
 ========================================================= */
 
 :root{
-  --bg: #f5f1eb;
-  --bg-2: #efe6dc;
+  --bg: #f3eee8;
+  --bg-2: #ece4db;
   --surface: #ffffff;
-  --surface-soft: rgba(255,255,255,.88);
-  --surface-2: #fcfaf7;
+  --surface-soft: rgba(255,255,255,.92);
+  --surface-2: #faf7f3;
 
-  --text: #1f1712;
-  --text-soft: rgba(31,23,18,.78);
-  --muted: rgba(31,23,18,.60);
-  --muted-2: rgba(31,23,18,.42);
+  --text: #1e1612;
+  --text-soft: rgba(30,22,18,.78);
+  --muted: rgba(30,22,18,.60);
+  --muted-2: rgba(30,22,18,.42);
 
   --line: rgba(58,38,25,.10);
   --line-2: rgba(58,38,25,.14);
   --line-3: rgba(58,38,25,.22);
 
-  --brand: #be1e2d;
-  --brand-dark: #971726;
-  --brand-soft: rgba(190,30,45,.10);
+  --brand: #cf202f;
+  --brand-dark: #b31927;
+  --brand-soft: rgba(207,32,47,.10);
 
-  --brown: #5a3826;
-  --brown-2: #7a5641;
-  --brown-soft: rgba(90,56,38,.08);
+  --brown: #231b17;
+  --brown-2: #342721;
+  --brown-soft: rgba(35,27,23,.08);
 
   --success: #1f7a45;
   --danger: #a11d1d;
   --warning: #9a5a16;
 
-  --shadow-xs: 0 2px 8px rgba(31,23,18,.04);
-  --shadow-sm: 0 10px 24px rgba(31,23,18,.08);
-  --shadow-md: 0 18px 44px rgba(31,23,18,.10);
-  --shadow-lg: 0 28px 70px rgba(31,23,18,.14);
-  --shadow-xl: 0 36px 90px rgba(31,23,18,.18);
+  --shadow-xs: 0 2px 6px rgba(31,23,18,.04);
+  --shadow-sm: 0 8px 20px rgba(31,23,18,.08);
+  --shadow-md: 0 16px 38px rgba(31,23,18,.10);
+  --shadow-lg: 0 24px 56px rgba(31,23,18,.14);
+  --shadow-xl: 0 32px 70px rgba(31,23,18,.18);
 
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 26px;
-  --radius-xl: 34px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
 
-  --wrap: 1360px;
+  --wrap: 1540px;
 
   --fs-12: 12px;
   --fs-13: 13px;
@@ -63,9 +63,9 @@ body{
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   color: var(--text);
   background:
-    radial-gradient(1200px 520px at 0% -10%, rgba(190,30,45,.08), transparent 58%),
-    radial-gradient(900px 420px at 100% 0%, rgba(122,86,65,.08), transparent 60%),
-    linear-gradient(180deg, #f7f2ec 0%, #f1e7db 100%);
+    radial-gradient(1200px 520px at 0% -10%, rgba(207,32,47,.06), transparent 58%),
+    radial-gradient(900px 420px at 100% 0%, rgba(122,86,65,.06), transparent 60%),
+    linear-gradient(180deg, #f6f1eb 0%, #eee6dc 100%);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -90,7 +90,7 @@ button{
 ========================================================= */
 
 .hg-btn{
-  height: 44px;
+  height: 42px;
   padding: 0 18px;
   border-radius: 999px;
   border: 1px solid var(--line-2);
@@ -121,11 +121,11 @@ button{
   background: linear-gradient(135deg, var(--brand), var(--brand-dark));
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 16px 34px rgba(190,30,45,.24);
+  box-shadow: 0 12px 28px rgba(207,32,47,.22);
 }
 
 .hg-btn--primary:hover{
-  box-shadow: 0 22px 42px rgba(190,30,45,.30);
+  box-shadow: 0 18px 34px rgba(207,32,47,.28);
 }
 
 .hg-btn--danger{
@@ -140,10 +140,10 @@ button{
 
 .hg-input,
 .hg-select{
-  height: 48px;
-  border-radius: 16px;
+  height: 46px;
+  border-radius: 10px;
   border: 1px solid var(--line-2);
-  padding: 0 15px;
+  padding: 0 14px;
   background: #fff;
   color: var(--text);
   font-size: var(--fs-14);
@@ -158,15 +158,15 @@ button{
 
 .hg-input:focus,
 .hg-select:focus{
-  border-color: rgba(190,30,45,.28);
-  box-shadow: 0 0 0 4px rgba(190,30,45,.10);
+  border-color: rgba(207,32,47,.28);
+  box-shadow: 0 0 0 4px rgba(207,32,47,.10);
 }
 
 .hg-textarea{
   width: 100%;
   min-height: 120px;
   resize: vertical;
-  border-radius: 18px;
+  border-radius: 12px;
   border: 1px solid var(--line-2);
   padding: 14px;
   outline: none;
@@ -177,8 +177,8 @@ button{
 }
 
 .hg-textarea:focus{
-  border-color: rgba(190,30,45,.28);
-  box-shadow: 0 0 0 4px rgba(190,30,45,.10);
+  border-color: rgba(207,32,47,.28);
+  box-shadow: 0 0 0 4px rgba(207,32,47,.10);
 }
 
 .hg-textarea--light{
@@ -225,8 +225,8 @@ button{
 .hg-note--order{
   margin-top: 10px;
   padding: 12px 14px;
-  border-radius: 14px;
-  background: rgba(190,30,45,.08);
+  border-radius: 10px;
+  background: rgba(207,32,47,.08);
   color: var(--brand-dark);
   font-weight: 700;
 }
@@ -234,10 +234,9 @@ button{
 .hg-panel{
   margin: 12px 0 18px;
   padding: 16px 18px;
-  border: 1px solid rgba(255,255,255,.6);
-  border-radius: 20px;
-  background: rgba(255,255,255,.78);
-  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,.65);
+  border-radius: 14px;
+  background: rgba(255,255,255,.86);
   box-shadow: var(--shadow-sm);
 }
 
@@ -279,24 +278,24 @@ button{
   min-height: 100vh;
   max-width: var(--wrap);
   margin: 0 auto;
-  padding: 18px 18px 100px;
+  padding: 20px 18px 90px;
 }
 
 .hg-publicHeader{
-  margin-bottom: 22px;
+  margin-bottom: 18px;
 }
 
 .hg-publicUtility{
-  min-height: 74px;
-  padding: 14px 22px;
-  border-radius: 20px 20px 0 0;
+  min-height: 72px;
+  padding: 12px 26px;
+  border-radius: 18px 18px 0 0;
   background: #231b17;
   color: rgba(255,255,255,.92);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 16px 34px rgba(31,23,18,.14);
 }
 
 .hg-publicUtility__brand{
@@ -317,18 +316,17 @@ button{
 
 .hg-publicUtility__logo{
   display: block;
-  font-size: clamp(34px, 4vw, 64px);
+  font-size: clamp(28px, 3.8vw, 52px);
   line-height: .90;
   font-weight: 900;
   letter-spacing: -0.06em;
-  color: #e62b39;
-  text-shadow: 0 10px 30px rgba(0,0,0,.22);
+  color: #ff2b3a;
 }
 
 .hg-publicUtility__copy{
   max-width: 720px;
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 13px;
+  line-height: 1.65;
   color: rgba(255,255,255,.76);
 }
 
@@ -336,14 +334,15 @@ button{
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 18px;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
 .hg-publicUtility__info span{
   font-size: 13px;
-  color: rgba(255,255,255,.82);
+  color: rgba(255,255,255,.86);
   white-space: nowrap;
+  font-weight: 600;
 }
 
 .hg-publicNav{
@@ -351,143 +350,159 @@ button{
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
-  padding: 16px 22px;
-  border-radius: 0 0 24px 24px;
-  background: linear-gradient(180deg, #cf202f, #b71d2b);
+  padding: 12px 20px;
+  border-radius: 0 0 18px 18px;
+  background: linear-gradient(180deg, #d32030, #c31d2c);
   color: #fff;
-  box-shadow: 0 20px 45px rgba(190,30,45,.22);
+  box-shadow: 0 18px 36px rgba(207,32,47,.20);
 }
 
 .hg-publicNav__menu{
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   flex-wrap: wrap;
 }
 
 .hg-navLink{
-  height: 42px;
-  padding: 0 14px;
+  height: 44px;
+  padding: 0 16px;
   border: none;
-  border-radius: 999px;
+  border-radius: 0;
   background: transparent;
   color: #fff;
   font-size: 13px;
   font-weight: 900;
   cursor: pointer;
-  transition: background .18s ease, transform .14s ease;
+  transition: background .18s ease, color .18s ease;
+  position: relative;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+.hg-navLink::after{
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: rgba(255,255,255,.20);
+}
+
+.hg-publicNav__menu .hg-navLink:last-child::after{
+  display: none;
 }
 
 .hg-navLink:hover{
-  background: rgba(255,255,255,.14);
-  transform: translateY(-1px);
+  background: rgba(255,255,255,.08);
 }
 
 .hg-publicNav__actions{
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .hg-publicNav__actions .hg-btn{
-  background: rgba(255,255,255,.96);
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: #fff;
   color: var(--brand);
   border-color: transparent;
+  box-shadow: none;
 }
 
 .hg-publicNav__actions .hg-btn:hover{
-  box-shadow: 0 14px 30px rgba(0,0,0,.16);
+  box-shadow: 0 10px 24px rgba(0,0,0,.14);
 }
 
 .hg-publicNav__actions .hg-btn--primary{
   background: #fff;
   color: var(--brand);
-  box-shadow: 0 12px 28px rgba(0,0,0,.14);
 }
 
 .hg--public .hg-userChip{
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
   color: rgba(255,255,255,.88);
-  backdrop-filter: blur(12px);
 }
 
 .hg-publicShell{
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
 }
 
 .hg-hero{
   position: relative;
-  min-height: 640px;
-  border-radius: 34px;
+  min-height: 600px;
+  border-radius: 16px;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) 360px;
+  grid-template-columns: minmax(0, 1.2fr) 300px;
   align-items: stretch;
   background:
-    linear-gradient(90deg, rgba(20,12,9,.78) 0%, rgba(20,12,9,.54) 42%, rgba(20,12,9,.18) 100%),
-    url("https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80");
+    linear-gradient(90deg, rgba(18,11,8,.54) 0%, rgba(18,11,8,.34) 38%, rgba(18,11,8,.14) 100%),
+    url("https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1800&q=80");
   background-size: cover;
   background-position: center;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-lg);
 }
 
 .hg-hero__overlay{
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(700px 300px at 18% 22%, rgba(190,30,45,.14), transparent 60%),
-    linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.16));
+    linear-gradient(180deg, rgba(0,0,0,.03), rgba(0,0,0,.10));
   pointer-events: none;
 }
 
 .hg-hero__content{
   position: relative;
   z-index: 1;
-  padding: 62px 54px;
+  padding: 58px 56px 54px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: 780px;
+  max-width: 760px;
 }
 
 .hg-hero__eyebrow{
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  min-height: 34px;
-  padding: 0 14px;
+  min-height: 42px;
+  padding: 0 18px;
   border-radius: 999px;
-  background: rgba(255,255,255,.14);
-  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.16);
+  border: 1px solid rgba(255,255,255,.18);
   color: #fff;
   font-size: 12px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: .08em;
-  backdrop-filter: blur(10px);
 }
 
 .hg-hero__title{
-  margin: 18px 0 0;
-  font-size: clamp(42px, 5vw, 76px);
-  line-height: .95;
-  letter-spacing: -0.06em;
+  margin: 22px 0 0;
+  font-size: clamp(46px, 5.4vw, 84px);
+  line-height: .92;
+  letter-spacing: -0.07em;
   font-weight: 900;
   color: #fff;
-  max-width: 740px;
+  max-width: 760px;
 }
 
 .hg-hero__text{
-  margin: 18px 0 0;
-  max-width: 650px;
-  font-size: 17px;
+  margin: 24px 0 0;
+  max-width: 700px;
+  font-size: 16px;
   line-height: 1.8;
-  color: rgba(255,255,255,.86);
+  color: rgba(255,255,255,.84);
 }
 
 .hg-hero__cta{
@@ -495,71 +510,74 @@ button{
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 28px;
+  margin-top: 26px;
+}
+
+.hg-hero__cta .hg-btn{
+  height: 44px;
 }
 
 .hg-hero__cta .hg-btn:not(.hg-btn--primary){
-  background: rgba(255,255,255,.16);
+  background: rgba(255,255,255,.12);
   color: #fff;
-  border-color: rgba(255,255,255,.18);
-  backdrop-filter: blur(8px);
+  border-color: rgba(255,255,255,.16);
 }
 
 .hg-hero__cta .hg-btn:not(.hg-btn--primary):hover{
-  background: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.18);
 }
 
 .hg-hero__links{
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 28px;
+  margin-top: 22px;
 }
 
 .hg-heroLink{
-  min-height: 40px;
+  min-height: 38px;
   padding: 0 14px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.10);
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
-  backdrop-filter: blur(8px);
   transition: background .18s ease, transform .14s ease;
+  text-transform: uppercase;
+  letter-spacing: .04em;
 }
 
 .hg-heroLink:hover{
-  background: rgba(255,255,255,.22);
+  background: rgba(255,255,255,.18);
   transform: translateY(-1px);
 }
 
 .hg-heroCards{
   position: relative;
   z-index: 1;
-  padding: 26px 24px 26px 0;
+  padding: 22px 20px 22px 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 14px;
+  gap: 12px;
 }
 
 .hg-heroCard{
   margin-left: auto;
   width: 100%;
-  max-width: 320px;
-  padding: 20px 20px 18px;
-  border-radius: 22px;
+  max-width: 280px;
+  padding: 18px 18px 16px;
+  border-radius: 12px;
   border: 1px solid rgba(255,255,255,.14);
-  background: rgba(255,255,255,.14);
+  background: rgba(48,40,34,.42);
   color: #fff;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 16px 36px rgba(0,0,0,.16);
+  box-shadow: 0 12px 28px rgba(0,0,0,.14);
 }
 
 .hg-heroCard__title{
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 900;
   letter-spacing: -0.02em;
 }
@@ -572,7 +590,7 @@ button{
 }
 
 .hg-chipSection{
-  padding: 6px 0 0;
+  padding: 2px 0 0;
 }
 
 .hg-sectionHead{
@@ -580,11 +598,11 @@ button{
   align-items: end;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .hg-sectionHead--toolbar{
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .hg-sectionEyebrow{
@@ -597,9 +615,9 @@ button{
 
 .hg-sectionTitle{
   margin: 8px 0 0;
-  font-size: clamp(28px, 3vw, 42px);
-  line-height: .98;
-  letter-spacing: -0.04em;
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1;
+  letter-spacing: -0.05em;
   font-weight: 900;
   color: var(--text);
 }
@@ -607,16 +625,15 @@ button{
 .hg-chipGrid{
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .hg-chipCard{
-  min-height: 108px;
-  padding: 18px;
-  border-radius: 22px;
-  border: 1px solid rgba(255,255,255,.58);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,255,255,.80));
+  min-height: 94px;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.72);
+  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.86));
   box-shadow: var(--shadow-sm);
   cursor: pointer;
   text-align: left;
@@ -625,13 +642,13 @@ button{
 
 .hg-chipCard:hover{
   transform: translateY(-2px);
-  border-color: rgba(190,30,45,.16);
+  border-color: rgba(207,32,47,.18);
   box-shadow: var(--shadow-md);
 }
 
 .hg-chipCard__title{
   display: block;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.35;
   font-weight: 900;
   color: var(--text);
@@ -656,10 +673,9 @@ button{
   gap: 12px;
   padding: 14px;
   margin: 0 0 22px;
-  border: 1px solid rgba(255,255,255,.60);
-  border-radius: 22px;
-  background: rgba(255,255,255,.76);
-  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: 12px;
+  background: rgba(255,255,255,.86);
   box-shadow: var(--shadow-md);
 }
 
@@ -684,7 +700,7 @@ button{
 .hg--public .hg-grid{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 32px 22px;
+  gap: 28px 20px;
 }
 
 .hg--public .hg-card{
@@ -701,29 +717,29 @@ button{
 }
 
 .hg--public .hg-thumb{
-  height: 300px;
-  border-radius: 24px;
-  border: 1px solid rgba(255,255,255,.62);
+  height: 290px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.72);
   background: #fff;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   box-shadow:
-    0 18px 40px rgba(31,23,18,.08),
-    0 4px 14px rgba(31,23,18,.05);
+    0 14px 30px rgba(31,23,18,.08),
+    0 4px 12px rgba(31,23,18,.05);
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 
 .hg--public .hg-card:hover .hg-thumb{
   transform: translateY(-2px);
-  border-color: rgba(190,30,45,.16);
+  border-color: rgba(207,32,47,.16);
   box-shadow:
-    0 24px 52px rgba(31,23,18,.12),
-    0 8px 20px rgba(190,30,45,.08);
+    0 18px 38px rgba(31,23,18,.12),
+    0 6px 16px rgba(207,32,47,.07);
 }
 
 .hg--public .hg-cardBody{
-  padding: 16px 4px 0;
+  padding: 14px 2px 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -746,11 +762,11 @@ button{
 .hg--public .hg-pill{
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
+  min-height: 26px;
   padding: 0 10px;
   border-radius: 999px;
   border: 1px solid rgba(31,23,18,.08);
-  background: rgba(255,255,255,.88);
+  background: rgba(255,255,255,.92);
   color: var(--text-soft);
   font-size: 11px;
   font-weight: 800;
@@ -770,7 +786,7 @@ button{
 }
 
 .hg--public .hg-price{
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1;
   font-weight: 900;
   letter-spacing: -0.04em;
@@ -786,7 +802,7 @@ button{
   position: fixed;
   inset: 0;
   background: rgba(20,14,10,.44);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(4px);
   z-index: 70;
 }
 
@@ -799,12 +815,11 @@ button{
   width: min(1080px, calc(100vw - 28px));
   max-height: min(86vh, 780px);
   overflow: auto;
-  border: 1px solid rgba(255,255,255,.56);
-  border-radius: 30px;
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.70);
+  border-radius: 14px;
+  background: rgba(255,255,255,.96);
   box-shadow:
-    0 44px 110px rgba(31,23,18,.24),
+    0 36px 90px rgba(31,23,18,.22),
     0 18px 44px rgba(31,23,18,.10);
   padding: 18px;
 }
@@ -829,9 +844,9 @@ button{
 .hg-modalClose{
   width: 40px;
   height: 40px;
-  border-radius: 14px;
+  border-radius: 8px;
   border: 1px solid var(--line-2);
-  background: rgba(255,255,255,.94);
+  background: rgba(255,255,255,.96);
   color: var(--text);
   cursor: pointer;
   font-size: 15px;
@@ -853,8 +868,8 @@ button{
 
 .hg-productModal__image{
   min-height: 440px;
-  border-radius: 24px;
-  border: 1px solid rgba(255,255,255,.58);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.72);
   background: #fff;
   background-size: cover;
   background-position: center;
@@ -893,12 +908,11 @@ button{
   top: 0;
   right: 0;
   z-index: 72;
-  width: min(580px, 100vw);
+  width: min(560px, 100vw);
   height: 100vh;
   padding: 18px;
-  background: rgba(255,255,255,.96);
-  backdrop-filter: blur(18px);
-  border-left: 1px solid rgba(255,255,255,.56);
+  background: rgba(255,255,255,.98);
+  border-left: 1px solid rgba(255,255,255,.70);
   box-shadow: -26px 0 70px rgba(31,23,18,.16);
   overflow: auto;
 }
@@ -918,16 +932,16 @@ button{
   grid-template-columns: 96px minmax(0, 1fr);
   gap: 14px;
   padding: 12px;
-  border-radius: 22px;
-  border: 1px solid rgba(255,255,255,.58);
-  background: rgba(255,255,255,.84);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.74);
+  background: rgba(255,255,255,.90);
   box-shadow: var(--shadow-sm);
 }
 
 .hg-cartItem__image{
   width: 96px;
   height: 96px;
-  border-radius: 16px;
+  border-radius: 8px;
   border: 1px solid var(--line);
   background-size: cover;
   background-position: center;
@@ -1005,7 +1019,7 @@ button{
   padding: 24px 18px 90px;
   color: #f3eee8;
   background:
-    radial-gradient(900px 420px at 16% -10%, rgba(190,30,45,.14), transparent 55%),
+    radial-gradient(900px 420px at 16% -10%, rgba(207,32,47,.14), transparent 55%),
     radial-gradient(900px 380px at 90% 0%, rgba(122,86,65,.16), transparent 55%),
     linear-gradient(180deg, #1d1411 0%, #241815 100%);
 }
@@ -1017,11 +1031,10 @@ button{
   gap: 14px;
   margin-bottom: 18px;
   padding: 20px;
-  border-radius: 28px;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(255,255,255,.05);
   box-shadow: 0 24px 70px rgba(0,0,0,.34);
-  backdrop-filter: blur(14px);
 }
 
 .hg-brand{
@@ -1062,7 +1075,6 @@ button{
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.06);
-  backdrop-filter: blur(18px);
 }
 
 .hg--admin .hg-switchBtn{
@@ -1085,7 +1097,7 @@ button{
 .hg--admin .hg-switchBtn.is-active{
   background: linear-gradient(135deg, var(--brand), var(--brand-dark));
   color: #fff;
-  box-shadow: 0 14px 30px rgba(190,30,45,.22);
+  box-shadow: 0 14px 30px rgba(207,32,47,.22);
 }
 
 .hg--admin .hg-switchBtn:disabled{
@@ -1102,10 +1114,9 @@ button{
 .hg--admin .hg-panel{
   margin: 12px 0 18px;
   padding: 18px;
-  border-radius: 26px;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.05);
-  backdrop-filter: blur(14px);
   box-shadow: 0 24px 70px rgba(0,0,0,.32);
   color: #f3eee8;
 }
@@ -1126,8 +1137,8 @@ button{
 
 .hg--admin .hg-input,
 .hg--admin .hg-select{
-  height: 48px;
-  border-radius: 16px;
+  height: 46px;
+  border-radius: 10px;
   border: 1px solid rgba(255,255,255,.14);
   padding: 0 14px;
   background: rgba(30,20,16,.56);
@@ -1177,7 +1188,7 @@ button{
 
 .hg--admin .hg-card{
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 16px;
   border: 1px solid rgba(255,255,255,.10);
   background: linear-gradient(
     180deg,
@@ -1264,12 +1275,12 @@ button{
 }
 
 .hg-check{
-  min-height: 48px;
+  min-height: 46px;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 0 14px;
-  border-radius: 16px;
+  border-radius: 10px;
   border: 1px solid rgba(255,255,255,.14);
   background: rgba(255,255,255,.04);
   color: #f3eee8;
@@ -1301,7 +1312,7 @@ button{
   }
 
   .hg-hero{
-    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-columns: minmax(0, 1fr) 270px;
   }
 }
 
@@ -1336,7 +1347,7 @@ button{
   }
 
   .hg-heroCards{
-    padding: 0 24px 24px;
+    padding: 0 20px 20px;
     flex-direction: row;
     flex-wrap: wrap;
   }
@@ -1344,7 +1355,7 @@ button{
   .hg-heroCard{
     margin-left: 0;
     max-width: none;
-    flex: 1 1 240px;
+    flex: 1 1 220px;
   }
 
   .hg--admin .hg-topbar{
@@ -1362,8 +1373,8 @@ button{
   }
 
   .hg-publicUtility{
-    padding: 16px 16px 14px;
-    border-radius: 18px 18px 0 0;
+    padding: 16px;
+    border-radius: 14px 14px 0 0;
   }
 
   .hg-publicUtility__brand{
@@ -1373,8 +1384,8 @@ button{
   }
 
   .hg-publicNav{
-    padding: 14px 16px;
-    border-radius: 0 0 20px 20px;
+    padding: 12px 14px;
+    border-radius: 0 0 14px 14px;
   }
 
   .hg-chipGrid{
@@ -1421,7 +1432,7 @@ button{
 
 @media (max-width: 680px){
   .hg-publicUtility__logo{
-    font-size: 42px;
+    font-size: 38px;
   }
 
   .hg-publicUtility__copy{
@@ -1433,7 +1444,13 @@ button{
   }
 
   .hg-publicNav{
-    padding: 12px 14px;
+    padding: 10px 12px;
+  }
+
+  .hg-navLink{
+    height: 40px;
+    padding: 0 12px;
+    font-size: 12px;
   }
 
   .hg-chipGrid{
@@ -1474,7 +1491,7 @@ button{
   }
 
   .hg-heroCards{
-    padding: 0 18px 18px;
+    padding: 0 16px 16px;
   }
 
   .hg-btn{
