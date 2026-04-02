@@ -442,14 +442,21 @@ function AppShell() {
     }
 
     if (!res.ok) {
-      const msg =
-        data?.message ||
-        data?.error ||
-        (text?.includes("<!doctype") || text?.includes("<html")
-          ? "Сървърът върна HTML вместо JSON."
-          : `HTTP ${res.status}`);
-      throw new Error(msg);
-    }
+  const parts = [
+    data?.message,
+    data?.error,
+    data?.details ? JSON.stringify(data.details) : "",
+  ].filter(Boolean);
+
+  const msg =
+    parts.join(" | ") ||
+    (text?.includes("<!doctype") || text?.includes("<html")
+      ? "Сървърът върна HTML вместо JSON."
+      : text ||
+        `HTTP ${res.status}`);
+
+  throw new Error(msg);
+}
 
     return data;
   }
