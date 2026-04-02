@@ -394,11 +394,15 @@ ProductSchema.pre("validate", function () {
     return;
   }
 
-  if (!this.slug || this.isModified("title")) {
+  // Ако route-ът вече е подал уникален slug, пазим него.
+  if (!this.slug) {
     this.slug = generatedSlug;
-  } else {
-    this.slug = slugifyProductTitle(this.slug);
+    return;
   }
+
+  // Нормализираме само вече зададения slug, без да го презаписваме
+  // с базовия slug от title.
+  this.slug = slugifyProductTitle(this.slug);
 });
 
 ProductSchema.index({ slug: 1 }, { unique: true, sparse: true });
