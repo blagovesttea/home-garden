@@ -128,21 +128,57 @@ function productPrice(p) {
   return p?.finalPrice != null ? p.finalPrice : p?.price;
 }
 
-function productImage(p) {
-  if (Array.isArray(p?.images) && p.images.length) return p.images[0];
-  if (p?.imageUrl) return p.imageUrl;
+function normalizeImageUrl(value) {
+  if (!value) return "";
+
+  if (typeof value === "string") {
+    const clean = value.trim();
+    return clean || "";
+  }
+
+  if (typeof value === "object") {
+    const candidates = [
+      value.url,
+      value.src,
+      value.secure_url,
+      value.imageUrl,
+      value.path,
+    ];
+
+    for (const candidate of candidates) {
+      if (typeof candidate === "string" && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+  }
+
   return "";
 }
 
 function productImages(p) {
   const images = [];
-  if (p?.imageUrl) images.push(p.imageUrl);
+  const seen = new Set();
+
+  const pushImage = (value) => {
+    const clean = normalizeImageUrl(value);
+    if (!clean) return;
+    if (seen.has(clean)) return;
+    seen.add(clean);
+    images.push(clean);
+  };
+
+  pushImage(p?.imageUrl);
+
   if (Array.isArray(p?.images)) {
-    p.images.forEach((img) => {
-      if (img && !images.includes(img)) images.push(img);
-    });
+    p.images.forEach((img) => pushImage(img));
   }
+
   return images;
+}
+
+function productImage(p) {
+  const images = productImages(p);
+  return images[0] || "";
 }
 
 function productRouteValue(product) {
