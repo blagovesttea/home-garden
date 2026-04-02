@@ -386,12 +386,12 @@ const ProductSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-ProductSchema.pre("validate", function (next) {
+ProductSchema.pre("validate", function () {
   const generatedSlug = slugifyProductTitle(this.title || "");
 
   if (!generatedSlug) {
     if (!this.slug) this.slug = "";
-    return next();
+    return;
   }
 
   if (!this.slug || this.isModified("title")) {
@@ -399,8 +399,6 @@ ProductSchema.pre("validate", function (next) {
   } else {
     this.slug = slugifyProductTitle(this.slug);
   }
-
-  next();
 });
 
 ProductSchema.index({ slug: 1 }, { unique: true, sparse: true });
