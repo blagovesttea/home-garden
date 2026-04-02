@@ -401,6 +401,9 @@ router.post("/products", auth, adminOnly, async (req, res) => {
     if (err && err.code === 11000) {
       return res.status(409).json({
         message: "Продукт с такъв уникален ключ вече съществува",
+        error: err.message,
+        keyPattern: err.keyPattern || null,
+        keyValue: err.keyValue || null,
       });
     }
 
@@ -764,6 +767,9 @@ router.patch("/products/:id", auth, adminOnly, async (req, res) => {
     if (err && err.code === 11000) {
       return res.status(409).json({
         message: "Продукт с такъв уникален ключ вече съществува",
+        error: err.message,
+        keyPattern: err.keyPattern || null,
+        keyValue: err.keyValue || null,
       });
     }
 
