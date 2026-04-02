@@ -347,6 +347,28 @@ function AppShell() {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [token]);
 
+  /* =========================
+     PUBLIC PRODUCTS
+  ========================== */
+  const [q, setQ] = useState("");
+  const [qDebounced, setQDebounced] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [sort, setSort] = useState("featured");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+
+  const [products, setProducts] = useState([]);
+  const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20 });
+  const [loading, setLoading] = useState(true);
+  const [errMsg, setErrMsg] = useState("");
+
+  const [productPage, setProductPage] = useState(null);
+  const [productPageLoading, setProductPageLoading] = useState(false);
+  const [productPageMsg, setProductPageMsg] = useState("");
+  const [productGalleryIndex, setProductGalleryIndex] = useState(0);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+
   useEffect(() => {
     const nextView = location.pathname.startsWith("/admin") ? "admin" : "public";
     setView(nextView);
@@ -596,28 +618,6 @@ function AppShell() {
     navigate("/");
   }
 
-  /* =========================
-     PUBLIC PRODUCTS
-  ========================== */
-  const [q, setQ] = useState("");
-  const [qDebounced, setQDebounced] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [sort, setSort] = useState("featured");
-  const [page, setPage] = useState(1);
-  const [limit] = useState(20);
-
-  const [products, setProducts] = useState([]);
-  const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20 });
-  const [loading, setLoading] = useState(true);
-  const [errMsg, setErrMsg] = useState("");
-
-  const [productPage, setProductPage] = useState(null);
-  const [productPageLoading, setProductPageLoading] = useState(false);
-  const [productPageMsg, setProductPageMsg] = useState("");
-  const [productGalleryIndex, setProductGalleryIndex] = useState(0);
-  const [relatedProducts, setRelatedProducts] = useState([]);
-  const [relatedLoading, setRelatedLoading] = useState(false);
-
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(q.trim()), 300);
     return () => clearTimeout(t);
@@ -708,7 +708,9 @@ function AppShell() {
         setProductPage(product);
 
         try {
-          await fetch(`${API}/products/${productSlug}/view`);
+          await fetch(`${API}/products/${productSlug}/view`, {
+            method: "POST",
+          });
         } catch {}
       } catch (e) {
         if (!aborted) {
