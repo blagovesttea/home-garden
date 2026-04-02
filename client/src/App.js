@@ -494,7 +494,9 @@ function AppShell() {
       return;
     }
 
-    const defaultPublicUrl = `${origin}${location.pathname === "/admin" ? "/" : location.pathname}`;
+    const defaultPublicUrl = `${origin}${
+      location.pathname === "/admin" ? "/" : location.pathname
+    }`;
 
     document.title = DEFAULT_TITLE;
     setMetaContent("name", "description", DEFAULT_DESCRIPTION);
@@ -698,10 +700,7 @@ function AppShell() {
 
         if (aborted) return;
 
-        if (
-          data?.canonicalPath &&
-          data.canonicalPath !== location.pathname
-        ) {
+        if (data?.canonicalPath && data.canonicalPath !== location.pathname) {
           navigate(data.canonicalPath, { replace: true });
         }
 
@@ -709,9 +708,7 @@ function AppShell() {
         setProductPage(product);
 
         try {
-          await fetch(`${API}/products/${productSlug}/view`, {
-            method: "POST",
-          });
+          await fetch(`${API}/products/${productSlug}/view`);
         } catch {}
       } catch (e) {
         if (!aborted) {
