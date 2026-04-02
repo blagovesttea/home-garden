@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
 
 // API base
@@ -193,10 +193,15 @@ function formatDateTime(value) {
 }
 
 function AppShell() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   /* =========================
      AUTH / ADMIN
   ========================== */
-  const [view, setView] = useState("public");
+  const [view, setView] = useState(
+    location.pathname.startsWith("/admin") ? "admin" : "public"
+  );
   const [adminSection, setAdminSection] = useState("products");
 
   const [token, setToken] = useState(() => {
@@ -219,6 +224,21 @@ function AppShell() {
   const authHeaders = useMemo(() => {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }, [token]);
+
+  useEffect(() => {
+    const nextView = location.pathname.startsWith("/admin") ? "admin" : "public";
+    setView(nextView);
+  }, [location.pathname]);
+
+  function goPublic() {
+    setView("public");
+    navigate("/");
+  }
+
+  function goAdmin() {
+    setView("admin");
+    navigate("/admin");
+  }
 
   async function apiFetch(path, opts = {}) {
     const hasBody = opts.body != null;
@@ -280,7 +300,7 @@ function AppShell() {
           localStorage.removeItem("token");
         } catch {}
         setAuthMsg("Сесията е изтекла. Влез отново.");
-        setView("public");
+        goPublic();
       } finally {
         if (!aborted) setMeLoading(false);
       }
@@ -315,6 +335,7 @@ function AppShell() {
       setView("admin");
       setAdminSection("products");
       setAuthMsg("Успешен вход");
+      navigate("/admin");
     } catch (e2) {
       setAuthMsg(e2?.message || "Грешка при вход");
     } finally {
@@ -332,6 +353,7 @@ function AppShell() {
     try {
       localStorage.removeItem("token");
     } catch {}
+    navigate("/");
   }
 
   /* =========================
@@ -1042,6 +1064,7 @@ function AppShell() {
     setQ("");
     setSelectedCategory("all");
     setPage(1);
+    navigate("/");
   }
 
   /* =========================
@@ -1118,26 +1141,6 @@ function AppShell() {
               >
                 Количка ({cartCount})
               </button>
-
-              <button
-                className="hg-btn"
-                onClick={() => setView("admin")}
-                type="button"
-              >
-                {token ? "Админ" : "Вход"}
-              </button>
-
-              {token ? (
-                <>
-                  <div className="hg-userChip">
-                    роля:{" "}
-                    <b>{me?.role || (meLoading ? "проверка..." : "неизвестна")}</b>
-                  </div>
-                  <button className="hg-btn" onClick={doLogout}>
-                    Изход
-                  </button>
-                </>
-              ) : null}
             </div>
           </div>
         </header>
@@ -1154,7 +1157,7 @@ function AppShell() {
             <div className="hg-switch">
               <button
                 className={`hg-switchBtn ${view === "public" ? "is-active" : ""}`}
-                onClick={() => setView("public")}
+                onClick={goPublic}
                 disabled={view === "public"}
               >
                 Магазин
@@ -1162,7 +1165,7 @@ function AppShell() {
 
               <button
                 className={`hg-switchBtn ${view === "admin" ? "is-active" : ""}`}
-                onClick={() => setView("admin")}
+                onClick={goAdmin}
                 disabled={view === "admin"}
               >
                 Админ
@@ -1180,7 +1183,7 @@ function AppShell() {
                 </button>
               </>
             ) : (
-              <button className="hg-btn" onClick={() => setView("public")}>
+              <button className="hg-btn" onClick={goPublic}>
                 Към магазина
               </button>
             )}
@@ -1963,7 +1966,10 @@ function AppShell() {
                           <b>Продукти в поръчката:</b>
                         </div>
 
-                        <div className="hg-actions--wrap" style={{ display: "grid", gap: 10 }}>
+                        <div
+                          className="hg-actions--wrap"
+                          style={{ display: "grid", gap: 10 }}
+                        >
                           {Array.isArray(order.items) && order.items.length > 0 ? (
                             order.items.map((item, idx) => (
                               <div
@@ -2482,6 +2488,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<AppShell />} />
+      <Route path="/admin" element={<AppShell />} />
       <Route path="*" element={<AppShell />} />
     </Routes>
   );
