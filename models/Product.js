@@ -16,6 +16,17 @@ const PRODUCT_CATEGORIES = [
   "other",
 ];
 
+function slugifyProductTitle(value = "") {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-")
+    .trim();
+}
+
 const ProductSchema = new mongoose.Schema(
   {
     title: {
@@ -23,6 +34,16 @@ const ProductSchema = new mongoose.Schema(
       required: true,
       trim: true,
       index: true,
+    },
+
+    slug: {
+      type: String,
+      default: "",
+      trim: true,
+      lowercase: true,
+      index: true,
+      unique: true,
+      sparse: true,
     },
 
     shortDescription: {
@@ -365,6 +386,24 @@ const ProductSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+ProductSchema.pre("validate", function (next) {
+  const generatedSlug = slugifyProductTitle(this.title || "");
+
+  if (!generatedSlug) {
+    if (!this.slug) this.slug = "";
+    return next();
+  }
+
+  if (!this.slug || this.isModified("title")) {
+    this.slug = generatedSlug;
+  } else {
+    this.slug = slugifyProductTitle(this.slug);
+  }
+
+  next();
+});
+
+ProductSchema.index({ slug: 1 }, { unique: true, sparse: true });
 ProductSchema.index({ createdAt: -1 });
 ProductSchema.index({ score: -1 });
 ProductSchema.index({ profitScore: -1 });

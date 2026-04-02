@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const Product = require("../models/Product");
 
 const router = express.Router();
@@ -246,6 +247,99 @@ function getSort(sort) {
   }
 }
 
+function isObjectId(value) {
+  return mongoose.Types.ObjectId.isValid(String(value || "").trim());
+}
+
+function normalizeIdentifier(value) {
+  return String(value || "").trim();
+}
+
+async function findPublicProductBySlugOrId(identifier, options = {}) {
+  const value = normalizeIdentifier(identifier);
+  if (!value) return null;
+
+  const projection = options.select || null;
+  const useLean = options.lean !== false;
+
+  let query = Product.findOne({
+    ...publicMatch(),
+    slug: value.toLowerCase(),
+  });
+
+  if (projection) query = query.select(projection);
+  if (useLean) query = query.lean();
+
+  let item = await query;
+  if (item) {
+    return {
+      item,
+      matchedBy: "slug",
+    };
+  }
+
+  if (!isObjectId(value)) {
+    return null;
+  }
+
+  query = Product.findOne({
+    ...publicMatch(),
+    _id: value,
+  });
+
+  if (projection) query = query.select(projection);
+  if (useLean) query = query.lean();
+
+  item = await query;
+  if (!item) return null;
+
+  return {
+    item,
+    matchedBy: "id",
+  };
+}
+
+async function incrementProductMetric(identifier, metricField) {
+  const value = normalizeIdentifier(identifier);
+  if (!value) return null;
+
+  let item = await Product.findOneAndUpdate(
+    {
+      ...publicMatch(),
+      slug: value.toLowerCase(),
+    },
+    { $inc: { [metricField]: 1 } },
+    { new: true }
+  ).lean();
+
+  if (item) {
+    return {
+      item,
+      matchedBy: "slug",
+    };
+  }
+
+  if (!isObjectId(value)) {
+    return null;
+  }
+
+  item = await Product.findOneAndUpdate(
+    {
+      ...publicMatch(),
+      _id: value,
+    },
+    { $inc: { [metricField]: 1 } },
+    { new: true }
+  ).lean();
+
+  if (!item) return null;
+
+  return {
+    item,
+    matchedBy: "id",
+  };
+}
+
 /**
  * GET /products/top
  *
@@ -279,7 +373,7 @@ router.get("/top", async (req, res) => {
       sort = { isFeatured: -1, views: -1, createdAt: -1 };
     }
 
-    const items = await Product.find(filter).sort(sort).limit(limit);
+    const items = await Product.find(filter).sort(sort).limit(limit).lean();
 
     return res.json({
       ok: true,
@@ -343,7 +437,8 @@ router.get("/", async (req, res) => {
     const items = await Product.find(filter)
       .sort(getSort(sort))
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     const total = await Product.countDocuments(filter);
 
@@ -364,21 +459,29 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * GET /products/:id
- * Детайли за продукт
+ * GET /products/:slug
+ * Детайли за продукт:
+ * - първо търси по slug
+ * - ако е подаден Mongo _id, връща canonicalPath към slug URL
  */
-router.get("/:id", async (req, res) => {
+router.get("/:slug", async (req, res) => {
   try {
-    const item = await Product.findOne({
-      _id: req.params.id,
-      ...publicMatch(),
-    });
+    const result = await findPublicProductBySlugOrId(req.params.slug);
 
-    if (!item) {
+    if (!result?.item) {
       return res.status(404).json({ message: "Продуктът не е намерен" });
     }
 
-    return res.json({ ok: true, item });
+    const { item, matchedBy } = result;
+    const canonicalPath = item?.slug ? `/products/${item.slug}` : null;
+
+    return res.json({
+      ok: true,
+      item,
+      canonicalPath,
+      matchedBy,
+      isCanonical: matchedBy === "slug",
+    });
   } catch (err) {
     return res.status(500).json({
       message: "Грешка в сървъра",
@@ -388,50 +491,106 @@ router.get("/:id", async (req, res) => {
 });
 
 /**
- * GET /products/:id/view
- * Броене на прегледи
+ * POST /products/:slug/view
+ * Броене на прегледи по slug
+ * Поддържа и fallback към _id за backward compatibility
  */
-router.get("/:id/view", async (req, res) => {
+router.post("/:slug/view", async (req, res) => {
   try {
-    const item = await Product.findOneAndUpdate(
-      { _id: req.params.id, ...publicMatch() },
-      { $inc: { views: 1 } },
-      { new: true }
-    );
+    const result = await incrementProductMetric(req.params.slug, "views");
 
-    if (!item) {
-      return res.status(404).json({ message: "Продуктът не е намерен" });
-    }
-
-    return res.json({ ok: true, views: item.views });
-  } catch (err) {
-    return res.status(500).json({
-      message: "Грешка в сървъра",
-      error: err.message,
-    });
-  }
-});
-
-/**
- * GET /products/:id/click
- * Броене на интерес / клик
- */
-router.get("/:id/click", async (req, res) => {
-  try {
-    const item = await Product.findOneAndUpdate(
-      { _id: req.params.id, ...publicMatch() },
-      { $inc: { clicks: 1 } },
-      { new: true }
-    );
-
-    if (!item) {
+    if (!result?.item) {
       return res.status(404).json({ message: "Продуктът не е намерен" });
     }
 
     return res.json({
       ok: true,
-      clicks: item.clicks,
+      views: result.item.views,
+      canonicalPath: result.item?.slug ? `/products/${result.item.slug}` : null,
+      matchedBy: result.matchedBy,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
+  }
+});
+
+/**
+ * POST /products/:slug/click
+ * Броене на интерес / клик по slug
+ * Поддържа и fallback към _id за backward compatibility
+ */
+router.post("/:slug/click", async (req, res) => {
+  try {
+    const result = await incrementProductMetric(req.params.slug, "clicks");
+
+    if (!result?.item) {
+      return res.status(404).json({ message: "Продуктът не е намерен" });
+    }
+
+    return res.json({
+      ok: true,
+      clicks: result.item.clicks,
       message: "Кликът е отчетен",
+      canonicalPath: result.item?.slug ? `/products/${result.item.slug}` : null,
+      matchedBy: result.matchedBy,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
+  }
+});
+
+/**
+ * TEMP backward compatibility:
+ * GET /products/:slug/view
+ * Оставяме го временно, докато обновим frontend-а към POST.
+ */
+router.get("/:slug/view", async (req, res) => {
+  try {
+    const result = await incrementProductMetric(req.params.slug, "views");
+
+    if (!result?.item) {
+      return res.status(404).json({ message: "Продуктът не е намерен" });
+    }
+
+    return res.json({
+      ok: true,
+      views: result.item.views,
+      canonicalPath: result.item?.slug ? `/products/${result.item.slug}` : null,
+      matchedBy: result.matchedBy,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Грешка в сървъра",
+      error: err.message,
+    });
+  }
+});
+
+/**
+ * TEMP backward compatibility:
+ * GET /products/:slug/click
+ * Оставяме го временно, докато обновим frontend-а към POST.
+ */
+router.get("/:slug/click", async (req, res) => {
+  try {
+    const result = await incrementProductMetric(req.params.slug, "clicks");
+
+    if (!result?.item) {
+      return res.status(404).json({ message: "Продуктът не е намерен" });
+    }
+
+    return res.json({
+      ok: true,
+      clicks: result.item.clicks,
+      message: "Кликът е отчетен",
+      canonicalPath: result.item?.slug ? `/products/${result.item.slug}` : null,
+      matchedBy: result.matchedBy,
     });
   } catch (err) {
     return res.status(500).json({

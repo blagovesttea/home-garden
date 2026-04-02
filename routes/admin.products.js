@@ -130,6 +130,37 @@ function normalizeNullableNumber(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+function slugify(value) {
+  return String(value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, " and ")
+    .replace(/['’"]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+}
+
+async function generateUniqueSlug(title, excludeId = null) {
+  const base = slugify(title) || `product-${Date.now()}`;
+  let candidate = base;
+  let counter = 2;
+
+  while (true) {
+    const existing = await Product.findOne({
+      slug: candidate,
+      ...(excludeId ? { _id: { $ne: excludeId } } : {}),
+    })
+      .select("_id")
+      .lean();
+
+    if (!existing) return candidate;
+
+    candidate = `${base}-${counter}`;
+    counter += 1;
+  }
+}
+
 function normalizePriceFields(data = {}) {
   const price =
     data.price != null && data.price !== ""
@@ -225,9 +256,10 @@ async function resolveCategoryMeta(input = {}) {
 
     if (byId) {
       return {
-        category: rawCategory && ALLOWED_CATEGORIES.includes(rawCategory)
-          ? rawCategory
-          : normalizeCategory(byId.slug || rawCategory || "coffee-beans"),
+        category:
+          rawCategory && ALLOWED_CATEGORIES.includes(rawCategory)
+            ? rawCategory
+            : normalizeCategory(byId.slug || rawCategory || "coffee-beans"),
         categoryId: byId._id,
         categoryPath: Array.isArray(byId.path) ? byId.path : [],
       };
@@ -244,9 +276,10 @@ async function resolveCategoryMeta(input = {}) {
 
     if (byPath) {
       return {
-        category: rawCategory && ALLOWED_CATEGORIES.includes(rawCategory)
-          ? rawCategory
-          : normalizeCategory(byPath.slug || rawCategory || "coffee-beans"),
+        category:
+          rawCategory && ALLOWED_CATEGORIES.includes(rawCategory)
+            ? rawCategory
+            : normalizeCategory(byPath.slug || rawCategory || "coffee-beans"),
         categoryId: byPath._id,
         categoryPath: Array.isArray(byPath.path) ? byPath.path : rawCategoryPath,
       };
@@ -360,6 +393,7 @@ router.post("/products", auth, adminOnly, async (req, res) => {
     payload.category = categoryMeta.category;
     payload.categoryId = categoryMeta.categoryId;
     payload.categoryPath = categoryMeta.categoryPath;
+    payload.slug = await generateUniqueSlug(payload.title);
 
     const product = await Product.create(payload);
     return res.status(201).json({ ok: true, product });
@@ -386,7 +420,8 @@ router.post("/products/seed", auth, adminOnly, async (req, res) => {
     const demo = [
       {
         title: "Lavazza Qualità Oro – кафе на зърна 1 кг",
-        shortDescription: "Премиум италианско кафе на зърна с мек и балансиран вкус.",
+        shortDescription:
+          "Премиум италианско кафе на зърна с мек и балансиран вкус.",
         description:
           "Подходящо за еспресо, автоматични кафемашини и домашна употреба.",
         brand: "Lavazza",
@@ -451,7 +486,8 @@ router.post("/products/seed", auth, adminOnly, async (req, res) => {
       },
       {
         title: "Nespresso съвместими капсули – Intenso",
-        shortDescription: "Капсули с плътен вкус и силен аромат за ежедневно кафе.",
+        shortDescription:
+          "Капсули с плътен вкус и силен аромат за ежедневно кафе.",
         description:
           "Подходящи за бързо и удобно еспресо у дома или в офиса.",
         brand: "Caffe Market",
@@ -508,7 +544,8 @@ router.post("/products/seed", auth, adminOnly, async (req, res) => {
       },
       {
         title: "Сироп за кафе Ванилия 700 мл",
-        shortDescription: "Класически сироп за кафе, капучино и десертни напитки.",
+        shortDescription:
+          "Класически сироп за кафе, капучино и десертни напитки.",
         description:
           "Подходящ за домашни напитки, барове, офиси и HoReCa обекти.",
         brand: "Monin",
@@ -547,6 +584,7 @@ router.post("/products/seed", auth, adminOnly, async (req, res) => {
         payload.category = categoryMeta.category;
         payload.categoryId = categoryMeta.categoryId;
         payload.categoryPath = categoryMeta.categoryPath;
+        payload.slug = await generateUniqueSlug(payload.title);
 
         await Product.create(payload);
         created++;
@@ -605,6 +643,7 @@ router.get("/products", auth, adminOnly, async (req, res) => {
         { sku: rx },
         { shortDescription: rx },
         { description: rx },
+        { slug: rx },
       ];
     }
 
@@ -699,8 +738,9 @@ router.patch("/products/:id", auth, adminOnly, async (req, res) => {
     if (data.isOnSale == null) delete patch.isOnSale;
     if (data.oldPrice == null && data.oldPrice !== "") delete patch.oldPrice;
     if (data.rating == null && data.rating !== "") delete patch.rating;
-    if (data.reviewsCount == null && data.reviewsCount !== "")
+    if (data.reviewsCount == null && data.reviewsCount !== "") {
       delete patch.reviewsCount;
+    }
 
     const hasCategoryInput =
       data.category != null || data.categoryId != null || data.categoryPath != null;
@@ -712,11 +752,21 @@ router.patch("/products/:id", auth, adminOnly, async (req, res) => {
       patch.categoryPath = categoryMeta.categoryPath;
     }
 
+    if (data.title != null && normalizeText(data.title)) {
+      patch.slug = await generateUniqueSlug(normalizeText(data.title), id);
+    }
+
     const updated = await Product.findByIdAndUpdate(id, { $set: patch }, { new: true });
     if (!updated) return res.status(404).json({ message: "Не е намерен" });
 
     return res.json({ ok: true, product: updated });
   } catch (err) {
+    if (err && err.code === 11000) {
+      return res.status(409).json({
+        message: "Продукт с такъв уникален ключ вече съществува",
+      });
+    }
+
     return res.status(500).json({
       message: "Грешка в сървъра",
       error: err.message,

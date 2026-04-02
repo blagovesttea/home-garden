@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import "./App.css";
 
 // API base
@@ -7,6 +13,13 @@ const API =
   process.env.NODE_ENV === "production"
     ? window.location.origin
     : "http://localhost:8000";
+
+const DEFAULT_SITE_TITLE = "Кафе Маркет";
+const DEFAULT_TITLE =
+  "Кафе Маркет | Премиум кафе, капсули, кафемашини и аксесоари";
+const DEFAULT_DESCRIPTION =
+  "Онлайн магазин за премиум кафе продукти, кафемашини, капсули и аксесоари за дома, офиса и професионалната среда.";
+const DEFAULT_OG_TYPE = "website";
 
 const ADMIN_STATUSES = ["all", "new", "approved", "rejected", "blacklisted"];
 
@@ -121,6 +134,21 @@ function productImage(p) {
   return "";
 }
 
+function productImages(p) {
+  const images = [];
+  if (p?.imageUrl) images.push(p.imageUrl);
+  if (Array.isArray(p?.images)) {
+    p.images.forEach((img) => {
+      if (img && !images.includes(img)) images.push(img);
+    });
+  }
+  return images;
+}
+
+function productRouteValue(product) {
+  return product?.slug || product?._id || "";
+}
+
 function cartStorageKey() {
   return "coffee_shop_cart_v1";
 }
@@ -192,16 +220,110 @@ function formatDateTime(value) {
   });
 }
 
+function ensureMetaTag(attr, value) {
+  if (typeof document === "undefined") return null;
+  let tag = document.head.querySelector(`meta[${attr}="${value}"]`);
+  if (!tag) {
+    tag = document.createElement("meta");
+    tag.setAttribute(attr, value);
+    document.head.appendChild(tag);
+  }
+  return tag;
+}
+
+function setMetaContent(attr, value, content) {
+  const tag = ensureMetaTag(attr, value);
+  if (tag) tag.setAttribute("content", content || "");
+}
+
+function removeMetaTag(attr, value) {
+  if (typeof document === "undefined") return;
+  const tag = document.head.querySelector(`meta[${attr}="${value}"]`);
+  if (tag) tag.remove();
+}
+
+function ensureCanonical() {
+  if (typeof document === "undefined") return null;
+  let link = document.head.querySelector('link[rel="canonical"]');
+  if (!link) {
+    link = document.createElement("link");
+    link.setAttribute("rel", "canonical");
+    document.head.appendChild(link);
+  }
+  return link;
+}
+
+function setCanonical(href) {
+  const link = ensureCanonical();
+  if (link) link.setAttribute("href", href || "");
+}
+
+function setStructuredDataById(id, data) {
+  if (typeof document === "undefined") return;
+  let script = document.getElementById(id);
+  if (!script) {
+    script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = id;
+    document.head.appendChild(script);
+  }
+  script.textContent = JSON.stringify(data);
+}
+
+function removeStructuredDataById(id) {
+  if (typeof document === "undefined") return;
+  const script = document.getElementById(id);
+  if (script) script.remove();
+}
+
+function categoryLabelFromValue(value) {
+  const found = ADMIN_CATEGORY_OPTIONS.find((x) => x.value === value);
+  return found?.label || value || "";
+}
+
+function buildProductTitle(product) {
+  const parts = [product?.title, product?.brand, DEFAULT_SITE_TITLE].filter(Boolean);
+  return parts.join(" | ");
+}
+
+function buildProductDescription(product) {
+  const firstText =
+    String(product?.shortDescription || product?.description || "")
+      .replace(/\s+/g, " ")
+      .trim() || "";
+  const categoryLabel = categoryLabelFromValue(product?.category);
+  const priceText = Number.isFinite(Number(productPrice(product)))
+    ? `Цена: ${formatPrice(productPrice(product), product?.currency || "BGN")}.`
+    : "";
+  const stockText =
+    product?.stockStatus === "in_stock"
+      ? "В наличност."
+      : product?.stockStatus === "out_of_stock"
+      ? "Временно изчерпан."
+      : "";
+  const composed = [categoryLabel, firstText, priceText, stockText]
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!composed) return DEFAULT_DESCRIPTION;
+  return composed.slice(0, 155);
+}
+
 function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { slug: productSlug } = useParams();
+
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isProductPage = location.pathname.startsWith("/products/");
+  const isPublicRoute = !isAdminRoute;
 
   /* =========================
      AUTH / ADMIN
   ========================== */
-  const [view, setView] = useState(
-    location.pathname.startsWith("/admin") ? "admin" : "public"
-  );
+  const [view, setView] = useState(isAdminRoute ? "admin" : "public");
   const [adminSection, setAdminSection] = useState("products");
 
   const [token, setToken] = useState(() => {
@@ -273,6 +395,122 @@ function AppShell() {
 
     return data;
   }
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const origin = window.location.origin;
+    const cleanPath = location.pathname;
+    const currentUrl = `${origin}${cleanPath}`;
+
+    if (isProductPage && productPage) {
+      const title = buildProductTitle(productPage);
+      const description = buildProductDescription(productPage);
+      const image = productImage(productPage) || "";
+      const price = productPrice(productPage);
+      const availability =
+        productPage?.stockStatus === "in_stock"
+          ? "https://schema.org/InStock"
+          : productPage?.stockStatus === "out_of_stock"
+          ? "https://schema.org/OutOfStock"
+          : "https://schema.org/LimitedAvailability";
+
+      document.title = title;
+      setMetaContent("name", "description", description);
+      setCanonical(currentUrl);
+
+      setMetaContent("property", "og:type", "product");
+      setMetaContent("property", "og:title", title);
+      setMetaContent("property", "og:description", description);
+      setMetaContent("property", "og:url", currentUrl);
+
+      if (image) {
+        setMetaContent("property", "og:image", image);
+        setMetaContent("name", "twitter:image", image);
+      } else {
+        removeMetaTag("property", "og:image");
+        removeMetaTag("name", "twitter:image");
+      }
+
+      setMetaContent(
+        "name",
+        "twitter:card",
+        image ? "summary_large_image" : "summary"
+      );
+      setMetaContent("name", "twitter:title", title);
+      setMetaContent("name", "twitter:description", description);
+
+      setStructuredDataById("hg-jsonld-product", {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: productPage?.title || "",
+        image: productImages(productPage),
+        description,
+        sku: productPage?.sku || undefined,
+        brand: productPage?.brand
+          ? {
+              "@type": "Brand",
+              name: productPage.brand,
+            }
+          : undefined,
+        category: categoryLabelFromValue(productPage?.category) || undefined,
+        offers: {
+          "@type": "Offer",
+          url: currentUrl,
+          priceCurrency: productPage?.currency || "BGN",
+          price:
+            Number.isFinite(Number(price)) && Number(price) >= 0
+              ? Number(price).toFixed(2)
+              : undefined,
+          availability,
+          itemCondition: "https://schema.org/NewCondition",
+        },
+      });
+
+      setStructuredDataById("hg-jsonld-breadcrumbs", {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Начало",
+            item: `${origin}/`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: categoryLabelFromValue(productPage?.category) || "Продукти",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: productPage?.title || "Продукт",
+            item: currentUrl,
+          },
+        ],
+      });
+
+      return;
+    }
+
+    const defaultPublicUrl = `${origin}${location.pathname === "/admin" ? "/" : location.pathname}`;
+
+    document.title = DEFAULT_TITLE;
+    setMetaContent("name", "description", DEFAULT_DESCRIPTION);
+    setCanonical(defaultPublicUrl);
+    setMetaContent("property", "og:type", DEFAULT_OG_TYPE);
+    setMetaContent("property", "og:title", DEFAULT_TITLE);
+    setMetaContent("property", "og:description", DEFAULT_DESCRIPTION);
+    setMetaContent("property", "og:url", defaultPublicUrl);
+    setMetaContent("name", "twitter:card", "summary_large_image");
+    setMetaContent("name", "twitter:title", DEFAULT_TITLE);
+    setMetaContent("name", "twitter:description", DEFAULT_DESCRIPTION);
+    removeMetaTag("property", "og:image");
+    removeMetaTag("name", "twitter:image");
+    removeStructuredDataById("hg-jsonld-product");
+    removeStructuredDataById("hg-jsonld-breadcrumbs");
+  }, [isProductPage, productPage, location.pathname]);
 
   useEffect(() => {
     let aborted = false;
@@ -371,6 +609,13 @@ function AppShell() {
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState("");
 
+  const [productPage, setProductPage] = useState(null);
+  const [productPageLoading, setProductPageLoading] = useState(false);
+  const [productPageMsg, setProductPageMsg] = useState("");
+  const [productGalleryIndex, setProductGalleryIndex] = useState(0);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(q.trim()), 300);
     return () => clearTimeout(t);
@@ -385,6 +630,7 @@ function AppShell() {
 
     async function loadProducts() {
       if (view !== "public") return;
+      if (isProductPage) return;
 
       setLoading(true);
       setErrMsg("");
@@ -426,22 +672,124 @@ function AppShell() {
     return () => {
       aborted = true;
     };
-  }, [view, qDebounced, selectedCategory, sort, page, limit]);
+  }, [view, qDebounced, selectedCategory, sort, page, limit, isProductPage]);
+
+  useEffect(() => {
+    let aborted = false;
+
+    async function loadProductPage() {
+      if (!isPublicRoute) return;
+
+      if (!isProductPage || !productSlug) {
+        setProductPage(null);
+        setProductPageMsg("");
+        setProductPageLoading(false);
+        return;
+      }
+
+      setProductPageLoading(true);
+      setProductPageMsg("");
+      setProductGalleryIndex(0);
+
+      try {
+        const data = await apiFetch(`/products/${productSlug}`, {
+          method: "GET",
+        });
+
+        if (aborted) return;
+
+        if (
+          data?.canonicalPath &&
+          data.canonicalPath !== location.pathname
+        ) {
+          navigate(data.canonicalPath, { replace: true });
+        }
+
+        const product = data?.item || data?.product || data || null;
+        setProductPage(product);
+
+        try {
+          await fetch(`${API}/products/${productSlug}/view`, {
+            method: "POST",
+          });
+        } catch {}
+      } catch (e) {
+        if (!aborted) {
+          setProductPage(null);
+          setProductPageMsg(e?.message || "Грешка при зареждане на продукта.");
+        }
+      } finally {
+        if (!aborted) setProductPageLoading(false);
+      }
+    }
+
+    loadProductPage();
+    return () => {
+      aborted = true;
+    };
+  }, [isPublicRoute, isProductPage, productSlug, location.pathname, navigate]);
+
+  useEffect(() => {
+    let aborted = false;
+
+    async function loadRelatedProducts() {
+      if (!productPage?._id || !productPage?.category) {
+        setRelatedProducts([]);
+        setRelatedLoading(false);
+        return;
+      }
+
+      setRelatedLoading(true);
+
+      try {
+        const params = new URLSearchParams();
+        params.set("category", productPage.category);
+        params.set("limit", "4");
+        params.set("sort", "featured");
+
+        const data = await apiFetch(`/products?${params.toString()}`, {
+          method: "GET",
+        });
+
+        if (aborted) return;
+
+        const items = Array.isArray(data?.items) ? data.items : [];
+        setRelatedProducts(
+          items.filter((item) => item?._id !== productPage._id).slice(0, 4)
+        );
+      } catch {
+        if (!aborted) setRelatedProducts([]);
+      } finally {
+        if (!aborted) setRelatedLoading(false);
+      }
+    }
+
+    loadRelatedProducts();
+    return () => {
+      aborted = true;
+    };
+  }, [productPage]);
 
   const totalPages = useMemo(() => {
     return Math.max(1, Math.ceil((meta.total || 0) / (meta.limit || 20)));
   }, [meta]);
 
+  const activeProductImages = useMemo(() => {
+    return productImages(productPage);
+  }, [productPage]);
+
+  const activeProductImage =
+    activeProductImages[productGalleryIndex] || productImage(productPage);
+
   /* =========================
-     PRODUCT MODAL
+     PRODUCT MODAL / PAGE NAV
   ========================== */
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   async function openProduct(product) {
-    setSelectedProduct(product);
-    try {
-      await fetch(`${API}/products/${product._id}/view`);
-    } catch {}
+    const target = productRouteValue(product);
+    if (!target) return;
+    navigate(`/products/${target}`);
   }
 
   function closeProduct() {
@@ -1052,12 +1400,14 @@ function AppShell() {
     setQ(value);
     setSelectedCategory("all");
     setPage(1);
+    navigate("/");
   }
 
   function applyCategoryFilter(categoryValue) {
     setSelectedCategory(categoryValue || "all");
     setQ("");
     setPage(1);
+    navigate("/");
   }
 
   function clearPublicFilters() {
@@ -2011,320 +2361,582 @@ function AppShell() {
 
       {view === "public" && (
         <>
-          <section className="hg-publicShell">
-            <section className="hg-hero">
-              <div className="hg-hero__overlay" />
-
-              <div className="hg-hero__content">
-                <div className="hg-hero__eyebrow">Онлайн магазин за кафе продукти</div>
-
-                <h2 className="hg-hero__title">
-                  Премиум кафе атмосфера за твоя дом, офис или бизнес
-                </h2>
-
-                <p className="hg-hero__text">
-                  Подбрани продукти, силна визия и лесна поръчка в стил модерен
-                  специализиран магазин за кафе.
-                </p>
-
-                <div className="hg-hero__cta">
-                  <button
-                    className="hg-btn hg-btn--primary"
-                    onClick={() => {
-                      const section = document.getElementById("hg-products-section");
-                      if (section) section.scrollIntoView({ behavior: "smooth" });
-                    }}
-                  >
-                    Разгледай продуктите
-                  </button>
-
-                  <button
-                    className="hg-btn"
-                    onClick={() => applyQuickSearch("премиум кафе")}
-                  >
-                    Премиум селекция
-                  </button>
-                </div>
-              </div>
-
-              <div className="hg-heroCategories">
-                {HERO_LINKS.map((item) => (
-                  <button
-                    key={item.label}
-                    type="button"
-                    className="hg-heroCategory"
-                    onClick={() => applyCategoryFilter(item.category)}
-                  >
-                    <div className="hg-heroCategoryIcon" aria-hidden="true">
-                      {item.icon}
-                    </div>
-                    <div className="hg-heroCategoryTitle">{item.label}</div>
-                    <div className="hg-heroCategoryLine" />
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            <section className="hg-chipSection">
-              <div className="hg-sectionHead">
-                <div>
-                  <div className="hg-sectionEyebrow">Категории</div>
-                  <h3 className="hg-sectionTitle">Избери какво търсиш</h3>
-                </div>
-              </div>
-
-              <div className="hg-chipGrid">
-                {PUBLIC_CATEGORY_CHIPS.map((chip) => (
-                  <button
-                    key={chip.label}
-                    className="hg-chipCard"
-                    onClick={() => applyCategoryFilter(chip.value)}
-                  >
-                    <span className="hg-chipCard__title">{chip.label}</span>
-                    <span className="hg-chipCard__sub">Разгледай категорията</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          </section>
-
-          <div className="hg-toolbarWrap" id="hg-products-section">
-            <div className="hg-sectionHead hg-sectionHead--toolbar">
-              <div>
-                <div className="hg-sectionEyebrow">Каталог</div>
-                <h3 className="hg-sectionTitle">Всички продукти</h3>
-              </div>
-            </div>
-
-            <div className="hg-toolbar">
-              <input
-                className="hg-input"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Търси кафе, капсули, машини, марка или продукт..."
-              />
-
-              <select
-                className="hg-select"
-                value={selectedCategory}
-                onChange={(e) => {
-                  setSelectedCategory(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="all">Всички категории</option>
-                {ADMIN_CATEGORY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                className="hg-select"
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-              >
-                {SORTS.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-
-              {(selectedCategory !== "all" || q) && (
-                <button className="hg-btn" onClick={clearPublicFilters}>
-                  Изчисти филтрите
-                </button>
-              )}
-            </div>
-          </div>
-
-          {loading && <div className="hg-panel">Зареждане…</div>}
-          {!loading && errMsg && (
-            <div className="hg-panel hg-panel--bad">{errMsg}</div>
-          )}
-
-          {!loading && (
-            <div className="hg-pager">
-              <button
-                className="hg-btn"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-              >
-                Назад
-              </button>
-              <div className="hg-counter">
-                Страница <b>{page}</b> / <b>{totalPages}</b> — Общо:{" "}
-                <b>{meta.total}</b>
-              </div>
-              <button
-                className="hg-btn"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-              >
-                Напред
-              </button>
-            </div>
-          )}
-
-          <div className="hg-grid">
-            {!loading && products.length === 0 && (
-              <div className="hg-panel">Няма продукти.</div>
-            )}
-
-            {products.map((p) => (
-              <div className="hg-card" key={p._id}>
-                <div
-                  className="hg-thumb"
-                  style={{
-                    backgroundImage: productImage(p)
-                      ? `url("${productImage(p)}")`
-                      : "linear-gradient(135deg,#eee,#f7f7f7)",
-                  }}
-                />
-
-                <div className="hg-cardBody">
-                  <h3 className="hg-cardTitle">{p.title}</h3>
-
-                  <div className="hg-meta">
-                    {p.brand ? <span className="hg-pill">{p.brand}</span> : null}
-
-                    {p.stockStatus === "in_stock" ? (
-                      <span className="hg-pill hg-pill--ok">В наличност</span>
-                    ) : p.stockStatus === "out_of_stock" ? (
-                      <span className="hg-pill hg-pill--bad">Изчерпан</span>
-                    ) : (
-                      <span className="hg-pill">Наличност: неизвестна</span>
-                    )}
-
-                    {p.shippingDays ? (
-                      <span className="hg-pill">
-                        Доставка: {p.shippingDays} дни
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className="hg-price">
-                    {formatPrice(productPrice(p), p.currency)}
-                  </div>
-
-                  <div className="hg-actions">
-                    <button
-                      className="hg-btn"
-                      type="button"
-                      onClick={() => openProduct(p)}
-                    >
-                      Детайли
-                    </button>
-
-                    <button
-                      className="hg-btn hg-btn--primary"
-                      type="button"
-                      onClick={() => addToCart(p)}
-                    >
-                      Добави в количката
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {selectedProduct ? (
+          {!isProductPage ? (
             <>
-              <div className="hg-modalBackdrop" onClick={closeProduct} />
-              <div className="hg-modal">
-                <div className="hg-modalHead">
-                  <div className="hg-modalTitle">Детайли за продукта</div>
-                  <button
-                    className="hg-modalClose"
-                    onClick={closeProduct}
-                    aria-label="Затвори"
-                  >
-                    ✕
-                  </button>
-                </div>
+              <section className="hg-publicShell">
+                <section className="hg-hero">
+                  <div className="hg-hero__overlay" />
 
-                <div className="hg-productModal">
-                  <div
-                    className="hg-productModal__image"
-                    style={{
-                      backgroundImage: productImage(selectedProduct)
-                        ? `url("${productImage(selectedProduct)}")`
-                        : "linear-gradient(135deg,#eee,#f7f7f7)",
-                    }}
-                  />
+                  <div className="hg-hero__content">
+                    <div className="hg-hero__eyebrow">Онлайн магазин за кафе продукти</div>
 
-                  <div className="hg-productModal__content">
-                    <h2 className="hg-productModal__title">
-                      {selectedProduct.title}
+                    <h2 className="hg-hero__title">
+                      Премиум кафе атмосфера за твоя дом, офис или бизнес
                     </h2>
 
-                    <div className="hg-meta">
-                      {selectedProduct.brand ? (
-                        <span className="hg-pill">{selectedProduct.brand}</span>
-                      ) : null}
+                    <p className="hg-hero__text">
+                      Подбрани продукти, силна визия и лесна поръчка в стил модерен
+                      специализиран магазин за кафе.
+                    </p>
 
-                      {selectedProduct.sku ? (
-                        <span className="hg-pill">SKU: {selectedProduct.sku}</span>
-                      ) : null}
-
-                      <span className="hg-pill">
-                        {selectedProduct.stockStatus || "unknown"}
-                      </span>
-                    </div>
-
-                    <div className="hg-price">
-                      {formatPrice(
-                        productPrice(selectedProduct),
-                        selectedProduct.currency
-                      )}
-                    </div>
-
-                    {selectedProduct.shortDescription ? (
-                      <div className="hg-productModal__text">
-                        {selectedProduct.shortDescription}
-                      </div>
-                    ) : null}
-
-                    {selectedProduct.description ? (
-                      <div className="hg-productModal__text">
-                        {selectedProduct.description}
-                      </div>
-                    ) : null}
-
-                    <div className="hg-kpis">
-                      Наличност: <b>{selectedProduct.stockQty ?? "-"}</b> •
-                      Доставка:{" "}
-                      <b>
-                        {selectedProduct.shippingDays
-                          ? `${selectedProduct.shippingDays} дни`
-                          : "—"}
-                      </b>
-                    </div>
-
-                    <div className="hg-kpis">
-                      Грамаж: <b>{selectedProduct.weight ?? "-"}</b>
-                      {selectedProduct.weightUnit
-                        ? ` ${selectedProduct.weightUnit}`
-                        : ""}{" "}
-                      • Интензитет: <b>{selectedProduct.intensity ?? "-"}</b>
-                    </div>
-
-                    <div className="hg-actions">
+                    <div className="hg-hero__cta">
                       <button
                         className="hg-btn hg-btn--primary"
-                        onClick={() => addToCart(selectedProduct)}
+                        onClick={() => {
+                          const section = document.getElementById("hg-products-section");
+                          if (section) section.scrollIntoView({ behavior: "smooth" });
+                        }}
                       >
-                        Добави в количката
+                        Разгледай продуктите
+                      </button>
+
+                      <button
+                        className="hg-btn"
+                        onClick={() => applyQuickSearch("премиум кафе")}
+                      >
+                        Премиум селекция
                       </button>
                     </div>
                   </div>
+
+                  <div className="hg-heroCategories">
+                    {HERO_LINKS.map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        className="hg-heroCategory"
+                        onClick={() => applyCategoryFilter(item.category)}
+                      >
+                        <div className="hg-heroCategoryIcon" aria-hidden="true">
+                          {item.icon}
+                        </div>
+                        <div className="hg-heroCategoryTitle">{item.label}</div>
+                        <div className="hg-heroCategoryLine" />
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="hg-chipSection">
+                  <div className="hg-sectionHead">
+                    <div>
+                      <div className="hg-sectionEyebrow">Категории</div>
+                      <h3 className="hg-sectionTitle">Избери какво търсиш</h3>
+                    </div>
+                  </div>
+
+                  <div className="hg-chipGrid">
+                    {PUBLIC_CATEGORY_CHIPS.map((chip) => (
+                      <button
+                        key={chip.label}
+                        className="hg-chipCard"
+                        onClick={() => applyCategoryFilter(chip.value)}
+                      >
+                        <span className="hg-chipCard__title">{chip.label}</span>
+                        <span className="hg-chipCard__sub">Разгледай категорията</span>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              </section>
+
+              <div className="hg-toolbarWrap" id="hg-products-section">
+                <div className="hg-sectionHead hg-sectionHead--toolbar">
+                  <div>
+                    <div className="hg-sectionEyebrow">Каталог</div>
+                    <h3 className="hg-sectionTitle">Всички продукти</h3>
+                  </div>
+                </div>
+
+                <div className="hg-toolbar">
+                  <input
+                    className="hg-input"
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Търси кафе, капсули, машини, марка или продукт..."
+                  />
+
+                  <select
+                    className="hg-select"
+                    value={selectedCategory}
+                    onChange={(e) => {
+                      setSelectedCategory(e.target.value);
+                      setPage(1);
+                    }}
+                  >
+                    <option value="all">Всички категории</option>
+                    {ADMIN_CATEGORY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="hg-select"
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                  >
+                    {SORTS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  {(selectedCategory !== "all" || q) && (
+                    <button className="hg-btn" onClick={clearPublicFilters}>
+                      Изчисти филтрите
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {loading && <div className="hg-panel">Зареждане…</div>}
+              {!loading && errMsg && (
+                <div className="hg-panel hg-panel--bad">{errMsg}</div>
+              )}
+
+              {!loading && (
+                <div className="hg-pager">
+                  <button
+                    className="hg-btn"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                  >
+                    Назад
+                  </button>
+                  <div className="hg-counter">
+                    Страница <b>{page}</b> / <b>{totalPages}</b> — Общо:{" "}
+                    <b>{meta.total}</b>
+                  </div>
+                  <button
+                    className="hg-btn"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    Напред
+                  </button>
+                </div>
+              )}
+
+              <div className="hg-grid">
+                {!loading && products.length === 0 && (
+                  <div className="hg-panel">Няма продукти.</div>
+                )}
+
+                {products.map((p) => (
+                  <div className="hg-card" key={p._id}>
+                    <div
+                      className="hg-thumb"
+                      style={{
+                        backgroundImage: productImage(p)
+                          ? `url("${productImage(p)}")`
+                          : "linear-gradient(135deg,#eee,#f7f7f7)",
+                      }}
+                    />
+
+                    <div className="hg-cardBody">
+                      <h3 className="hg-cardTitle">{p.title}</h3>
+
+                      <div className="hg-meta">
+                        {p.brand ? <span className="hg-pill">{p.brand}</span> : null}
+
+                        {p.stockStatus === "in_stock" ? (
+                          <span className="hg-pill hg-pill--ok">В наличност</span>
+                        ) : p.stockStatus === "out_of_stock" ? (
+                          <span className="hg-pill hg-pill--bad">Изчерпан</span>
+                        ) : (
+                          <span className="hg-pill">Наличност: неизвестна</span>
+                        )}
+
+                        {p.shippingDays ? (
+                          <span className="hg-pill">
+                            Доставка: {p.shippingDays} дни
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="hg-price">
+                        {formatPrice(productPrice(p), p.currency)}
+                      </div>
+
+                      <div className="hg-actions">
+                        <button
+                          className="hg-btn"
+                          type="button"
+                          onClick={() => openProduct(p)}
+                        >
+                          Детайли
+                        </button>
+
+                        <button
+                          className="hg-btn hg-btn--primary"
+                          type="button"
+                          onClick={() => addToCart(p)}
+                        >
+                          Добави в количката
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {selectedProduct ? (
+                <>
+                  <div className="hg-modalBackdrop" onClick={closeProduct} />
+                  <div className="hg-modal">
+                    <div className="hg-modalHead">
+                      <div className="hg-modalTitle">Детайли за продукта</div>
+                      <button
+                        className="hg-modalClose"
+                        onClick={closeProduct}
+                        aria-label="Затвори"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="hg-productModal">
+                      <div
+                        className="hg-productModal__image"
+                        style={{
+                          backgroundImage: productImage(selectedProduct)
+                            ? `url("${productImage(selectedProduct)}")`
+                            : "linear-gradient(135deg,#eee,#f7f7f7)",
+                        }}
+                      />
+
+                      <div className="hg-productModal__content">
+                        <h2 className="hg-productModal__title">
+                          {selectedProduct.title}
+                        </h2>
+
+                        <div className="hg-meta">
+                          {selectedProduct.brand ? (
+                            <span className="hg-pill">{selectedProduct.brand}</span>
+                          ) : null}
+
+                          {selectedProduct.sku ? (
+                            <span className="hg-pill">SKU: {selectedProduct.sku}</span>
+                          ) : null}
+
+                          <span className="hg-pill">
+                            {selectedProduct.stockStatus || "unknown"}
+                          </span>
+                        </div>
+
+                        <div className="hg-price">
+                          {formatPrice(
+                            productPrice(selectedProduct),
+                            selectedProduct.currency
+                          )}
+                        </div>
+
+                        {selectedProduct.shortDescription ? (
+                          <div className="hg-productModal__text">
+                            {selectedProduct.shortDescription}
+                          </div>
+                        ) : null}
+
+                        {selectedProduct.description ? (
+                          <div className="hg-productModal__text">
+                            {selectedProduct.description}
+                          </div>
+                        ) : null}
+
+                        <div className="hg-kpis">
+                          Наличност: <b>{selectedProduct.stockQty ?? "-"}</b> •
+                          Доставка:{" "}
+                          <b>
+                            {selectedProduct.shippingDays
+                              ? `${selectedProduct.shippingDays} дни`
+                              : "—"}
+                          </b>
+                        </div>
+
+                        <div className="hg-kpis">
+                          Грамаж: <b>{selectedProduct.weight ?? "-"}</b>
+                          {selectedProduct.weightUnit
+                            ? ` ${selectedProduct.weightUnit}`
+                            : ""}{" "}
+                          • Интензитет: <b>{selectedProduct.intensity ?? "-"}</b>
+                        </div>
+
+                        <div className="hg-actions">
+                          <button
+                            className="hg-btn hg-btn--primary"
+                            onClick={() => addToCart(selectedProduct)}
+                          >
+                            Добави в количката
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : null}
             </>
-          ) : null}
+          ) : (
+            <div className="hg-publicShell">
+              <div className="hg-toolbarWrap">
+                <div className="hg-toolbar">
+                  <button className="hg-btn" onClick={() => navigate(-1)}>
+                    Назад
+                  </button>
+                  <button className="hg-btn" onClick={clearPublicFilters}>
+                    Към каталога
+                  </button>
+                </div>
+              </div>
+
+              {productPageLoading && <div className="hg-panel">Зареждане…</div>}
+
+              {!productPageLoading && productPageMsg && (
+                <div className="hg-panel hg-panel--bad">{productPageMsg}</div>
+              )}
+
+              {!productPageLoading && !productPageMsg && productPage && (
+                <>
+                  <section className="hg-panel" style={{ marginBottom: 18 }}>
+                    <div
+                      className="hg-kpis"
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                        alignItems: "center",
+                      }}
+                    >
+                      <button className="hg-btn" onClick={clearPublicFilters}>
+                        Начало
+                      </button>
+                      <span>/</span>
+                      <button
+                        className="hg-btn"
+                        onClick={() => applyCategoryFilter(productPage.category || "all")}
+                      >
+                        {categoryLabelFromValue(productPage.category) || "Продукти"}
+                      </button>
+                      <span>/</span>
+                      <b>{productPage.title}</b>
+                    </div>
+                  </section>
+
+                  <section className="hg-panel">
+                    <div className="hg-productModal" style={{ gap: 24 }}>
+                      <div>
+                        <div
+                          className="hg-productModal__image"
+                          style={{
+                            minHeight: 520,
+                            backgroundImage: activeProductImage
+                              ? `url("${activeProductImage}")`
+                              : "linear-gradient(135deg,#eee,#f7f7f7)",
+                          }}
+                        />
+
+                        {activeProductImages.length > 1 ? (
+                          <div
+                            className="hg-actions hg-actions--wrap"
+                            style={{ marginTop: 14 }}
+                          >
+                            {activeProductImages.map((img, idx) => (
+                              <button
+                                key={`${img}-${idx}`}
+                                type="button"
+                                className="hg-btn"
+                                onClick={() => setProductGalleryIndex(idx)}
+                                style={{
+                                  padding: 0,
+                                  border:
+                                    idx === productGalleryIndex
+                                      ? "2px solid #111"
+                                      : undefined,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: 72,
+                                    height: 72,
+                                    borderRadius: 12,
+                                    backgroundImage: `url("${img}")`,
+                                    backgroundSize: "cover",
+                                    backgroundPosition: "center",
+                                  }}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="hg-productModal__content">
+                        <div className="hg-meta" style={{ marginBottom: 14 }}>
+                          {productPage.category ? (
+                            <span className="hg-pill">
+                              {categoryLabelFromValue(productPage.category)}
+                            </span>
+                          ) : null}
+                          {productPage.brand ? (
+                            <span className="hg-pill">{productPage.brand}</span>
+                          ) : null}
+                          {productPage.sku ? (
+                            <span className="hg-pill">SKU: {productPage.sku}</span>
+                          ) : null}
+                          <span className="hg-pill">
+                            {productPage.stockStatus === "in_stock"
+                              ? "В наличност"
+                              : productPage.stockStatus === "out_of_stock"
+                              ? "Изчерпан"
+                              : "Наличност: неизвестна"}
+                          </span>
+                        </div>
+
+                        <h1
+                          className="hg-productModal__title"
+                          style={{ marginBottom: 16 }}
+                        >
+                          {productPage.title}
+                        </h1>
+
+                        <div className="hg-price" style={{ marginBottom: 18 }}>
+                          {formatPrice(productPrice(productPage), productPage.currency)}
+                        </div>
+
+                        {productPage.shortDescription ? (
+                          <div
+                            className="hg-productModal__text"
+                            style={{ marginBottom: 14 }}
+                          >
+                            {productPage.shortDescription}
+                          </div>
+                        ) : null}
+
+                        {productPage.description ? (
+                          <div
+                            className="hg-productModal__text"
+                            style={{ marginBottom: 14 }}
+                          >
+                            {productPage.description}
+                          </div>
+                        ) : null}
+
+                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
+                          Наличност: <b>{productPage.stockQty ?? "-"}</b>
+                        </div>
+
+                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
+                          Доставка:{" "}
+                          <b>
+                            {productPage.shippingDays
+                              ? `${productPage.shippingDays} дни`
+                              : "—"}
+                          </b>
+                        </div>
+
+                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
+                          Грамаж: <b>{productPage.weight ?? "-"}</b>
+                          {productPage.weightUnit
+                            ? ` ${productPage.weightUnit}`
+                            : ""}
+                        </div>
+
+                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
+                          Интензитет: <b>{productPage.intensity ?? "-"}</b>
+                        </div>
+
+                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
+                          Изпичане: <b>{productPage.roastLevel || "-"}</b>
+                        </div>
+
+                        <div className="hg-kpis" style={{ marginBottom: 18 }}>
+                          Кофеин: <b>{productPage.caffeineType || "-"}</b>
+                        </div>
+
+                        <div className="hg-actions hg-actions--wrap">
+                          <button
+                            className="hg-btn hg-btn--primary"
+                            onClick={() => addToCart(productPage)}
+                          >
+                            Добави в количката
+                          </button>
+
+                          <button
+                            className="hg-btn"
+                            onClick={() => {
+                              addToCart(productPage);
+                              setCartOpen(true);
+                            }}
+                          >
+                            Добави и отвори количката
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="hg-panel" style={{ marginTop: 18 }}>
+                    <div className="hg-panelTitle">Подобни продукти</div>
+
+                    {relatedLoading ? (
+                      <div className="hg-kpis">Зареждане…</div>
+                    ) : relatedProducts.length === 0 ? (
+                      <div className="hg-kpis">Няма други продукти в тази категория.</div>
+                    ) : (
+                      <div className="hg-grid">
+                        {relatedProducts.map((p) => (
+                          <div className="hg-card" key={p._id}>
+                            <div
+                              className="hg-thumb"
+                              style={{
+                                backgroundImage: productImage(p)
+                                  ? `url("${productImage(p)}")`
+                                  : "linear-gradient(135deg,#eee,#f7f7f7)",
+                              }}
+                            />
+                            <div className="hg-cardBody">
+                              <h3 className="hg-cardTitle">{p.title}</h3>
+
+                              <div className="hg-meta">
+                                {p.brand ? <span className="hg-pill">{p.brand}</span> : null}
+                                <span className="hg-pill">
+                                  {categoryLabelFromValue(p.category)}
+                                </span>
+                              </div>
+
+                              <div className="hg-price">
+                                {formatPrice(productPrice(p), p.currency)}
+                              </div>
+
+                              <div className="hg-actions">
+                                <button
+                                  className="hg-btn"
+                                  type="button"
+                                  onClick={() => openProduct(p)}
+                                >
+                                  Детайли
+                                </button>
+
+                                <button
+                                  className="hg-btn hg-btn--primary"
+                                  type="button"
+                                  onClick={() => addToCart(p)}
+                                >
+                                  Добави
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </>
+              )}
+            </div>
+          )}
 
           {cartOpen ? (
             <>
@@ -2488,6 +3100,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<AppShell />} />
+      <Route path="/products/:slug" element={<AppShell />} />
       <Route path="/admin" element={<AppShell />} />
       <Route path="*" element={<AppShell />} />
     </Routes>
