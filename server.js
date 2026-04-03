@@ -8,6 +8,8 @@ const path = require("path");
 const fs = require("fs");
 const compression = require("compression");
 const helmet = require("helmet");
+const multer = require("multer");
+const { v2: cloudinary } = require("cloudinary");
 
 const Product = require("./models/Product");
 
@@ -15,6 +17,9 @@ const authRoutes = require("./routes/auth");
 const adminProductsRoutes = require("./routes/admin.products");
 const productsRoutes = require("./routes/products");
 const ordersRoutes = require("./routes/orders");
+
+const auth = require("./middleware/auth");
+const adminOnly = require("./middleware/admin");
 
 // ✅ Categories routes (safe require + show real error)
 let categoriesRoutes = null;
@@ -43,6 +48,33 @@ try {
 }
 
 const app = express();
+
+/* =========================
+   Cloudinary
+========================= */
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "",
+  api_key: process.env.CLOUDINARY_API_KEY || "",
+  api_secret: process.env.CLOUDINARY_API_SECRET || "",
+});
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 8 * 1024 * 1024, // 8MB
+  },
+});
+
+function uploadBufferToCloudinary(buffer, options = {}) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) return reject(error);
+      resolve(result);
+    });
+
+    stream.end(buffer);
+  });
+}
 
 /* =========================
    Helpers
@@ -217,6 +249,86 @@ app.get("/api-info", (req, res) =>
     description: "API за онлайн магазин за кафе продукти",
     env: process.env.NODE_ENV || "development",
   })
+);
+
+/* =========================
+   Admin image upload
+========================= */
+app.post(
+  "/admin/upload-image",
+  auth,
+  adminOnly,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      if (!process.env.CLOUDINARY_CLOUD_NAME) {
+        return res.status(500).json({
+          ok: false,
+          message: "Липсва CLOUDINARY_CLOUD_NAME",
+        });
+      }
+
+      if (!process.env.CLOUDINARY_API_KEY) {
+        return res.status(500).json({
+          ok: false,
+          message: "Липсва CLOUDINARY_API_KEY",
+        });
+      }
+
+      if (!process.env.CLOUDINARY_API_SECRET) {
+        return res.status(500).json({
+          ok: false,
+          message: "Липсва CLOUDINARY_API_SECRET",
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          ok: false,
+          message: "Няма качен файл",
+        });
+      }
+
+      const mime = String(req.file.mimetype || "").toLowerCase();
+      if (!mime.startsWith("image/")) {
+        return res.status(400).json({
+          ok: false,
+          message: "Позволени са само изображения",
+        });
+      }
+
+      const originalName = String(req.file.originalname || "image");
+      const baseName = originalName
+        .replace(/\.[^/.]+$/, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60) || `product-${Date.now()}`;
+
+      const result = await uploadBufferToCloudinary(req.file.buffer, {
+        folder: "coffee-market/products",
+        resource_type: "image",
+        public_id: `${Date.now()}-${baseName}`,
+      });
+
+      return res.json({
+        ok: true,
+        message: "Снимката е качена успешно",
+        url: result.secure_url,
+        publicId: result.public_id,
+        width: result.width,
+        height: result.height,
+        format: result.format,
+      });
+    } catch (err) {
+      console.error("❌ Cloudinary upload error:", err?.stack || err?.message || err);
+      return res.status(500).json({
+        ok: false,
+        message: "Грешка при качване на снимката",
+        error: err?.message || "upload failed",
+      });
+    }
+  }
 );
 
 /* =========================
