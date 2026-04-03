@@ -421,8 +421,8 @@ function AppShell() {
   const [meLoading, setMeLoading] = useState(false);
   const isAdmin = me?.role === "admin";
 
-  const [loginEmail, setLoginEmail] = useState("test@test.com");
-  const [loginPass, setLoginPass] = useState("Test1234");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPass, setLoginPass] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authMsg, setAuthMsg] = useState("");
 
@@ -1003,6 +1003,7 @@ function AppShell() {
      CART
   ========================== */
   const [cartOpen, setCartOpen] = useState(false);
+  const [cartToast, setCartToast] = useState("");
   const [cart, setCart] = useState(() => {
     try {
       const raw = localStorage.getItem(cartStorageKey());
@@ -1017,6 +1018,12 @@ function AppShell() {
       localStorage.setItem(cartStorageKey(), JSON.stringify(cart));
     } catch {}
   }, [cart]);
+
+  useEffect(() => {
+    if (!cartToast) return;
+    const t = setTimeout(() => setCartToast(""), 2200);
+    return () => clearTimeout(t);
+  }, [cartToast]);
 
   function addToCart(product) {
     if (!product?._id) return;
@@ -1044,6 +1051,8 @@ function AppShell() {
         },
       ];
     });
+
+    setCartToast("Вашият продукт е добавен в количката.");
   }
 
   function decreaseQty(id) {
@@ -1702,8 +1711,11 @@ function AppShell() {
               <button
                 className="hg-btn hg-btn--primary"
                 onClick={() => setCartOpen(true)}
+                aria-label="Отвори количката"
+                title="Количка"
+                type="button"
               >
-                Количка ({cartCount})
+                🛒 {cartCount}
               </button>
             </div>
           </div>
@@ -1754,6 +1766,22 @@ function AppShell() {
           </div>
         </div>
       )}
+
+      {cartToast ? (
+        <div
+          className="hg-note hg-note--order"
+          style={{
+            position: "fixed",
+            top: 18,
+            right: 18,
+            zIndex: 2000,
+            maxWidth: 340,
+            boxShadow: "0 18px 48px rgba(0,0,0,.18)",
+          }}
+        >
+          {cartToast}
+        </div>
+      ) : null}
 
       {view === "admin" && !token && (
         <form className="hg-panel" onSubmit={doLogin}>
@@ -2792,28 +2820,6 @@ function AppShell() {
                         </div>
                         <div className="hg-heroCategoryTitle">{item.label}</div>
                         <div className="hg-heroCategoryLine" />
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="hg-chipSection">
-                  <div className="hg-sectionHead">
-                    <div>
-                      <div className="hg-sectionEyebrow">Категории</div>
-                      <h3 className="hg-sectionTitle">Избери какво търсиш</h3>
-                    </div>
-                  </div>
-
-                  <div className="hg-chipGrid">
-                    {PUBLIC_CATEGORY_CHIPS.map((chip) => (
-                      <button
-                        key={chip.label}
-                        className="hg-chipCard"
-                        onClick={() => applyCategoryFilter(chip.value)}
-                      >
-                        <span className="hg-chipCard__title">{chip.label}</span>
-                        <span className="hg-chipCard__sub">Разгледай категорията</span>
                       </button>
                     ))}
                   </div>
