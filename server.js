@@ -284,6 +284,14 @@ function extractCloudinaryPublicId(value = "") {
 
     let rest = pathname.slice(uploadIndex + uploadMarker.length);
 
+    // ако има transformation-и, Cloudinary URL често е:
+    // /upload/f_auto,q_auto,w_1600/v123456/folder/file.jpg
+    // затова търсим version сегмента и взимаме всичко след него
+    const versionMatch = rest.match(/\/v\d+\//);
+    if (versionMatch && typeof versionMatch.index === "number") {
+      rest = rest.slice(versionMatch.index + 1); // start from v123/...
+    }
+
     // махаме version частта: v123456/
     rest = rest.replace(/^v\d+\//, "");
 
@@ -307,8 +315,26 @@ app.set("trust proxy", 1);
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false,
   })
 );
+
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    [
+      "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:",
+      "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https:",
+      "media-src 'self' data: blob: https:",
+      "connect-src 'self' http://localhost:8000 http://localhost:3000 http://localhost:3001 https: ws: wss:",
+      "style-src 'self' 'unsafe-inline' https:",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
+      "font-src 'self' data: https:",
+      "frame-src 'self' https:",
+    ].join("; ")
+  );
+  next();
+});
 
 app.use(compression());
 
@@ -478,7 +504,9 @@ app.delete("/admin/delete-image", auth, adminOnly, async (req, res) => {
   try {
     const publicId =
       String(req.body?.publicId || req.body?.public_id || "").trim() ||
-      extractCloudinaryPublicId(req.body?.url || req.body?.imageUrl || req.body?.src || "");
+      extractCloudinaryPublicId(
+        req.body?.url || req.body?.imageUrl || req.body?.src || ""
+      );
 
     if (!publicId) {
       return res.status(400).json({
