@@ -209,6 +209,12 @@ function productImage(p) {
   return images[0] || "";
 }
 
+function orderItemImage(item) {
+  return normalizeImageUrl(
+    item?.imageUrl || item?.image || item?.src || item?.url || ""
+  );
+}
+
 function productRouteValue(product) {
   return product?.slug || product?._id || "";
 }
@@ -2618,40 +2624,108 @@ function AppShell() {
                           </button>
                         </div>
 
-                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
+                        <div className="hg-kpis" style={{ marginBottom: 10 }}>
                           <b>Продукти в поръчката:</b>
                         </div>
 
-                        <div
-                          className="hg-actions--wrap"
-                          style={{ display: "grid", gap: 10 }}
-                        >
+                        <div style={{ display: "grid", gap: 12 }}>
                           {Array.isArray(order.items) && order.items.length > 0 ? (
-                            order.items.map((item, idx) => (
-                              <div
-                                key={`${order._id}-${item?.productId || idx}`}
-                                className="hg-check"
-                                style={{
-                                  minHeight: "auto",
-                                  alignItems: "flex-start",
-                                  flexDirection: "column",
-                                  padding: "12px 14px",
-                                }}
-                              >
-                                <div>
-                                  <b>{item?.title || "Продукт"}</b>
+                            order.items.map((item, idx) => {
+                              const img = orderItemImage(item);
+                              const qty = toNum(item?.qty);
+                              const price = toNum(item?.price);
+                              const lineTotal = qty * price;
+
+                              return (
+                                <div
+                                  key={`${order._id}-${item?.productId || idx}`}
+                                  style={{
+                                    display: "grid",
+                                    gridTemplateColumns: img
+                                      ? "92px minmax(0,1fr)"
+                                      : "1fr",
+                                    gap: 14,
+                                    alignItems: "stretch",
+                                    padding: "14px",
+                                    borderRadius: 14,
+                                    border: "1px solid rgba(255,255,255,.12)",
+                                    background: "rgba(255,255,255,.04)",
+                                  }}
+                                >
+                                  {img ? (
+                                    <div
+                                      style={{
+                                        width: "100%",
+                                        minHeight: 92,
+                                        borderRadius: 12,
+                                        border: "1px solid rgba(255,255,255,.10)",
+                                        backgroundImage: `url("${img}")`,
+                                        backgroundSize: "cover",
+                                        backgroundPosition: "center",
+                                        backgroundRepeat: "no-repeat",
+                                      }}
+                                    />
+                                  ) : null}
+
+                                  <div
+                                    style={{
+                                      minWidth: 0,
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 8,
+                                      justifyContent: "center",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        fontSize: 15,
+                                        lineHeight: 1.45,
+                                        fontWeight: 800,
+                                        color: "#fff",
+                                        wordBreak: "break-word",
+                                      }}
+                                    >
+                                      {item?.title || "Продукт"}
+                                    </div>
+
+                                    <div className="hg-kpis">
+                                      ID на продукт:{" "}
+                                      <b>
+                                        {item?.productId
+                                          ? String(item.productId)
+                                          : "—"}
+                                      </b>
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexWrap: "wrap",
+                                        gap: 8,
+                                      }}
+                                    >
+                                      <span className="hg-pill">
+                                        Количество: {qty}
+                                      </span>
+                                      <span className="hg-pill">
+                                        Ед. цена:{" "}
+                                        {formatPrice(
+                                          price,
+                                          order.currency || "BGN"
+                                        )}
+                                      </span>
+                                      <span className="hg-pill">
+                                        Общо ред:{" "}
+                                        {formatPrice(
+                                          lineTotal,
+                                          order.currency || "BGN"
+                                        )}
+                                      </span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="hg-kpis">
-                                  Количество: <b>{item?.qty ?? 0}</b> • Цена:{" "}
-                                  <b>
-                                    {formatPrice(
-                                      item?.price,
-                                      order.currency || "BGN"
-                                    )}
-                                  </b>
-                                </div>
-                              </div>
-                            ))
+                              );
+                            })
                           ) : (
                             <div className="hg-kpis">Няма артикули.</div>
                           )}

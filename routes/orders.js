@@ -31,6 +31,65 @@ function getProductPrice(product) {
   return toSafeNumber(product?.price, 0);
 }
 
+function normalizeImageUrl(value) {
+  if (!value) return "";
+
+  if (typeof value === "string") {
+    const clean = value.trim();
+    if (
+      !clean ||
+      clean === "null" ||
+      clean === "undefined" ||
+      clean === "[object Object]"
+    ) {
+      return "";
+    }
+    return clean;
+  }
+
+  if (typeof value === "object") {
+    const candidates = [
+      value.url,
+      value.src,
+      value.secure_url,
+      value.imageUrl,
+      value.path,
+      value.optimizedUrl,
+      value.originalUrl,
+    ];
+
+    for (const candidate of candidates) {
+      if (typeof candidate === "string") {
+        const clean = candidate.trim();
+        if (
+          clean &&
+          clean !== "null" &&
+          clean !== "undefined" &&
+          clean !== "[object Object]"
+        ) {
+          return clean;
+        }
+      }
+    }
+  }
+
+  return "";
+}
+
+function getProductImage(product) {
+  const direct = normalizeImageUrl(product?.imageUrl);
+  if (direct) return direct;
+
+  if (Array.isArray(product?.images)) {
+    for (const item of product.images) {
+      const img = normalizeImageUrl(item);
+      if (img) return img;
+    }
+  }
+
+  return "";
+}
+
 /**
  * POST /orders
  * Създаване на поръчка от публичната част
@@ -83,14 +142,12 @@ router.post("/", async (req, res) => {
       if (!product) continue;
 
       const price = getProductPrice(product);
+      const imageUrl = getProductImage(product);
 
       normalizedItems.push({
         productId: product._id,
-        title: product.title,
-        imageUrl:
-          (Array.isArray(product.images) && product.images[0]) ||
-          product.imageUrl ||
-          "",
+        title: normalizeText(product.title),
+        imageUrl,
         price,
         qty,
       });
