@@ -10,10 +10,10 @@
   --surface-soft: rgba(255,255,255,.92);
   --surface-2: #faf7f3;
 
-  --text: #1e1612;
-  --text-soft: rgba(30,22,18,.78);
-  --muted: rgba(30,22,18,.60);
-  --muted-2: rgba(30,22,18,.42);
+  --text: #2a211d;
+  --text-soft: rgba(42,33,29,.74);
+  --muted: rgba(42,33,29,.58);
+  --muted-2: rgba(42,33,29,.42);
 
   --line: rgba(58,38,25,.10);
   --line-2: rgba(58,38,25,.14);
@@ -409,7 +409,7 @@ button{
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
@@ -423,13 +423,13 @@ button{
   color: #fff;
   border: none;
   box-shadow: none;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 900;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -811,7 +811,7 @@ button{
 .hg--public .hg-grid{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 34px 28px;
+  gap: 30px 24px;
 }
 
 .hg--public .hg-card{
@@ -823,6 +823,7 @@ button{
   border: none;
   box-shadow: none;
   transition: transform .18s ease;
+  max-width: 340px;
 }
 
 .hg--public .hg-card:hover{
@@ -832,8 +833,8 @@ button{
 }
 
 .hg--public .hg-thumb{
-  height: 290px;
-  border-radius: 28px;
+  height: 260px;
+  border-radius: 26px;
   border: none;
   background-color: transparent;
   background-size: cover;
@@ -843,16 +844,16 @@ button{
 }
 
 .hg--public .hg-cardBody{
-  padding: 16px 2px 0;
+  padding: 14px 2px 0;
   display: grid;
   grid-template-rows: auto auto auto auto;
-  gap: 10px;
+  gap: 8px;
   min-height: auto;
   background: transparent;
 }
 
 .hg--public .hg-meta{
-  min-height: 18px;
+  min-height: 16px;
   margin-bottom: 0;
   position: relative;
 }
@@ -863,7 +864,7 @@ button{
 
 .hg--public .hg-meta::before{
   content: "★★★★★";
-  font-size: 15px;
+  font-size: 13px;
   letter-spacing: 1px;
   color: #b8b2ad;
   line-height: 1;
@@ -871,28 +872,28 @@ button{
 
 .hg--public .hg-cardTitle{
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.34;
-  font-weight: 900;
-  color: #1f1714;
-  letter-spacing: -0.03em;
+  font-weight: 800;
+  color: rgba(42,33,29,.88);
+  letter-spacing: -0.02em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 42px;
+  min-height: 38px;
 }
 
 .hg--public .hg-pill{
   display: inline-flex;
   align-items: center;
-  min-height: 26px;
+  min-height: 24px;
   padding: 0 10px;
   border-radius: 999px;
   border: 1px solid rgba(31,23,18,.08);
   background: rgba(255,255,255,.92);
   color: var(--text-soft);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   box-shadow: var(--shadow-xs);
 }
@@ -910,12 +911,12 @@ button{
 }
 
 .hg--public .hg-price{
-  font-size: 26px;
+  font-size: 21px;
   line-height: 1;
   font-weight: 900;
-  letter-spacing: -0.05em;
-  color: #1d2438;
-  margin-top: 2px;
+  letter-spacing: -0.04em;
+  color: #3a312d;
+  margin-top: 0;
 }
 
 .hg--public .hg-cardBody .hg-actions{
@@ -923,38 +924,38 @@ button{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: nowrap;
 }
 
 .hg--public .hg-cardBody .hg-actions .hg-btn:first-child{
-  height: 44px;
-  min-width: 90px;
-  padding: 0 14px;
+  height: 40px;
+  min-width: 82px;
+  padding: 0 13px;
   border-radius: 999px;
-  background: rgba(255,255,255,.66);
-  border: 1px solid rgba(43,32,27,.10);
-  color: #6d635d;
+  background: rgba(255,255,255,.62);
+  border: 1px solid rgba(43,32,27,.08);
+  color: rgba(76,66,61,.88);
   box-shadow: none;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
 }
 
 .hg--public .hg-cardBody .hg-actions .hg-btn:first-child:hover{
-  background: rgba(255,255,255,.88);
+  background: rgba(255,255,255,.84);
   box-shadow: none;
 }
 
 .hg--public .hg-cardBody .hg-actions .hg-btn--primary{
-  height: 50px;
-  min-width: 148px;
-  padding: 0 24px;
+  height: 44px;
+  min-width: 132px;
+  padding: 0 20px;
   border-radius: 999px;
   background: linear-gradient(135deg, #d71d2c, #bd1826);
   border: none;
   color: #fff;
   box-shadow: 0 12px 24px rgba(207,32,47,.18);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: -.01em;
   text-transform: uppercase;
@@ -983,8 +984,8 @@ button{
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(1160px, calc(100vw - 28px));
-  max-height: min(90vh, 860px);
+  width: min(1060px, calc(100vw - 28px));
+  max-height: min(88vh, 820px);
   overflow: auto;
   border: 1px solid rgba(255,255,255,.70);
   border-radius: 24px;
@@ -993,7 +994,7 @@ button{
   box-shadow:
     0 36px 90px rgba(31,23,18,.22),
     0 18px 44px rgba(31,23,18,.10);
-  padding: 22px;
+  padding: 20px;
 }
 
 .hg-modalHead{
@@ -1007,7 +1008,7 @@ button{
 }
 
 .hg-modalTitle{
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 900;
   letter-spacing: -0.03em;
   color: var(--text);
@@ -1033,8 +1034,8 @@ button{
 
 .hg-productModal{
   display: grid;
-  grid-template-columns: minmax(320px, 470px) minmax(320px, 1fr);
-  gap: 30px;
+  grid-template-columns: minmax(280px, 410px) minmax(300px, 1fr);
+  gap: 24px;
   margin-top: 6px;
   align-items: start;
   position: relative;
@@ -1053,7 +1054,7 @@ button{
 
 .hg-productModal__image{
   width: 100%;
-  min-height: 360px;
+  min-height: 320px;
   height: auto;
   aspect-ratio: 1 / 1;
   border-radius: 18px;
@@ -1072,16 +1073,16 @@ button{
 .hg-productModal__thumbnails{
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .hg-productModal__thumb,
 .hg-productModal__galleryThumb,
 .hg-productModal__thumbnail{
-  width: 74px;
-  height: 74px;
-  border-radius: 16px;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
   border: 1px solid rgba(64,41,28,.08);
   background-color: #fff;
   background-size: cover;
@@ -1097,10 +1098,10 @@ button{
 .hg-productModal__info{
   min-width: 0;
   width: 100%;
-  max-width: 520px;
+  max-width: 500px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   padding-top: 2px;
   position: relative;
   z-index: 2;
@@ -1134,23 +1135,23 @@ button{
 
 .hg-productModal__title{
   margin: 0;
-  font-size: clamp(22px, 2.5vw, 34px);
-  line-height: 1.05;
-  letter-spacing: -0.05em;
-  font-weight: 900;
-  color: var(--text);
+  font-size: clamp(19px, 2vw, 28px);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  color: rgba(42,33,29,.92);
   word-break: break-word;
 }
 
 .hg-productModal__rating,
 .hg-productModal .hg-meta{
-  min-height: 18px;
+  min-height: 16px;
   margin: 0;
 }
 
 .hg-productModal .hg-meta::before{
   content: "★★★★★";
-  font-size: 16px;
+  font-size: 14px;
   letter-spacing: 2px;
   color: #b8b2ad;
   line-height: 1;
@@ -1158,12 +1159,12 @@ button{
 
 .hg-productModal__price,
 .hg-productModal .hg-price{
-  margin: 0 0 4px;
-  font-size: clamp(24px, 2.4vw, 34px);
+  margin: 0 0 2px;
+  font-size: clamp(21px, 2vw, 28px);
   line-height: 1;
   font-weight: 900;
-  letter-spacing: -0.05em;
-  color: #1d2438;
+  letter-spacing: -0.04em;
+  color: #3a312d;
 }
 
 .hg-productModal__badges,
@@ -1171,53 +1172,53 @@ button{
 .hg-productModal__details,
 .hg-productModal__features{
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
 
 .hg-productModal__row,
 .hg-productModal__spec,
 .hg-productModal__detail{
   display: grid;
-  grid-template-columns: 110px minmax(0, 1fr);
+  grid-template-columns: 100px minmax(0, 1fr);
   gap: 10px;
   align-items: center;
   padding: 0;
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.42;
   color: var(--text-soft);
 }
 
 .hg-productModal__row strong,
 .hg-productModal__spec strong,
 .hg-productModal__detail strong{
-  color: #6d635d;
+  color: rgba(109,99,93,.88);
   font-weight: 700;
 }
 
 .hg-productModal__description,
 .hg-productModal__text{
   margin: 2px 0 0;
-  font-size: 13px;
-  line-height: 1.72;
+  font-size: 12px;
+  line-height: 1.68;
   color: var(--text-soft);
 }
 
 .hg-productModal__actions,
 .hg-productModal .hg-actions{
-  margin-top: 8px;
+  margin-top: 6px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .hg-productModal__actions .hg-btn,
 .hg-productModal .hg-actions .hg-btn{
-  min-width: 190px;
-  height: 48px;
-  padding: 0 20px;
+  min-width: 170px;
+  height: 44px;
+  padding: 0 18px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
   box-shadow: none;
 }
@@ -1231,7 +1232,7 @@ button{
 .hg-productModal .hg-actions .hg-btn:not(.hg-btn--primary){
   background: rgba(255,255,255,.84);
   border-color: rgba(43,32,27,.10);
-  color: #2d241f;
+  color: #4b403a;
 }
 
 .hg-productModal__actions .hg-btn:not(.hg-btn--primary):hover,
@@ -1241,7 +1242,7 @@ button{
 
 .hg-productModal__summary,
 .hg-productModal__panel{
-  padding: 18px 18px;
+  padding: 16px 16px;
   border-radius: 18px;
   background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(248,244,239,.92));
   border: 1px solid rgba(64,41,28,.06);
@@ -1688,8 +1689,8 @@ button{
   }
 
   .hg-productModal{
-    grid-template-columns: minmax(300px, 400px) minmax(300px, 1fr);
-    gap: 24px;
+    grid-template-columns: minmax(280px, 360px) minmax(280px, 1fr);
+    gap: 22px;
   }
 }
 
@@ -1707,7 +1708,7 @@ button{
   }
 
   .hg-modal{
-    width: min(100vw - 20px, 1100px);
+    width: min(100vw - 20px, 1040px);
     padding: 18px;
   }
 
@@ -1717,7 +1718,7 @@ button{
   }
 
   .hg-productModal__image{
-    min-height: 340px;
+    min-height: 300px;
     aspect-ratio: auto;
   }
 
@@ -1773,7 +1774,7 @@ button{
 
   .hg--public .hg-grid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 26px 18px;
+    gap: 24px 18px;
   }
 
   .hg-formGrid{
@@ -1805,7 +1806,7 @@ button{
   }
 
   .hg-publicNav__actions .hg-btn{
-    font-size: 17px;
+    font-size: 22px;
   }
 
   .hg-productModal__row,
@@ -1848,8 +1849,8 @@ button{
   }
 
   .hg--public .hg-thumb{
-    height: 250px;
-    border-radius: 24px;
+    height: 236px;
+    border-radius: 22px;
   }
 
   .hg--admin .hg-grid{
@@ -1861,7 +1862,7 @@ button{
   }
 
   .hg-productModal__title{
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .hg-cartItem{
@@ -1890,7 +1891,8 @@ button{
     min-width: 0;
     height: auto;
     padding: 0;
-    font-size: 16px;
+    font-size: 20px;
+    gap: 8px;
   }
 
   .hg--public .hg-cardBody .hg-actions{
@@ -1914,7 +1916,7 @@ button{
   }
 
   .hg-productModal__image{
-    min-height: 280px;
+    min-height: 260px;
     border-radius: 18px;
   }
 
@@ -1927,9 +1929,9 @@ button{
   .hg-productModal__thumb,
   .hg-productModal__galleryThumb,
   .hg-productModal__thumbnail{
-    width: 62px;
-    height: 62px;
-    border-radius: 14px;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
   }
 
   .hg-heroCategories{
