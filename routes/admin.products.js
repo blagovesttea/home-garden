@@ -1,5 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const { v2: cloudinary } = require("cloudinary");
+
 const Product = require("../models/Product");
 const Category = require("../models/Category");
 const auth = require("../middleware/auth");
@@ -9,6 +11,12 @@ const adminOnly = require("../middleware/admin");
 const { categorizeProduct } = require("../services/categorizer");
 
 const router = express.Router();
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "",
+  api_key: process.env.CLOUDINARY_API_KEY || "",
+  api_secret: process.env.CLOUDINARY_API_SECRET || "",
+});
 
 const ALLOWED_STATUS = ["new", "approved", "rejected", "blacklisted"];
 const ALLOWED_MARKUP = ["none", "percent", "fixed"];
@@ -59,14 +67,18 @@ function normalizeText(v, fallback = "") {
   return String(v ?? fallback).trim();
 }
 
+function uniqueStrings(values = []) {
+  return [...new Set(values.map((x) => String(x || "").trim()).filter(Boolean))];
+}
+
 function normalizeImages(images) {
   if (!Array.isArray(images)) return [];
-  return images.map((x) => String(x || "").trim()).filter(Boolean);
+  return uniqueStrings(images);
 }
 
 function normalizeStringArray(value) {
   if (!Array.isArray(value)) return [];
-  return value.map((x) => String(x || "").trim()).filter(Boolean);
+  return uniqueStrings(value);
 }
 
 function normalizeCategory(category) {
@@ -207,6 +219,57 @@ function normalizePriceFields(data = {}) {
   };
 }
 
+function normalizeImageMeta(data = {}) {
+  const imageUrl = normalizeText(data.imageUrl);
+  const imagePublicId = normalizeText(data.imagePublicId);
+  const images = normalizeImages(data.images);
+  const imagePublicIds = normalizeStringArray(data.imagePublicIds);
+
+  const mergedImages = imageUrl ? uniqueStrings([imageUrl, ...images]) : images.slice();
+  const mergedPublicIds = imagePublicId
+    ? uniqueStrings([imagePublicId, ...imagePublicIds])
+    : imagePublicIds.slice();
+
+  return {
+    imageUrl: imageUrl || mergedImages[0] || "",
+    imagePublicId: imagePublicId || mergedPublicIds[0] || "",
+    images: mergedImages,
+    imagePublicIds: mergedPublicIds,
+  };
+}
+
+function collectCloudinaryPublicIds(product) {
+  if (!product) return [];
+
+  return uniqueStrings([
+    product.imagePublicId,
+    ...(Array.isArray(product.imagePublicIds) ? product.imagePublicIds : []),
+  ]);
+}
+
+async function deleteCloudinaryResources(publicIds = []) {
+  const ids = uniqueStrings(publicIds);
+  if (!ids.length) return { deleted: [] };
+
+  const deleted = [];
+
+  for (const publicId of ids) {
+    try {
+      const result = await cloudinary.uploader.destroy(publicId, {
+        resource_type: "image",
+      });
+
+      if (result === "ok" || result?.result === "ok" || result?.result === "not found") {
+        deleted.push(publicId);
+      }
+    } catch (err) {
+      console.error("⚠️ Cloudinary destroy failed:", publicId, err?.message || err);
+    }
+  }
+
+  return { deleted };
+}
+
 async function resolveManualCategoryMeta(category) {
   const normalizedCategory = normalizeCategory(category);
   const mappedPath = MANUAL_CATEGORY_PATHS[normalizedCategory] || [];
@@ -297,6 +360,7 @@ async function resolveCategoryMeta(input = {}) {
 
 function buildProductPayload(data = {}, userId = null) {
   const prices = normalizePriceFields(data);
+  const imageMeta = normalizeImageMeta(data);
 
   const weightUnit = normalizeText(data.weightUnit);
   const roastLevel = normalizeText(data.roastLevel);
@@ -315,8 +379,10 @@ function buildProductPayload(data = {}, userId = null) {
     sourceUrl: normalizeText(data.sourceUrl),
     affiliateUrl: "",
 
-    imageUrl: normalizeText(data.imageUrl),
-    images: normalizeImages(data.images),
+    imageUrl: imageMeta.imageUrl,
+    imagePublicId: imageMeta.imagePublicId,
+    images: imageMeta.images,
+    imagePublicIds: imageMeta.imagePublicIds,
 
     currency: normalizeText(data.currency, "BGN") || "BGN",
 
@@ -700,6 +766,11 @@ router.patch("/products/:id", auth, adminOnly, async (req, res) => {
     const { id } = req.params;
     const data = req.body || {};
 
+    const existing = await Product.findById(id);
+    if (!existing) {
+      return res.status(404).json({ message: "Не е намерен" });
+    }
+
     const patch = buildProductPayload(data);
 
     if (data.title != null) patch.title = normalizeText(data.title);
@@ -713,7 +784,9 @@ router.patch("/products/:id", auth, adminOnly, async (req, res) => {
     if (data.source == null) delete patch.source;
     if (data.sourceUrl == null) delete patch.sourceUrl;
     if (data.imageUrl == null) delete patch.imageUrl;
+    if (data.imagePublicId == null) delete patch.imagePublicId;
     if (data.images == null) delete patch.images;
+    if (data.imagePublicIds == null) delete patch.imagePublicIds;
     if (data.currency == null) delete patch.currency;
     if (data.shippingPrice == null) delete patch.shippingPrice;
     if (data.shippingToBG == null) delete patch.shippingToBG;
@@ -759,8 +832,25 @@ router.patch("/products/:id", auth, adminOnly, async (req, res) => {
       patch.slug = await generateUniqueSlug(normalizeText(data.title), id);
     }
 
-    const updated = await Product.findByIdAndUpdate(id, { $set: patch }, { new: true });
+    const oldIds = collectCloudinaryPublicIds(existing);
+
+    const imageFieldsTouched =
+      data.imageUrl != null ||
+      data.imagePublicId != null ||
+      data.images != null ||
+      data.imagePublicIds != null;
+
+    let updated = await Product.findByIdAndUpdate(id, { $set: patch }, { new: true });
     if (!updated) return res.status(404).json({ message: "Не е намерен" });
+
+    if (imageFieldsTouched) {
+      const newIds = collectCloudinaryPublicIds(updated);
+      const idsToDelete = oldIds.filter((x) => !newIds.includes(x));
+
+      if (idsToDelete.length) {
+        await deleteCloudinaryResources(idsToDelete);
+      }
+    }
 
     return res.json({ ok: true, product: updated });
   } catch (err) {
@@ -869,6 +959,20 @@ router.delete("/products/delete-many", auth, adminOnly, async (req, res) => {
       });
     }
 
+    const productsToDelete = await Product.find({
+      _id: { $in: validIds },
+    })
+      .select("_id imagePublicId imagePublicIds")
+      .lean();
+
+    const allPublicIds = uniqueStrings(
+      productsToDelete.flatMap((item) => collectCloudinaryPublicIds(item))
+    );
+
+    if (allPublicIds.length) {
+      await deleteCloudinaryResources(allPublicIds);
+    }
+
     const r = await Product.deleteMany({
       _id: { $in: validIds },
     });
@@ -876,6 +980,7 @@ router.delete("/products/delete-many", auth, adminOnly, async (req, res) => {
     return res.json({
       ok: true,
       deleted: r.deletedCount ?? 0,
+      deletedImages: allPublicIds.length,
     });
   } catch (err) {
     return res.status(500).json({
@@ -964,10 +1069,24 @@ router.post("/products/recategorize-missing", auth, adminOnly, async (req, res) 
 router.delete("/products/:id", auth, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await Product.findByIdAndDelete(id);
-    if (!deleted) return res.status(404).json({ message: "Не е намерен" });
 
-    return res.json({ ok: true });
+    const existing = await Product.findById(id)
+      .select("_id imagePublicId imagePublicIds")
+      .lean();
+
+    if (!existing) return res.status(404).json({ message: "Не е намерен" });
+
+    const publicIds = collectCloudinaryPublicIds(existing);
+    if (publicIds.length) {
+      await deleteCloudinaryResources(publicIds);
+    }
+
+    await Product.findByIdAndDelete(id);
+
+    return res.json({
+      ok: true,
+      deletedImages: publicIds.length,
+    });
   } catch (err) {
     return res.status(500).json({
       message: "Грешка в сървъра",

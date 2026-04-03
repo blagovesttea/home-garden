@@ -11,6 +11,14 @@ const helmet = require("helmet");
 const multer = require("multer");
 const { v2: cloudinary } = require("cloudinary");
 
+let sharp = null;
+try {
+  sharp = require("sharp");
+  console.log("✅ sharp loaded");
+} catch (e) {
+  console.warn("⚠️ sharp is not installed. Image uploads will continue without local compression.");
+}
+
 const Product = require("./models/Product");
 
 const authRoutes = require("./routes/auth");
@@ -172,6 +180,91 @@ async function dropLegacyProductIndexes() {
   }
 }
 
+function safeBaseName(filename = "") {
+  const originalName = String(filename || "image");
+  return (
+    originalName
+      .replace(/\.[^/.]+$/, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || `product-${Date.now()}`
+  );
+}
+
+async function optimizeImageBuffer(buffer, mime = "") {
+  if (!sharp || !buffer) {
+    return {
+      buffer,
+      format: null,
+      optimized: false,
+    };
+  }
+
+  const type = String(mime || "").toLowerCase();
+
+  try {
+    let pipeline = sharp(buffer, { failOnError: false }).rotate().resize({
+      width: 1800,
+      height: 1800,
+      fit: "inside",
+      withoutEnlargement: true,
+    });
+
+    // За PNG/WebP/SVG-like uploads предпочитаме webp, за снимки jpeg.
+    if (type.includes("png") || type.includes("webp") || type.includes("gif")) {
+      pipeline = pipeline.webp({
+        quality: 82,
+        effort: 4,
+      });
+
+      return {
+        buffer: await pipeline.toBuffer(),
+        format: "webp",
+        optimized: true,
+      };
+    }
+
+    pipeline = pipeline.jpeg({
+      quality: 82,
+      mozjpeg: true,
+      chromaSubsampling: "4:4:4",
+    });
+
+    return {
+      buffer: await pipeline.toBuffer(),
+      format: "jpg",
+      optimized: true,
+    };
+  } catch (err) {
+    console.warn("⚠️ sharp optimize failed, using original buffer:");
+    console.warn(err?.stack || err?.message || err);
+
+    return {
+      buffer,
+      format: null,
+      optimized: false,
+    };
+  }
+}
+
+function buildOptimizedCloudinaryUrl(publicId) {
+  if (!publicId) return "";
+
+  try {
+    return cloudinary.url(publicId, {
+      secure: true,
+      fetch_format: "auto",
+      quality: "auto",
+      width: 1600,
+      height: 1600,
+      crop: "limit",
+    });
+  } catch (_) {
+    return "";
+  }
+}
+
 /* =========================
    App settings
 ========================= */
@@ -297,28 +390,32 @@ app.post(
         });
       }
 
-      const originalName = String(req.file.originalname || "image");
-      const baseName = originalName
-        .replace(/\.[^/.]+$/, "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
-        .slice(0, 60) || `product-${Date.now()}`;
+      const baseName = safeBaseName(req.file.originalname);
+      const optimized = await optimizeImageBuffer(req.file.buffer, mime);
 
-      const result = await uploadBufferToCloudinary(req.file.buffer, {
+      const result = await uploadBufferToCloudinary(optimized.buffer, {
         folder: "coffee-market/products",
         resource_type: "image",
         public_id: `${Date.now()}-${baseName}`,
+        overwrite: false,
       });
+
+      const optimizedUrl =
+        buildOptimizedCloudinaryUrl(result.public_id) || result.secure_url;
 
       return res.json({
         ok: true,
         message: "Снимката е качена успешно",
         url: result.secure_url,
+        imageUrl: result.secure_url,
+        optimizedUrl,
         publicId: result.public_id,
         width: result.width,
         height: result.height,
         format: result.format,
+        bytes: result.bytes,
+        originalName: req.file.originalname,
+        optimized: optimized.optimized,
       });
     } catch (err) {
       console.error("❌ Cloudinary upload error:", err?.stack || err?.message || err);

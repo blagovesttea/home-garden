@@ -133,7 +133,17 @@ function normalizeImageUrl(value) {
 
   if (typeof value === "string") {
     const clean = value.trim();
-    return clean || "";
+    if (!clean) return "";
+
+    if (
+      clean === "null" ||
+      clean === "undefined" ||
+      clean === "[object Object]"
+    ) {
+      return "";
+    }
+
+    return clean;
   }
 
   if (typeof value === "object") {
@@ -143,16 +153,34 @@ function normalizeImageUrl(value) {
       value.secure_url,
       value.imageUrl,
       value.path,
+      value.optimizedUrl,
     ];
 
     for (const candidate of candidates) {
       if (typeof candidate === "string" && candidate.trim()) {
-        return candidate.trim();
+        const clean = candidate.trim();
+        if (
+          clean !== "null" &&
+          clean !== "undefined" &&
+          clean !== "[object Object]"
+        ) {
+          return clean;
+        }
       }
     }
   }
 
   return "";
+}
+
+function normalizePublicId(value) {
+  const clean = String(value || "").trim();
+  if (!clean || clean === "null" || clean === "undefined") return "";
+  return clean;
+}
+
+function uniqueStrings(values = []) {
+  return [...new Set(values.map((x) => String(x || "").trim()).filter(Boolean))];
 }
 
 function productImages(p) {
@@ -212,6 +240,8 @@ function emptyProductForm() {
     source: "manual",
     sourceUrl: "",
     imageUrl: "",
+    imagePublicId: "",
+    imagePublicIds: [],
     imagesText: "",
     price: "",
     basePrice: "",
@@ -492,12 +522,19 @@ function AppShell() {
       body: formData,
     });
 
-    const url = normalizeImageUrl(data?.url || data?.secure_url);
+    const url = normalizeImageUrl(
+      data?.optimizedUrl || data?.imageUrl || data?.url || data?.secure_url
+    );
+    const publicId = normalizePublicId(data?.publicId);
+
     if (!url) {
       throw new Error("Не е върнат URL на снимката");
     }
 
-    return url;
+    return {
+      url,
+      publicId,
+    };
   }
 
   async function handleMainImageUpload(file) {
@@ -507,8 +544,19 @@ function AppShell() {
     setMainImageUploadMsg("");
 
     try {
-      const url = await uploadSingleImageFile(file);
-      updateFormField("imageUrl", url);
+      const uploaded = await uploadSingleImageFile(file);
+
+      updateFormField("imageUrl", uploaded.url);
+      updateFormField("imagePublicId", uploaded.publicId);
+
+      if (uploaded.publicId) {
+        const currentIds = Array.isArray(productForm.imagePublicIds)
+          ? productForm.imagePublicIds
+          : [];
+        const mergedIds = uniqueStrings([uploaded.publicId, ...currentIds]);
+        updateFormField("imagePublicIds", mergedIds);
+      }
+
       setMainImageUploadMsg("Главната снимка е качена успешно.");
     } catch (e) {
       setMainImageUploadMsg(e?.message || "Грешка при качване на главната снимка.");
@@ -525,30 +573,39 @@ function AppShell() {
     setGalleryUploadMsg("");
 
     try {
-      const uploadedUrls = [];
+      const uploadedItems = [];
       for (const file of files) {
-        const url = await uploadSingleImageFile(file);
-        if (url) uploadedUrls.push(url);
+        const uploaded = await uploadSingleImageFile(file);
+        if (uploaded?.url) uploadedItems.push(uploaded);
       }
 
-      if (!uploadedUrls.length) {
+      if (!uploadedItems.length) {
         throw new Error("Не бяха качени снимки");
       }
 
       const current = linesToArray(productForm.imagesText);
       const merged = [...current];
 
-      uploadedUrls.forEach((url) => {
-        if (!merged.includes(url)) {
-          merged.push(url);
+      uploadedItems.forEach((item) => {
+        if (item.url && !merged.includes(item.url)) {
+          merged.push(item.url);
         }
       });
 
+      const mergedPublicIds = uniqueStrings([
+        ...(Array.isArray(productForm.imagePublicIds)
+          ? productForm.imagePublicIds
+          : []),
+        ...uploadedItems.map((item) => item.publicId).filter(Boolean),
+      ]);
+
       updateFormField("imagesText", merged.join("\n"));
+      updateFormField("imagePublicIds", mergedPublicIds);
+
       setGalleryUploadMsg(
-        uploadedUrls.length === 1
+        uploadedItems.length === 1
           ? "Допълнителната снимка е качена успешно."
-          : `Качени са ${uploadedUrls.length} допълнителни снимки.`
+          : `Качени са ${uploadedItems.length} допълнителни снимки.`
       );
     } catch (e) {
       setGalleryUploadMsg(
@@ -1238,6 +1295,10 @@ function AppShell() {
       source: product?.source || "manual",
       sourceUrl: product?.sourceUrl || "",
       imageUrl: product?.imageUrl || "",
+      imagePublicId: product?.imagePublicId || "",
+      imagePublicIds: Array.isArray(product?.imagePublicIds)
+        ? product.imagePublicIds
+        : [],
       imagesText: Array.isArray(product?.images) ? product.images.join("\n") : "",
       price: product?.price ?? "",
       basePrice: product?.basePrice ?? "",
@@ -1403,6 +1464,8 @@ function AppShell() {
         source: String(productForm.source || "manual").trim(),
         sourceUrl: String(productForm.sourceUrl || "").trim(),
         imageUrl: String(productForm.imageUrl || "").trim(),
+        imagePublicId: normalizePublicId(productForm.imagePublicId),
+        imagePublicIds: uniqueStrings(productForm.imagePublicIds || []),
         images,
 
         price: productForm.price === "" ? null : toNum(productForm.price),

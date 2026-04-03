@@ -27,6 +27,15 @@ function slugifyProductTitle(value = "") {
     .trim();
 }
 
+function cleanString(value = "") {
+  return String(value || "").trim();
+}
+
+function cleanStringArray(values = []) {
+  if (!Array.isArray(values)) return [];
+  return [...new Set(values.map((v) => cleanString(v)).filter(Boolean))];
+}
+
 const ProductSchema = new mongoose.Schema(
   {
     title: {
@@ -185,11 +194,13 @@ const ProductSchema = new mongoose.Schema(
       type: String,
       default: "",
       index: true,
+      trim: true,
     },
 
     affiliateUrl: {
       type: String,
       default: "",
+      trim: true,
     },
 
     /**
@@ -201,7 +212,27 @@ const ProductSchema = new mongoose.Schema(
       trim: true,
     },
 
+    /**
+     * Главната Cloudinary public id за imageUrl
+     */
+    imagePublicId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    /**
+     * Gallery URLs
+     */
     images: {
+      type: [String],
+      default: [],
+    },
+
+    /**
+     * Cloudinary public ids за images[]
+     */
+    imagePublicIds: {
       type: [String],
       default: [],
     },
@@ -391,18 +422,37 @@ ProductSchema.pre("validate", function () {
 
   if (!generatedSlug) {
     if (!this.slug) this.slug = "";
-    return;
-  }
-
-  // Ако route-ът вече е подал уникален slug, пазим него.
-  if (!this.slug) {
+  } else if (!this.slug) {
     this.slug = generatedSlug;
-    return;
+  } else {
+    // Нормализираме само вече зададения slug, без да го презаписваме
+    // с базовия slug от title.
+    this.slug = slugifyProductTitle(this.slug);
   }
 
-  // Нормализираме само вече зададения slug, без да го презаписваме
-  // с базовия slug от title.
-  this.slug = slugifyProductTitle(this.slug);
+  this.imageUrl = cleanString(this.imageUrl);
+  this.imagePublicId = cleanString(this.imagePublicId);
+  this.images = cleanStringArray(this.images);
+  this.imagePublicIds = cleanStringArray(this.imagePublicIds);
+  this.sourceUrl = cleanString(this.sourceUrl);
+  this.affiliateUrl = cleanString(this.affiliateUrl);
+
+  // Ако няма главна снимка, но има gallery снимки,
+  // взимаме първата валидна за imageUrl, за да не остава продуктът без основна снимка.
+  if (!this.imageUrl && this.images.length > 0) {
+    this.imageUrl = this.images[0];
+  }
+
+  // Ако imageUrl съществува, но не фигурира в images[],
+  // добавяме го отпред, за да е стабилна gallery логиката.
+  if (this.imageUrl) {
+    this.images = cleanStringArray([this.imageUrl, ...this.images]);
+  }
+
+  // Синхронизираме imagePublicIds да няма празни и дублирани стойности.
+  if (this.imagePublicId) {
+    this.imagePublicIds = cleanStringArray([this.imagePublicId, ...this.imagePublicIds]);
+  }
 });
 
 ProductSchema.index({ slug: 1 }, { unique: true, sparse: true });
