@@ -211,7 +211,7 @@ async function optimizeImageBuffer(buffer, mime = "") {
       withoutEnlargement: true,
     });
 
-    // За PNG/WebP/SVG-like uploads предпочитаме webp, за снимки jpeg.
+    // За PNG/WebP/GIF uploads предпочитаме webp, за снимки jpeg.
     if (type.includes("png") || type.includes("webp") || type.includes("gif")) {
       pipeline = pipeline.webp({
         quality: 82,
@@ -260,6 +260,37 @@ function buildOptimizedCloudinaryUrl(publicId) {
       height: 1600,
       crop: "limit",
     });
+  } catch (_) {
+    return "";
+  }
+}
+
+function extractCloudinaryPublicId(value = "") {
+  const input = String(value || "").trim();
+  if (!input) return "";
+
+  // ако е public id директно
+  if (!/^https?:\/\//i.test(input) && !input.includes("/upload/")) {
+    return input.replace(/\.[a-z0-9]+$/i, "");
+  }
+
+  try {
+    const url = new URL(input);
+    const pathname = url.pathname || "";
+    const uploadMarker = "/upload/";
+    const uploadIndex = pathname.indexOf(uploadMarker);
+
+    if (uploadIndex === -1) return "";
+
+    let rest = pathname.slice(uploadIndex + uploadMarker.length);
+
+    // махаме version частта: v123456/
+    rest = rest.replace(/^v\d+\//, "");
+
+    // махаме extension-а
+    rest = rest.replace(/\.[a-z0-9]+$/i, "");
+
+    return rest;
   } catch (_) {
     return "";
   }
@@ -406,16 +437,28 @@ app.post(
       return res.json({
         ok: true,
         message: "Снимката е качена успешно",
-        url: result.secure_url,
-        imageUrl: result.secure_url,
-        optimizedUrl,
+
+        // ✅ основни полета
+        url: optimizedUrl,
+        imageUrl: optimizedUrl,
+        src: optimizedUrl,
+
+        // ✅ оригинален Cloudinary URL
+        originalUrl: result.secure_url,
+        secure_url: result.secure_url,
+
+        // ✅ public id в различни варианти за съвместимост
         publicId: result.public_id,
+        public_id: result.public_id,
+
+        // ✅ полезни метаданни
         width: result.width,
         height: result.height,
         format: result.format,
         bytes: result.bytes,
         originalName: req.file.originalname,
         optimized: optimized.optimized,
+        optimizedUrl,
       });
     } catch (err) {
       console.error("❌ Cloudinary upload error:", err?.stack || err?.message || err);
@@ -427,6 +470,53 @@ app.post(
     }
   }
 );
+
+/* =========================
+   Admin image delete from Cloudinary
+========================= */
+app.delete("/admin/delete-image", auth, adminOnly, async (req, res) => {
+  try {
+    const publicId =
+      String(req.body?.publicId || req.body?.public_id || "").trim() ||
+      extractCloudinaryPublicId(req.body?.url || req.body?.imageUrl || req.body?.src || "");
+
+    if (!publicId) {
+      return res.status(400).json({
+        ok: false,
+        message: "Липсва publicId или валиден Cloudinary URL",
+      });
+    }
+
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: "image",
+    });
+
+    if (result?.result !== "ok" && result?.result !== "not found") {
+      return res.status(400).json({
+        ok: false,
+        message: "Cloudinary не успя да изтрие снимката",
+        cloudinary: result,
+      });
+    }
+
+    return res.json({
+      ok: true,
+      message:
+        result?.result === "not found"
+          ? "Снимката не беше намерена в Cloudinary"
+          : "Снимката е изтрита успешно",
+      publicId,
+      cloudinary: result?.result || "unknown",
+    });
+  } catch (err) {
+    console.error("❌ Cloudinary delete error:", err?.stack || err?.message || err);
+    return res.status(500).json({
+      ok: false,
+      message: "Грешка при триене на снимката",
+      error: err?.message || "delete failed",
+    });
+  }
+});
 
 /* =========================
    SEO: robots.txt

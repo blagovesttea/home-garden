@@ -71,11 +71,6 @@ function uniqueStrings(values = []) {
   return [...new Set(values.map((x) => String(x || "").trim()).filter(Boolean))];
 }
 
-function normalizeImages(images) {
-  if (!Array.isArray(images)) return [];
-  return uniqueStrings(images);
-}
-
 function normalizeStringArray(value) {
   if (!Array.isArray(value)) return [];
   return uniqueStrings(value);
@@ -219,13 +214,108 @@ function normalizePriceFields(data = {}) {
   };
 }
 
+function extractCloudinaryPublicId(value = "") {
+  const input = String(value || "").trim();
+  if (!input) return "";
+
+  if (!/^https?:\/\//i.test(input) && !input.includes("/upload/")) {
+    return input.replace(/\.[a-z0-9]+$/i, "");
+  }
+
+  try {
+    const url = new URL(input);
+    const pathname = url.pathname || "";
+    const marker = "/upload/";
+    const markerIndex = pathname.indexOf(marker);
+
+    if (markerIndex === -1) return "";
+
+    let rest = pathname.slice(markerIndex + marker.length);
+
+    rest = rest.replace(/^[^/]+\/+/, "");
+    rest = rest.replace(/^v\d+\//, "");
+    rest = rest.replace(/\.[a-z0-9]+$/i, "");
+
+    return rest;
+  } catch (_) {
+    return "";
+  }
+}
+
+function normalizeImageEntry(entry) {
+  if (!entry) {
+    return { url: "", publicId: "" };
+  }
+
+  if (typeof entry === "string") {
+    return {
+      url: entry.trim(),
+      publicId: extractCloudinaryPublicId(entry),
+    };
+  }
+
+  if (typeof entry === "object") {
+    const url = normalizeText(
+      entry.imageUrl ||
+        entry.url ||
+        entry.src ||
+        entry.secure_url ||
+        entry.originalUrl ||
+        ""
+    );
+
+    const publicId = normalizeText(
+      entry.imagePublicId ||
+        entry.publicId ||
+        entry.public_id ||
+        extractCloudinaryPublicId(url)
+    );
+
+    return { url, publicId };
+  }
+
+  return { url: "", publicId: "" };
+}
+
+function normalizeImages(images) {
+  if (!Array.isArray(images)) return [];
+  return uniqueStrings(
+    images
+      .map((item) => normalizeImageEntry(item).url)
+      .filter(Boolean)
+  );
+}
+
+function normalizeImagePublicIdsFromImages(images) {
+  if (!Array.isArray(images)) return [];
+  return uniqueStrings(
+    images
+      .map((item) => normalizeImageEntry(item).publicId)
+      .filter(Boolean)
+  );
+}
+
 function normalizeImageMeta(data = {}) {
-  const imageUrl = normalizeText(data.imageUrl);
-  const imagePublicId = normalizeText(data.imagePublicId);
+  const imageUrl = normalizeText(
+    data.imageUrl || data.url || data.src || data.secure_url || data.originalUrl || ""
+  );
+
+  const imagePublicId = normalizeText(
+    data.imagePublicId ||
+      data.publicId ||
+      data.public_id ||
+      extractCloudinaryPublicId(imageUrl)
+  );
+
   const images = normalizeImages(data.images);
-  const imagePublicIds = normalizeStringArray(data.imagePublicIds);
+  const imagePublicIds = uniqueStrings([
+    ...normalizeStringArray(data.imagePublicIds),
+    ...normalizeStringArray(data.publicIds),
+    ...normalizeImagePublicIdsFromImages(data.images),
+  ]);
 
   const mergedImages = imageUrl ? uniqueStrings([imageUrl, ...images]) : images.slice();
+
   const mergedPublicIds = imagePublicId
     ? uniqueStrings([imagePublicId, ...imagePublicIds])
     : imagePublicIds.slice();
@@ -241,9 +331,14 @@ function normalizeImageMeta(data = {}) {
 function collectCloudinaryPublicIds(product) {
   if (!product) return [];
 
+  const imageUrls = [];
+  if (product.imageUrl) imageUrls.push(product.imageUrl);
+  if (Array.isArray(product.images)) imageUrls.push(...product.images);
+
   return uniqueStrings([
     product.imagePublicId,
     ...(Array.isArray(product.imagePublicIds) ? product.imagePublicIds : []),
+    ...imageUrls.map((url) => extractCloudinaryPublicId(url)),
   ]);
 }
 
@@ -783,10 +878,14 @@ router.patch("/products/:id", auth, adminOnly, async (req, res) => {
     if (data.category == null) delete patch.category;
     if (data.source == null) delete patch.source;
     if (data.sourceUrl == null) delete patch.sourceUrl;
-    if (data.imageUrl == null) delete patch.imageUrl;
-    if (data.imagePublicId == null) delete patch.imagePublicId;
+    if (data.imageUrl == null && data.url == null && data.src == null && data.secure_url == null && data.originalUrl == null) {
+      delete patch.imageUrl;
+    }
+    if (data.imagePublicId == null && data.publicId == null && data.public_id == null) {
+      delete patch.imagePublicId;
+    }
     if (data.images == null) delete patch.images;
-    if (data.imagePublicIds == null) delete patch.imagePublicIds;
+    if (data.imagePublicIds == null && data.publicIds == null) delete patch.imagePublicIds;
     if (data.currency == null) delete patch.currency;
     if (data.shippingPrice == null) delete patch.shippingPrice;
     if (data.shippingToBG == null) delete patch.shippingToBG;
@@ -836,9 +935,16 @@ router.patch("/products/:id", auth, adminOnly, async (req, res) => {
 
     const imageFieldsTouched =
       data.imageUrl != null ||
+      data.url != null ||
+      data.src != null ||
+      data.secure_url != null ||
+      data.originalUrl != null ||
       data.imagePublicId != null ||
+      data.publicId != null ||
+      data.public_id != null ||
       data.images != null ||
-      data.imagePublicIds != null;
+      data.imagePublicIds != null ||
+      data.publicIds != null;
 
     let updated = await Product.findByIdAndUpdate(id, { $set: patch }, { new: true });
     if (!updated) return res.status(404).json({ message: "Не е намерен" });
@@ -962,7 +1068,7 @@ router.delete("/products/delete-many", auth, adminOnly, async (req, res) => {
     const productsToDelete = await Product.find({
       _id: { $in: validIds },
     })
-      .select("_id imagePublicId imagePublicIds")
+      .select("_id imageUrl images imagePublicId imagePublicIds")
       .lean();
 
     const allPublicIds = uniqueStrings(
@@ -1071,7 +1177,7 @@ router.delete("/products/:id", auth, adminOnly, async (req, res) => {
     const { id } = req.params;
 
     const existing = await Product.findById(id)
-      .select("_id imagePublicId imagePublicIds")
+      .select("_id imageUrl images imagePublicId imagePublicIds")
       .lean();
 
     if (!existing) return res.status(404).json({ message: "Не е намерен" });
