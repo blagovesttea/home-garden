@@ -347,6 +347,17 @@ function buildProductDescription(product) {
   return composed.slice(0, 155);
 }
 
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<AppShell />} />
+      <Route path="/products/:slug" element={<AppShell />} />
+      <Route path="/admin" element={<AppShell />} />
+      <Route path="*" element={<AppShell />} />
+    </Routes>
+  );
+}
+
 function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -405,6 +416,14 @@ function AppShell() {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
 
+  /* =========================
+     ADMIN IMAGE UPLOAD
+  ========================== */
+  const [mainImageUploading, setMainImageUploading] = useState(false);
+  const [mainImageUploadMsg, setMainImageUploadMsg] = useState("");
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [galleryUploadMsg, setGalleryUploadMsg] = useState("");
+
   useEffect(() => {
     const nextView = location.pathname.startsWith("/admin") ? "admin" : "public";
     setView(nextView);
@@ -422,11 +441,13 @@ function AppShell() {
 
   async function apiFetch(path, opts = {}) {
     const hasBody = opts.body != null;
+    const isFormData =
+      typeof FormData !== "undefined" && opts.body instanceof FormData;
 
     const res = await fetch(`${API}${path}`, {
       ...opts,
       headers: {
-        ...(hasBody ? { "Content-Type": "application/json" } : {}),
+        ...(!isFormData && hasBody ? { "Content-Type": "application/json" } : {}),
         ...authHeaders,
         ...(opts.headers || {}),
       },
@@ -442,23 +463,100 @@ function AppShell() {
     }
 
     if (!res.ok) {
-  const parts = [
-    data?.message,
-    data?.error,
-    data?.details ? JSON.stringify(data.details) : "",
-  ].filter(Boolean);
+      const parts = [
+        data?.message,
+        data?.error,
+        data?.details ? JSON.stringify(data.details) : "",
+      ].filter(Boolean);
 
-  const msg =
-    parts.join(" | ") ||
-    (text?.includes("<!doctype") || text?.includes("<html")
-      ? "Сървърът върна HTML вместо JSON."
-      : text ||
-        `HTTP ${res.status}`);
+      const msg =
+        parts.join(" | ") ||
+        (text?.includes("<!doctype") || text?.includes("<html")
+          ? "Сървърът върна HTML вместо JSON."
+          : text || `HTTP ${res.status}`);
 
-  throw new Error(msg);
-}
+      throw new Error(msg);
+    }
 
     return data;
+  }
+
+  async function uploadSingleImageFile(file) {
+    if (!file) throw new Error("Няма избран файл");
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const data = await apiFetch("/admin/upload-image", {
+      method: "POST",
+      body: formData,
+    });
+
+    const url = normalizeImageUrl(data?.url || data?.secure_url);
+    if (!url) {
+      throw new Error("Не е върнат URL на снимката");
+    }
+
+    return url;
+  }
+
+  async function handleMainImageUpload(file) {
+    if (!file) return;
+
+    setMainImageUploading(true);
+    setMainImageUploadMsg("");
+
+    try {
+      const url = await uploadSingleImageFile(file);
+      updateFormField("imageUrl", url);
+      setMainImageUploadMsg("Главната снимка е качена успешно.");
+    } catch (e) {
+      setMainImageUploadMsg(e?.message || "Грешка при качване на главната снимка.");
+    } finally {
+      setMainImageUploading(false);
+    }
+  }
+
+  async function handleGalleryImagesUpload(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+
+    setGalleryUploading(true);
+    setGalleryUploadMsg("");
+
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        const url = await uploadSingleImageFile(file);
+        if (url) uploadedUrls.push(url);
+      }
+
+      if (!uploadedUrls.length) {
+        throw new Error("Не бяха качени снимки");
+      }
+
+      const current = linesToArray(productForm.imagesText);
+      const merged = [...current];
+
+      uploadedUrls.forEach((url) => {
+        if (!merged.includes(url)) {
+          merged.push(url);
+        }
+      });
+
+      updateFormField("imagesText", merged.join("\n"));
+      setGalleryUploadMsg(
+        uploadedUrls.length === 1
+          ? "Допълнителната снимка е качена успешно."
+          : `Качени са ${uploadedUrls.length} допълнителни снимки.`
+      );
+    } catch (e) {
+      setGalleryUploadMsg(
+        e?.message || "Грешка при качване на допълнителните снимки."
+      );
+    } finally {
+      setGalleryUploading(false);
+    }
   }
 
   useEffect(() => {
@@ -1122,7 +1220,10 @@ function AppShell() {
     setEditingId("");
     setProductForm(emptyProductForm());
     setFormOpen(true);
+    setFormLoading(false);
     setAdminMsg("");
+    setMainImageUploadMsg("");
+    setGalleryUploadMsg("");
   }
 
   function openEditForm(product) {
@@ -1171,7 +1272,10 @@ function AppShell() {
       status: product?.status || "new",
     });
     setFormOpen(true);
+    setFormLoading(false);
     setAdminMsg("");
+    setMainImageUploadMsg("");
+    setGalleryUploadMsg("");
   }
 
   function closeForm() {
@@ -1179,6 +1283,8 @@ function AppShell() {
     setEditingId("");
     setProductForm(emptyProductForm());
     setFormLoading(false);
+    setMainImageUploadMsg("");
+    setGalleryUploadMsg("");
   }
 
   function updateFormField(key, value) {
@@ -1459,9 +1565,6 @@ function AppShell() {
     navigate("/");
   }
 
-  /* =========================
-     UI
-  ========================== */
   return (
     <div className={`hg ${view === "public" ? "hg--public" : "hg--admin"}`}>
       {view === "public" ? (
@@ -2033,6 +2136,104 @@ function AppShell() {
                         </label>
                       </div>
 
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 14,
+                          marginBottom: 14,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 10,
+                            padding: 14,
+                            borderRadius: 12,
+                            border: "1px solid rgba(255,255,255,.14)",
+                            background: "rgba(255,255,255,.04)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontWeight: 800,
+                              fontSize: 14,
+                            }}
+                          >
+                            Качи главна снимка от компютъра
+                          </div>
+
+                          <input
+                            className="hg-input"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleMainImageUpload(e.target.files?.[0])}
+                            disabled={mainImageUploading || formLoading}
+                          />
+
+                          {mainImageUploadMsg ? (
+                            <div className="hg-note">{mainImageUploadMsg}</div>
+                          ) : null}
+
+                          {mainImageUploading ? (
+                            <div className="hg-note">Качване на главната снимка...</div>
+                          ) : null}
+
+                          {productForm.imageUrl ? (
+                            <div
+                              style={{
+                                width: 180,
+                                height: 180,
+                                borderRadius: 14,
+                                border: "1px solid rgba(255,255,255,.14)",
+                                backgroundImage: `url("${productForm.imageUrl}")`,
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                                backgroundRepeat: "no-repeat",
+                              }}
+                            />
+                          ) : null}
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 10,
+                            padding: 14,
+                            borderRadius: 12,
+                            border: "1px solid rgba(255,255,255,.14)",
+                            background: "rgba(255,255,255,.04)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontWeight: 800,
+                              fontSize: 14,
+                            }}
+                          >
+                            Качи допълнителни снимки за галерия
+                          </div>
+
+                          <input
+                            className="hg-input"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={(e) => handleGalleryImagesUpload(e.target.files)}
+                            disabled={galleryUploading || formLoading}
+                          />
+
+                          {galleryUploadMsg ? (
+                            <div className="hg-note">{galleryUploadMsg}</div>
+                          ) : null}
+
+                          {galleryUploading ? (
+                            <div className="hg-note">
+                              Качване на допълнителните снимки...
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+
                       <textarea
                         className="hg-textarea"
                         placeholder="Кратко описание"
@@ -2078,7 +2279,7 @@ function AppShell() {
                         <button
                           className="hg-btn hg-btn--primary"
                           type="submit"
-                          disabled={formLoading}
+                          disabled={formLoading || mainImageUploading || galleryUploading}
                         >
                           {formLoading
                             ? "Запис..."
@@ -3135,16 +3336,5 @@ function AppShell() {
         </>
       )}
     </div>
-  );
-}
-
-export default function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<AppShell />} />
-      <Route path="/products/:slug" element={<AppShell />} />
-      <Route path="/admin" element={<AppShell />} />
-      <Route path="*" element={<AppShell />} />
-    </Routes>
   );
 }
