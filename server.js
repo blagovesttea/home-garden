@@ -108,6 +108,38 @@ function resolveBuildPath() {
   return path.join(__dirname, "client", "build");
 }
 
+async function dropLegacyProductIndexes() {
+  try {
+    const productsCollection = mongoose.connection.collection("products");
+    const indexes = await productsCollection.indexes();
+    const hasLegacySourceUrlIndex = indexes.some(
+      (idx) => idx && idx.name === "sourceUrl_1"
+    );
+
+    if (!hasLegacySourceUrlIndex) {
+      console.log("ℹ️ Legacy index sourceUrl_1 not found");
+      return;
+    }
+
+    await productsCollection.dropIndex("sourceUrl_1");
+    console.log("✅ Dropped legacy unique index: sourceUrl_1");
+  } catch (err) {
+    const msg = err?.message || String(err || "");
+
+    if (
+      err?.codeName === "IndexNotFound" ||
+      /index not found/i.test(msg) ||
+      /ns not found/i.test(msg)
+    ) {
+      console.log("ℹ️ Legacy index sourceUrl_1 already missing");
+      return;
+    }
+
+    console.error("⚠️ Failed to drop legacy index sourceUrl_1:");
+    console.error(err?.stack || err?.message || err);
+  }
+}
+
 /* =========================
    App settings
 ========================= */
@@ -371,6 +403,8 @@ async function start() {
 
     await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ MongoDB connected");
+
+    await dropLegacyProductIndexes();
 
     const PORT = process.env.PORT || 8000;
     app.listen(PORT, () => {
