@@ -279,7 +279,7 @@ button{
   max-width: var(--wrap);
   width: 100%;
   margin: 0 auto;
-  padding: 0 2px 80px;
+  padding: 0 8px 80px;
 }
 
 .hg-publicHeader{
@@ -409,15 +409,15 @@ button{
 }
 
 .hg-publicNav__actions .hg-btn{
-  min-width: 104px;
-  height: 54px;
-  padding: 0 18px;
+  min-width: 72px;
+  height: 56px;
+  padding: 0 20px;
   border-radius: 999px;
-  background: #fff;
-  color: #6f6f6f;
+  background: rgba(255,255,255,.96);
+  color: #544843;
   border: 1px solid rgba(0,0,0,.04);
-  box-shadow: 0 12px 30px rgba(0,0,0,.14);
-  font-size: 23px;
+  box-shadow: 0 14px 30px rgba(0,0,0,.16);
+  font-size: 24px;
   font-weight: 900;
   line-height: 1;
   display: inline-flex;
@@ -428,12 +428,12 @@ button{
 
 .hg-publicNav__actions .hg-btn:hover{
   transform: translateY(-1px);
-  box-shadow: 0 14px 32px rgba(0,0,0,.18);
+  box-shadow: 0 16px 34px rgba(0,0,0,.18);
 }
 
 .hg-publicNav__actions .hg-btn--primary{
-  background: #fff;
-  color: #6f6f6f;
+  background: rgba(255,255,255,.96);
+  color: #544843;
 }
 
 .hg--public .hg-userChip{
@@ -460,7 +460,7 @@ button{
   padding-top: 0;
   background-color: #8f847b;
   background-image:
-    linear-gradient(90deg, rgba(18,11,8,.58) 0%, rgba(18,11,8,.36) 38%, rgba(18,11,8,.16) 100%),
+    linear-gradient(90deg, rgba(18,11,8,.62) 0%, rgba(18,11,8,.40) 38%, rgba(18,11,8,.18) 100%),
     url("https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=2200");
   background-size: cover;
   background-position: center center;
@@ -479,7 +479,7 @@ button{
 .hg-hero__content{
   position: relative;
   z-index: 2;
-  padding: 58px 56px 220px;
+  padding: 58px 56px 120px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -566,16 +566,9 @@ button{
   transform: translateY(-1px);
 }
 
+/* Скриваме белите category cards под hero */
 .hg-heroCategories{
-  position: absolute;
-  left: 50%;
-  bottom: 26px;
-  transform: translateX(-50%);
-  width: calc(100% - 72px);
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 18px;
-  z-index: 3;
+  display: none;
 }
 
 .hg-heroCategory{
@@ -709,8 +702,9 @@ button{
   color: rgba(255,255,255,.82);
 }
 
+/* Скриваме дублиращите category cards секции под hero */
 .hg-chipSection{
-  padding: 24px 0 0;
+  display: none;
 }
 
 .hg-sectionHead{
@@ -783,7 +777,7 @@ button{
 }
 
 .hg-toolbarWrap{
-  margin-top: 28px;
+  margin-top: 26px;
 }
 
 .hg--public .hg-toolbar{
@@ -792,11 +786,12 @@ button{
   flex-wrap: wrap;
   gap: 12px;
   padding: 14px;
-  margin: 0 0 22px;
+  margin: 0 0 18px;
   border: 1px solid rgba(255,255,255,.72);
-  border-radius: 12px;
-  background: rgba(255,255,255,.86);
-  box-shadow: var(--shadow-md);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,255,255,.86));
+  box-shadow: 0 16px 36px rgba(31,23,18,.08);
 }
 
 .hg--public .hg-input{
@@ -820,19 +815,19 @@ button{
 .hg--public .hg-grid{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 26px 24px;
+  gap: 24px 22px;
 }
 
 .hg--public .hg-card{
   display: flex;
   flex-direction: column;
-  border-radius: 22px;
+  border-radius: 24px;
   overflow: hidden;
-  background: #f9f9f9;
-  border: 1px solid rgba(0,0,0,.03);
+  background: linear-gradient(180deg, #ffffff 0%, #faf7f3 100%);
+  border: 1px solid rgba(64,41,28,.06);
   box-shadow:
-    0 16px 34px rgba(31,23,18,.08),
-    0 2px 6px rgba(31,23,18,.04);
+    0 18px 38px rgba(31,23,18,.08),
+    0 2px 8px rgba(31,23,18,.04);
   transition:
     transform .18s ease,
     box-shadow .18s ease,
@@ -840,18 +835,18 @@ button{
 }
 
 .hg--public .hg-card:hover{
-  transform: translateY(-4px);
-  border-color: rgba(207,32,47,.08);
+  transform: translateY(-5px);
+  border-color: rgba(207,32,47,.10);
   box-shadow:
-    0 22px 46px rgba(31,23,18,.12),
-    0 4px 10px rgba(31,23,18,.05);
+    0 24px 48px rgba(31,23,18,.12),
+    0 6px 14px rgba(31,23,18,.05);
 }
 
 .hg--public .hg-thumb{
-  height: 310px;
+  height: 268px;
   border-radius: 0;
   border: none;
-  background: #fdfdfd;
+  background: linear-gradient(180deg, #fff 0%, #f6f0ea 100%);
   background-size: contain;
   background-position: center center;
   background-repeat: no-repeat;
@@ -859,17 +854,17 @@ button{
 }
 
 .hg--public .hg-cardBody{
-  padding: 18px 22px 22px;
+  padding: 18px 20px 20px;
   display: grid;
-  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-rows: auto auto auto auto;
   gap: 10px;
-  min-height: 220px;
-  background: #f9f9f9;
+  min-height: 196px;
+  background: transparent;
 }
 
 .hg--public .hg-meta{
   min-height: 18px;
-  margin-bottom: 2px;
+  margin-bottom: 0;
   position: relative;
 }
 
@@ -879,24 +874,24 @@ button{
 
 .hg--public .hg-meta::before{
   content: "★★★★★";
-  font-size: 20px;
+  font-size: 16px;
   letter-spacing: 1px;
-  color: #b7b7b7;
+  color: #b8b2ad;
   line-height: 1;
 }
 
 .hg--public .hg-cardTitle{
   margin: 0;
-  font-size: 16px;
-  line-height: 1.36;
-  font-weight: 500;
-  color: #6f6f6f;
-  letter-spacing: -0.02em;
+  font-size: 18px;
+  line-height: 1.34;
+  font-weight: 800;
+  color: #2b201b;
+  letter-spacing: -0.03em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 44px;
+  min-height: 48px;
 }
 
 .hg--public .hg-pill{
@@ -926,59 +921,59 @@ button{
 }
 
 .hg--public .hg-price{
-  font-size: 28px;
+  font-size: 30px;
   line-height: 1;
-  font-weight: 500;
-  letter-spacing: -0.04em;
+  font-weight: 900;
+  letter-spacing: -0.05em;
   color: #1f2130;
-  margin-top: 10px;
+  margin-top: 2px;
 }
 
 .hg--public .hg-cardBody .hg-actions{
-  margin-top: 6px;
+  margin-top: 4px;
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: nowrap;
 }
 
 .hg--public .hg-cardBody .hg-actions .hg-btn:first-child{
-  height: 50px;
-  min-width: 94px;
-  padding: 0 12px;
+  height: 46px;
+  min-width: 96px;
+  padding: 0 14px;
   border-radius: 999px;
-  background: transparent;
-  border: 1px solid rgba(0,0,0,.08);
-  color: #666;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(43,32,27,.10);
+  color: #6d635d;
   box-shadow: none;
   font-size: 13px;
   font-weight: 800;
 }
 
 .hg--public .hg-cardBody .hg-actions .hg-btn:first-child:hover{
-  background: rgba(0,0,0,.03);
+  background: rgba(255,255,255,.96);
   box-shadow: none;
 }
 
 .hg--public .hg-cardBody .hg-actions .hg-btn--primary{
-  height: 52px;
-  min-width: 146px;
-  padding: 0 26px;
+  height: 50px;
+  min-width: 148px;
+  padding: 0 24px;
   border-radius: 999px;
-  background: #cb1523;
+  background: linear-gradient(135deg, #d71d2c, #bd1826);
   border: none;
   color: #fff;
-  box-shadow: none;
-  font-size: 16px;
+  box-shadow: 0 12px 24px rgba(207,32,47,.20);
+  font-size: 15px;
   font-weight: 900;
   letter-spacing: -.01em;
   text-transform: uppercase;
 }
 
 .hg--public .hg-cardBody .hg-actions .hg-btn--primary:hover{
-  background: #b90f1c;
-  box-shadow: none;
+  background: linear-gradient(135deg, #c91524, #af1220);
+  box-shadow: 0 16px 28px rgba(207,32,47,.24);
 }
 
 /* =========================================================
@@ -1003,12 +998,13 @@ button{
   max-height: min(86vh, 780px);
   overflow: auto;
   border: 1px solid rgba(255,255,255,.70);
-  border-radius: 14px;
-  background: rgba(255,255,255,.96);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(250,247,243,.96));
   box-shadow:
     0 36px 90px rgba(31,23,18,.22),
     0 18px 44px rgba(31,23,18,.10);
-  padding: 18px;
+  padding: 20px;
 }
 
 .hg-modalHead{
@@ -1031,7 +1027,7 @@ button{
 .hg-modalClose{
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--line-2);
   background: rgba(255,255,255,.96);
   color: var(--text);
@@ -1048,20 +1044,22 @@ button{
 
 .hg-productModal{
   display: grid;
-  grid-template-columns: 420px minmax(0, 1fr);
-  gap: 28px;
+  grid-template-columns: 400px minmax(0, 1fr);
+  gap: 26px;
   margin-top: 12px;
+  align-items: start;
 }
 
 .hg-productModal__image{
-  min-height: 440px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.72);
-  background: #fff;
+  min-height: 400px;
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+  border: 1px solid rgba(64,41,28,.06);
+  background-color: #fff;
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 20px 48px rgba(31,23,18,.10);
 }
 
 .hg-productModal__content{
@@ -1069,6 +1067,7 @@ button{
   flex-direction: column;
   gap: 14px;
   padding-top: 4px;
+  min-width: 0;
 }
 
 .hg-productModal__title{
@@ -1098,7 +1097,8 @@ button{
   width: min(560px, 100vw);
   height: 100vh;
   padding: 18px;
-  background: rgba(255,255,255,.98);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.99), rgba(250,247,243,.98));
   border-left: 1px solid rgba(255,255,255,.70);
   box-shadow: -26px 0 70px rgba(31,23,18,.16);
   overflow: auto;
@@ -1119,16 +1119,16 @@ button{
   grid-template-columns: 96px minmax(0, 1fr);
   gap: 14px;
   padding: 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.74);
-  background: rgba(255,255,255,.90);
+  border-radius: 16px;
+  border: 1px solid rgba(64,41,28,.06);
+  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(249,246,242,.92));
   box-shadow: var(--shadow-sm);
 }
 
 .hg-cartItem__image{
   width: 96px;
   height: 96px;
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid var(--line);
   background-size: contain;
   background-position: center;
@@ -1591,6 +1591,7 @@ button{
 
   .hg-productModal__image{
     min-height: 300px;
+    aspect-ratio: auto;
   }
 
   .hg-formGrid{
@@ -1610,11 +1611,11 @@ button{
   }
 
   .hg-hero{
-    min-height: 860px;
+    min-height: 760px;
   }
 
   .hg-hero__content{
-    padding: 42px 28px 280px;
+    padding: 42px 28px 90px;
   }
 
   .hg-hero__title{
@@ -1678,7 +1679,7 @@ button{
   }
 
   .hg--public .hg-thumb{
-    height: 250px;
+    height: 240px;
   }
 
   .hg--admin .hg-grid{
@@ -1703,11 +1704,11 @@ button{
   }
 
   .hg-hero{
-    min-height: 980px;
+    min-height: 700px;
   }
 
   .hg-hero__content{
-    padding: 32px 20px 380px;
+    padding: 32px 20px 72px;
   }
 
   .hg-btn{
@@ -1753,9 +1754,9 @@ button{
   }
 
   .hg-publicNav__actions .hg-btn{
-    min-width: 84px;
-    height: 48px;
-    font-size: 20px;
+    min-width: 68px;
+    height: 50px;
+    font-size: 22px;
   }
 
   .hg--public .hg-cardBody .hg-actions{
