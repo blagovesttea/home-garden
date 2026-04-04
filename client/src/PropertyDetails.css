@@ -792,3 +792,44 @@
     min-height: 200px;
   }
 }
+.hg-productDetailsBottomGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.hg-productDetailsBottomGrid:has(.hg-productDetailsInfoSection:only-child) {
+  grid-template-columns: 1fr;
+}
+
+.hg-productDetailsInfoSection {
+  max-width: 420px;
+}
+
+.hg-productDetailsInfoSection--description {
+  max-width: 100%;
+}
+
+.hg-productDetailsSpecs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+  row-gap: 10px;
+}
+
+.hg-productDetailsSpec {
+  padding: 0;
+}
+
+@media (max-width: 920px) {
+  .hg-productDetailsBottomGrid,
+  .hg-productDetailsSpecs {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .hg-productDetailsInfoSection {
+    max-width: 100%;
+  }
+}
