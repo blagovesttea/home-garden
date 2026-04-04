@@ -3,7 +3,7 @@
 .hg-productDetailsPage {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 2px 0 24px;
+  padding: 4px 0 24px;
   display: grid;
   gap: 10px;
   color: #1d1714;
@@ -109,7 +109,7 @@
   max-width: 640px;
   width: 100%;
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .hg-productDetailsHeroWrap {
@@ -416,13 +416,13 @@
 
 .hg-productDetailsBottom {
   width: min(100%, 1180px);
-  margin: 34px auto 0;
+  margin: 18px auto 0;
 }
 
 .hg-productDetailsBottomGrid {
   display: grid;
-  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
-  gap: 70px;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  gap: 44px;
   align-items: start;
 }
 
@@ -432,9 +432,9 @@
 
 .hg-productDetailsInfoSection {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   align-content: start;
-  max-width: 460px;
+  max-width: 420px;
 }
 
 .hg-productDetailsInfoSection--description {
@@ -446,11 +446,11 @@
   display: flex;
   align-items: end;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 
 .hg-productDetailsSectionEyebrow {
-  margin-bottom: 2px;
+  margin-bottom: 0;
   color: rgba(33, 24, 19, 0.36);
   font-size: 9px;
   font-weight: 800;
@@ -461,7 +461,7 @@
 .hg-productDetailsSectionTitle {
   margin: 0;
   color: #201714;
-  font-size: clamp(18px, 1.4vw, 24px);
+  font-size: clamp(16px, 1.3vw, 22px);
   line-height: 1.08;
   font-weight: 900;
   letter-spacing: -0.04em;
@@ -469,8 +469,8 @@
 
 .hg-productDetailsText {
   max-width: 760px;
-  font-size: 14px;
-  line-height: 1.9;
+  font-size: 13px;
+  line-height: 1.75;
   color: rgba(43, 30, 24, 0.76);
   white-space: pre-line;
 }
@@ -478,8 +478,8 @@
 .hg-productDetailsSpecs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 42px;
-  row-gap: 20px;
+  column-gap: 34px;
+  row-gap: 16px;
 }
 
 .hg-productDetailsSpec {
@@ -501,9 +501,9 @@
 
 .hg-productDetailsSpecValue {
   color: #201714;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  line-height: 1.42;
+  line-height: 1.35;
 }
 
 .hg-productDetailsRelated {
@@ -605,13 +605,13 @@
   }
 
   .hg-productDetailsBottomGrid {
-    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
-    gap: 48px;
+    grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+    gap: 34px;
   }
 
   .hg-productDetailsSpecs {
-    column-gap: 28px;
-    row-gap: 18px;
+    column-gap: 24px;
+    row-gap: 16px;
   }
 }
 
@@ -645,7 +645,7 @@
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 250px;
+    min-height: 260px;
     max-height: none;
     aspect-ratio: 16 / 10;
   }
@@ -662,6 +662,10 @@
     padding-top: 0;
   }
 
+  .hg-productDetailsLead {
+    max-width: 100%;
+  }
+
   .hg-productDetailsTitle {
     font-size: clamp(24px, 6vw, 34px);
   }
@@ -671,13 +675,18 @@
   }
 
   .hg-productDetailsBottom {
-    margin-top: 24px;
+    margin-top: 22px;
   }
 
-  .hg-productDetailsBottomGrid,
-  .hg-productDetailsSpecs {
+  .hg-productDetailsBottomGrid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 22px;
+  }
+
+  .hg-productDetailsSpecs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 16px;
   }
 
   .hg-productDetailsInfoSection {
@@ -695,8 +704,8 @@
 
 @media (max-width: 640px) {
   .hg-productDetailsPage {
-    gap: 10px;
-    padding: 4px 0 16px;
+    gap: 8px;
+    padding: 2px 0 14px;
   }
 
   .hg-productDetailsTopbar__inner {
@@ -711,6 +720,23 @@
     font-size: 11px;
   }
 
+  .hg-productDetailsBreadcrumbs__inner {
+    gap: 6px;
+  }
+
+  .hg-productDetailsBreadcrumbLink,
+  .hg-productDetailsBreadcrumbCurrent {
+    font-size: 11px;
+  }
+
+  .hg-productDetailsBreadcrumbSep {
+    font-size: 10px;
+  }
+
+  .hg-productDetailsLayout {
+    gap: 14px;
+  }
+
   .hg-productDetailsHeroWrap,
   .hg-productDetailsHeroImage,
   .hg-productDetailsHeroOverlay {
@@ -723,40 +749,48 @@
   }
 
   .hg-productDetailsHeroBadges {
-    top: 14px;
-    left: 14px;
-    right: 14px;
-    gap: 10px;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    gap: 8px;
   }
 
   .hg-productDetailsBadge {
-    font-size: 10px;
-  }
-
-  .hg-productDetailsHeroContent {
-    left: 14px;
-    right: 14px;
-    bottom: 14px;
-    gap: 5px;
-  }
-
-  .hg-productDetailsHeroEyebrow {
     font-size: 9px;
   }
 
+  .hg-productDetailsHeroContent {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    gap: 4px;
+  }
+
+  .hg-productDetailsHeroEyebrow {
+    font-size: 8px;
+  }
+
   .hg-productDetailsHeroTitle {
-    font-size: clamp(18px, 7vw, 24px);
-    max-width: 260px;
+    font-size: clamp(17px, 7vw, 22px);
+    max-width: 230px;
   }
 
   .hg-productDetailsHeroMetaItem {
-    font-size: 10px;
+    font-size: 9px;
+  }
+
+  .hg-productDetailsThumbs {
+    gap: 6px;
   }
 
   .hg-productDetailsThumb {
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+  }
+
+  .hg-productDetailsContent {
+    gap: 10px;
   }
 
   .hg-productDetailsEyebrow {
@@ -764,7 +798,7 @@
   }
 
   .hg-productDetailsTitle {
-    font-size: clamp(20px, 8vw, 28px);
+    font-size: clamp(22px, 7vw, 28px);
   }
 
   .hg-productDetailsMetaItem {
@@ -782,7 +816,7 @@
   .hg-productDetailsLead,
   .hg-productDetailsText {
     font-size: 12px;
-    line-height: 1.64;
+    line-height: 1.62;
   }
 
   .hg-productDetailsActionPrimary,
@@ -791,6 +825,27 @@
     min-height: 42px;
     height: 42px;
     font-size: 11px;
+  }
+
+  .hg-productDetailsBottom {
+    margin-top: 18px;
+  }
+
+  .hg-productDetailsBottomGrid {
+    gap: 18px;
+  }
+
+  .hg-productDetailsSectionTitle {
+    font-size: 18px;
+  }
+
+  .hg-productDetailsSpecs {
+    grid-template-columns: 1fr;
+    row-gap: 14px;
+  }
+
+  .hg-productDetailsSpec {
+    gap: 4px;
   }
 
   .hg-productDetailsSpecLabel,
@@ -815,11 +870,32 @@
 }
 
 @media (max-width: 420px) {
+  .hg-productDetailsPage {
+    padding-bottom: 12px;
+  }
+
   .hg-productDetailsHeroImage {
     min-height: 200px;
   }
 
   .hg-productDetailsHeroTitle {
-    max-width: 220px;
+    max-width: 190px;
+    font-size: clamp(16px, 7vw, 20px);
+  }
+
+  .hg-productDetailsThumb {
+    width: 44px;
+    height: 44px;
+  }
+
+  .hg-productDetailsTitle {
+    font-size: 24px;
+  }
+
+  .hg-productDetailsActionPrimary,
+  .hg-productDetailsActionSecondary,
+  .hg-productDetailsActions .hg-btn {
+    min-height: 40px;
+    height: 40px;
   }
 }
