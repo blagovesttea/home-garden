@@ -1664,7 +1664,7 @@ function AppShell() {
             </div>
 
             <div className="hg-publicUtility__info">
-              <span>☎ 02 812 99 99</span>
+              <span>☎ +359889388113</span>
               <span>Доставка в България</span>
               <span>Онлайн поръчки</span>
             </div>
