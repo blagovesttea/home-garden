@@ -64,7 +64,10 @@ export default function PropertyDetails({
     <div className="hg-publicShell hg-productDetailsPage">
       <div className="hg-productDetailsTopbar">
         <div className="hg-productDetailsTopbar__inner">
-          <button className="hg-btn hg-productDetailsTopbarBtn" onClick={() => navigate(-1)}>
+          <button
+            className="hg-btn hg-productDetailsTopbarBtn"
+            onClick={() => navigate(-1)}
+          >
             Назад
           </button>
           <button
@@ -135,9 +138,7 @@ export default function PropertyDetails({
                 <div className="hg-productDetailsHeroOverlay" />
 
                 <div className="hg-productDetailsHeroBadges">
-                  <span className="hg-productDetailsBadge">
-                    {categoryLabel}
-                  </span>
+                  <span className="hg-productDetailsBadge">{categoryLabel}</span>
                   <span
                     className={`hg-productDetailsBadge ${
                       productPage?.stockStatus === "in_stock"
@@ -254,45 +255,43 @@ export default function PropertyDetails({
                   Добави и отвори количката
                 </button>
               </div>
+            </div>
+          </div>
 
-              <div className="hg-productDetailsInfo">
-                <div className="hg-productDetailsInfoSection">
+          <div className="hg-productDetailsBottom">
+            <div className="hg-productDetailsBottomGrid">
+              <div className="hg-productDetailsInfoSection">
+                <div className="hg-productDetailsSectionEyebrow">Детайли</div>
+                <h2 className="hg-productDetailsSectionTitle">
+                  Основна информация
+                </h2>
+
+                <div className="hg-productDetailsSpecs">
+                  {detailRows.map((row) => (
+                    <div className="hg-productDetailsSpec" key={row.label}>
+                      <span className="hg-productDetailsSpecLabel">
+                        {row.label}
+                      </span>
+                      <b className="hg-productDetailsSpecValue">
+                        {row.value}
+                      </b>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {productPage.description && (
+                <div className="hg-productDetailsInfoSection hg-productDetailsInfoSection--description">
                   <div className="hg-productDetailsSectionEyebrow">
-                    Детайли
+                    Представяне
                   </div>
-                  <h2 className="hg-productDetailsSectionTitle">
-                    Основна информация
-                  </h2>
+                  <h2 className="hg-productDetailsSectionTitle">Описание</h2>
 
-                  <div className="hg-productDetailsSpecs">
-                    {detailRows.map((row) => (
-                      <div className="hg-productDetailsSpec" key={row.label}>
-                        <span className="hg-productDetailsSpecLabel">
-                          {row.label}
-                        </span>
-                        <b className="hg-productDetailsSpecValue">
-                          {row.value}
-                        </b>
-                      </div>
-                    ))}
+                  <div className="hg-productDetailsText">
+                    {productPage.description}
                   </div>
                 </div>
-
-                {productPage.description && (
-                  <div className="hg-productDetailsInfoSection hg-productDetailsInfoSection--description">
-                    <div className="hg-productDetailsSectionEyebrow">
-                      Представяне
-                    </div>
-                    <h2 className="hg-productDetailsSectionTitle">
-                      Описание
-                    </h2>
-
-                    <div className="hg-productDetailsText">
-                      {productPage.description}
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </>
