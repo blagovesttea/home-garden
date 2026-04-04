@@ -296,12 +296,12 @@ button{
 
 .hg-publicUtility{
   min-height: 68px;
-  padding: 0 0 14px;
+  padding: 0 0 16px;
   background: transparent;
   color: rgba(255,255,255,.92);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
+  gap: 20px;
   align-items: center;
   border: none;
   box-shadow: none;
@@ -338,10 +338,10 @@ button{
 }
 
 .hg-publicUtility__copy{
-  max-width: 720px;
+  max-width: 640px;
   font-size: 12px;
   line-height: 1.6;
-  color: rgba(255,255,255,.76);
+  color: rgba(255,255,255,.70);
   text-shadow: 0 2px 10px rgba(0,0,0,.22);
 }
 
@@ -349,7 +349,7 @@ button{
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 18px;
+  gap: 22px;
   flex-wrap: wrap;
 }
 
@@ -366,7 +366,7 @@ button{
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
-  padding: 8px 0 0;
+  padding: 10px 0 0;
   background: transparent;
   color: #fff;
   border: none;
@@ -381,6 +381,7 @@ button{
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .hg-navLink{
@@ -512,7 +513,7 @@ button{
   padding-top: 0;
   background-color: #8f847b;
   background-image:
-    linear-gradient(180deg, rgba(7,5,5,.34) 0%, rgba(7,5,5,.18) 12%, rgba(7,5,5,.08) 24%, rgba(7,5,5,.18) 100%),
+    linear-gradient(180deg, rgba(7,5,5,.38) 0%, rgba(7,5,5,.22) 10%, rgba(7,5,5,.10) 22%, rgba(7,5,5,.20) 100%),
     linear-gradient(90deg, rgba(11,8,7,.72) 0%, rgba(11,8,7,.46) 36%, rgba(11,8,7,.18) 68%, rgba(11,8,7,.06) 100%),
     linear-gradient(180deg, rgba(0,0,0,.10) 0%, rgba(0,0,0,.18) 100%),
     url("https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=2200");
@@ -534,7 +535,7 @@ button{
 .hg-hero__content{
   position: relative;
   z-index: 2;
-  padding: 174px 64px 220px;
+  padding: 180px 64px 220px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1927,7 +1928,7 @@ button{
   }
 
   .hg-hero__content{
-    padding: 160px 28px 250px;
+    padding: 164px 28px 250px;
   }
 
   .hg-toolbarWrap{
@@ -1977,8 +1978,8 @@ button{
   }
 
   .hg-publicNav{
-    padding: 6px 0 0;
-    gap: 10px;
+    padding: 8px 0 0;
+    gap: 12px;
   }
 
   .hg-publicNav__menu{
@@ -2017,7 +2018,7 @@ button{
   }
 
   .hg-hero__content{
-    padding: 154px 28px 300px;
+    padding: 158px 28px 300px;
   }
 
   .hg-hero__title{
@@ -2055,22 +2056,32 @@ button{
   }
 
   .hg-publicHeader{
-    margin-bottom: -74px;
-    padding: 12px 14px 0;
+    position: absolute;
+    inset: 0 0 auto 0;
+    margin-bottom: 0;
+    padding: 14px 16px 0;
+    z-index: 45;
   }
 
   .hg-publicUtility{
     min-height: auto;
-    gap: 8px;
-    padding: 0 0 8px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+    padding: 0;
   }
 
   .hg-publicUtility__brand{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 6px;
+    min-width: 0;
   }
 
   .hg-publicUtility__logo{
-    font-size: 34px;
+    font-size: 30px;
+    line-height: .94;
   }
 
   .hg-publicUtility__copy{
@@ -2078,48 +2089,58 @@ button{
   }
 
   .hg-publicUtility__info{
-    width: 100%;
-    gap: 8px 12px;
-    justify-content: flex-start;
-  }
-
-  .hg-publicUtility__info span{
-    font-size: 11px;
-    line-height: 1.35;
+    display: none;
   }
 
   .hg-publicNav{
-    grid-template-columns: 1fr;
-    align-items: start;
-    justify-items: stretch;
-    gap: 8px;
-    padding: 4px 0 0;
+    position: relative;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0 0;
   }
 
   .hg-publicNav__menu{
-    display: flex;
-    align-items: center;
-    gap: 4px 2px;
-    flex-wrap: wrap;
     width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 6px;
+    padding: 0 40px 6px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .hg-publicNav__menu::-webkit-scrollbar{
+    display: none;
   }
 
   .hg-navLink{
+    flex: 0 0 auto;
     height: 34px;
-    padding: 0 10px;
+    padding: 0 12px;
     font-size: 10px;
     letter-spacing: .04em;
+    white-space: nowrap;
   }
 
   .hg-navLink::after{
-    left: 10px;
-    right: 10px;
+    left: 12px;
+    right: 12px;
   }
 
   .hg-publicNav__actions{
-    width: 100%;
+    width: auto;
     justify-content: flex-end;
-    gap: 10px;
+    align-self: flex-start;
+    position: absolute;
+    right: 0;
+    top: 8px;
+    z-index: 3;
+    padding-left: 12px;
+    background: linear-gradient(90deg, rgba(11,8,7,0) 0%, rgba(11,8,7,.32) 30%, rgba(11,8,7,.50) 100%);
   }
 
   .hg--public .hg-grid{
@@ -2162,13 +2183,13 @@ button{
   }
 
   .hg-hero{
-    min-height: 960px;
+    min-height: 980px;
     border-radius: 24px;
     background-position: 58% center;
   }
 
   .hg-hero__content{
-    padding: 148px 20px 410px;
+    padding: 250px 20px 410px;
     max-width: 100%;
   }
 
@@ -2181,8 +2202,9 @@ button{
 
   .hg-hero__title{
     margin-top: 18px;
-    font-size: clamp(30px, 13vw, 52px);
-    line-height: .95;
+    font-size: clamp(28px, 11.8vw, 46px);
+    line-height: .96;
+    max-width: 100%;
   }
 
   .hg-hero__text{
@@ -2198,7 +2220,7 @@ button{
   }
 
   .hg-hero__cta .hg-btn{
-    height: 46px;
+    height: 48px;
     padding: 0 18px;
     font-size: 12px;
   }
@@ -2324,34 +2346,39 @@ button{
 
 @media (max-width: 480px){
   .hg-publicHeader{
-    margin-bottom: -66px;
-    padding: 10px 12px 0;
+    position: absolute;
+    inset: 0 0 auto 0;
+    margin-bottom: 0;
+    padding: 12px 12px 0;
+  }
+
+  .hg-publicUtility{
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
   }
 
   .hg-publicUtility__logo{
-    font-size: 30px;
-  }
-
-  .hg-publicUtility__info{
-    gap: 6px 10px;
-  }
-
-  .hg-publicUtility__info span{
-    font-size: 10px;
+    font-size: 28px;
   }
 
   .hg-publicNav{
-    gap: 6px;
+    gap: 8px;
+    padding-top: 8px;
   }
 
   .hg-publicNav__menu{
-    gap: 2px;
+    gap: 4px;
+    padding-right: 34px;
   }
 
   .hg-navLink{
     height: 32px;
-    padding: 0 9px;
+    padding: 0 10px;
     font-size: 9px;
+  }
+
+  .hg-publicNav__actions{
+    top: 6px;
   }
 
   .hg-publicNav__actions .hg-btn{
@@ -2359,17 +2386,17 @@ button{
   }
 
   .hg-hero{
-    min-height: 920px;
+    min-height: 940px;
     border-radius: 22px;
     background-position: 60% center;
   }
 
   .hg-hero__content{
-    padding: 142px 16px 402px;
+    padding: 234px 16px 402px;
   }
 
   .hg-hero__title{
-    font-size: clamp(28px, 12vw, 44px);
+    font-size: clamp(26px, 11vw, 40px);
   }
 
   .hg-hero__text{
