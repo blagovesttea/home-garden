@@ -190,16 +190,19 @@ export default function PropertyDetails({
                 </div>
 
                 <div className="hg-productDetailsPrice">
-                  {formatPrice(
-                    productPrice(productPage),
-                    productPage.currency
-                  )}
+                  {formatPrice(productPrice(productPage), productPage.currency)}
                 </div>
               </div>
 
               {productPage.shortDescription && (
                 <div className="hg-productDetailsLead">
                   {productPage.shortDescription}
+                </div>
+              )}
+
+              {productPage.description && (
+                <div className="hg-productDetailsText">
+                  {productPage.description}
                 </div>
               )}
 
@@ -241,17 +244,6 @@ export default function PropertyDetails({
                     ))}
                   </div>
                 </div>
-
-                {productPage.description && (
-                  <div className="hg-productDetailsCard">
-                    <div className="hg-productDetailsCardTitle">
-                      Описание
-                    </div>
-                    <div className="hg-productDetailsText">
-                      {productPage.description}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
