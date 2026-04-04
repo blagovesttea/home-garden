@@ -1160,10 +1160,23 @@ button{
   text-shadow: none;
 }
 
+/* ВАЖНО:
+   App.css вече НЕ управлява размерите/spacing-а на самата detail page.
+   Това остава изцяло за PropertyDetails.css.
+*/
+.hg--public .hg-publicShell.hg-productDetailsPage{
+  display: grid;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-top: 0;
+}
+
 .hg--public .hg-productDetailsPage{
-  max-width: 1440px;
-  margin: 0 auto;
-  padding-top: 22px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-top: 0;
 }
 
 /* НЕУТРАЛИЗИРАНЕ НА ГЛОБАЛНИ WRAPPERS ЗА PRODUCT DETAILS */
@@ -1189,8 +1202,6 @@ button{
   justify-content: flex-start;
   gap: 10px;
 }
-
-/* ОСТАВЯМЕ БУТОНИТЕ/MAIN PANEL/BREADCRUMB/GRID/CARD ДА СЕ УПРАВЛЯВАТ ОТ PropertyDetails.css */
 
 /* =========================================================
    CART / CHECKOUT
@@ -1655,7 +1666,7 @@ button{
   }
 
   .hg--public .hg-productDetailsPage{
-    max-width: 1260px;
+    padding-top: 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
@@ -1689,7 +1700,7 @@ button{
   }
 
   .hg--public .hg-productDetailsPage{
-    padding-top: 18px;
+    padding-top: 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
@@ -1746,7 +1757,7 @@ button{
   }
 
   .hg--public .hg-productDetailsPage{
-    padding-top: 16px;
+    padding-top: 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
@@ -1851,7 +1862,7 @@ button{
   }
 
   .hg--public .hg-productDetailsPage{
-    padding-top: 14px;
+    padding-top: 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
@@ -2284,8 +2295,8 @@ button{
   }
 
   .hg--public .hg-productDetailsPage{
-    padding-top: 10px;
-    gap: 14px;
+    padding-top: 0;
+    gap: 0;
   }
 
   .hg--public .hg-productDetailsPage .hg-toolbarWrap,
@@ -2629,8 +2640,8 @@ button{
   }
 
   .hg--public .hg-productDetailsPage{
-    padding-top: 8px;
-    gap: 12px;
+    padding-top: 0;
+    gap: 0;
   }
 
   .hg--public .hg-productDetailsPage .hg-toolbarWrap,
