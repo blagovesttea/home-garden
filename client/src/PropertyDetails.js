@@ -144,16 +144,18 @@ export default function PropertyDetails({
               <div className="hg-productDetailsContent">
                 <div className="hg-productDetailsMeta">
                   {productPage.category ? (
-                    <span className="hg-pill">
+                    <span className="hg-productDetailsPill">
                       {categoryLabelFromValue(productPage.category)}
                     </span>
                   ) : null}
 
                   {productPage.brand ? (
-                    <span className="hg-pill">{productPage.brand}</span>
+                    <span className="hg-productDetailsPill">
+                      {productPage.brand}
+                    </span>
                   ) : null}
 
-                  <span className="hg-pill">{stockLabel}</span>
+                  <span className="hg-productDetailsPill">{stockLabel}</span>
                 </div>
 
                 <h1 className="hg-productDetailsTitle">{productPage.title}</h1>
@@ -173,40 +175,42 @@ export default function PropertyDetails({
                 ) : null}
 
                 <div className="hg-productDetailsSpecs">
-                  <div className="hg-kpis">
-                    Наличност
-                    <b>{stockQtyLabel}</b>
+                  <div className="hg-productDetailsSpec">
+                    <span className="hg-productDetailsSpecLabel">Наличност</span>
+                    <b className="hg-productDetailsSpecValue">{stockQtyLabel}</b>
                   </div>
 
-                  <div className="hg-kpis">
-                    Доставка
-                    <b>{shippingLabel}</b>
+                  <div className="hg-productDetailsSpec">
+                    <span className="hg-productDetailsSpecLabel">Доставка</span>
+                    <b className="hg-productDetailsSpecValue">{shippingLabel}</b>
                   </div>
 
-                  <div className="hg-kpis">
-                    Грамаж
-                    <b>{weightLabel}</b>
+                  <div className="hg-productDetailsSpec">
+                    <span className="hg-productDetailsSpecLabel">Грамаж</span>
+                    <b className="hg-productDetailsSpecValue">{weightLabel}</b>
                   </div>
 
-                  <div className="hg-kpis">
-                    Интензитет
-                    <b>{intensityLabel}</b>
+                  <div className="hg-productDetailsSpec">
+                    <span className="hg-productDetailsSpecLabel">Интензитет</span>
+                    <b className="hg-productDetailsSpecValue">{intensityLabel}</b>
                   </div>
 
-                  <div className="hg-kpis">
-                    Изпичане
-                    <b>{roastLabel}</b>
+                  <div className="hg-productDetailsSpec">
+                    <span className="hg-productDetailsSpecLabel">Изпичане</span>
+                    <b className="hg-productDetailsSpecValue">{roastLabel}</b>
                   </div>
 
-                  <div className="hg-kpis">
-                    Кофеин
-                    <b>{caffeineLabel}</b>
+                  <div className="hg-productDetailsSpec">
+                    <span className="hg-productDetailsSpecLabel">Кофеин</span>
+                    <b className="hg-productDetailsSpecValue">{caffeineLabel}</b>
                   </div>
 
                   {productPage.sku ? (
-                    <div className="hg-kpis">
-                      SKU
-                      <b>{productPage.sku}</b>
+                    <div className="hg-productDetailsSpec">
+                      <span className="hg-productDetailsSpecLabel">SKU</span>
+                      <b className="hg-productDetailsSpecValue">
+                        {productPage.sku}
+                      </b>
                     </div>
                   ) : null}
                 </div>
@@ -241,18 +245,20 @@ export default function PropertyDetails({
           </section>
 
           <section className="hg-productDetailsRelated">
-            <div className="hg-panelTitle">Подобни продукти</div>
+            <div className="hg-productDetailsRelatedTitle">Подобни продукти</div>
 
             {relatedLoading ? (
-              <div className="hg-kpis">Зареждане…</div>
+              <div className="hg-productDetailsRelatedState">Зареждане…</div>
             ) : relatedProducts.length === 0 ? (
-              <div className="hg-kpis">Няма други продукти в тази категория.</div>
+              <div className="hg-productDetailsRelatedState">
+                Няма други продукти в тази категория.
+              </div>
             ) : (
-              <div className="hg-grid">
+              <div className="hg-productDetailsRelatedGrid">
                 {relatedProducts.map((p) => (
-                  <div className="hg-card" key={p._id}>
+                  <div className="hg-productDetailsRelatedCard" key={p._id}>
                     <div
-                      className="hg-thumb"
+                      className="hg-productDetailsRelatedThumb"
                       style={{
                         backgroundImage: productImage(p)
                           ? `url("${productImage(p)}")`
@@ -260,21 +266,27 @@ export default function PropertyDetails({
                       }}
                     />
 
-                    <div className="hg-cardBody">
-                      <h3 className="hg-cardTitle">{p.title}</h3>
-
-                      <div className="hg-meta">
-                        {p.brand ? <span className="hg-pill">{p.brand}</span> : null}
-                        <span className="hg-pill">
+                    <div className="hg-productDetailsRelatedBody">
+                      <div className="hg-productDetailsRelatedMeta">
+                        {p.brand ? (
+                          <span className="hg-productDetailsRelatedPill">
+                            {p.brand}
+                          </span>
+                        ) : null}
+                        <span className="hg-productDetailsRelatedPill">
                           {categoryLabelFromValue(p.category)}
                         </span>
                       </div>
 
-                      <div className="hg-price">
+                      <h3 className="hg-productDetailsRelatedCardTitle">
+                        {p.title}
+                      </h3>
+
+                      <div className="hg-productDetailsRelatedPrice">
                         {formatPrice(productPrice(p), p.currency)}
                       </div>
 
-                      <div className="hg-actions">
+                      <div className="hg-productDetailsRelatedActions">
                         <button
                           className="hg-btn"
                           type="button"

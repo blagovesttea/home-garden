@@ -2,7 +2,7 @@
 
 .hg-productDetailsPage{
   display: grid;
-  gap: 12px;
+  gap: 14px;
   max-width: 1380px;
   margin: 0 auto;
   padding: 0;
@@ -89,6 +89,7 @@
   font-size: 14px;
   font-weight: 900;
   letter-spacing: -0.02em;
+  word-break: break-word;
 }
 
 /* =========================================================
@@ -121,7 +122,7 @@
   grid-template-columns: minmax(0, 1.18fr) minmax(360px, .68fr);
   gap: 34px;
   align-items: start;
-  padding: 8px 0 0;
+  padding: 10px 0 0;
 }
 
 .hg-productDetailsGallery{
@@ -238,7 +239,9 @@
   gap: 8px;
 }
 
-.hg-productDetailsMeta .hg-pill{
+.hg-productDetailsPill{
+  display: inline-flex;
+  align-items: center;
   min-height: 28px;
   padding: 0 11px;
   border-radius: 999px;
@@ -284,7 +287,7 @@
 }
 
 /* =========================================================
-   SPECS GRID
+   SPECS
 ========================================================= */
 
 .hg-productDetailsSpecs{
@@ -294,7 +297,7 @@
   margin: 10px 0 22px;
 }
 
-.hg-productDetailsSpecs .hg-kpis{
+.hg-productDetailsSpec{
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -304,13 +307,16 @@
   border-radius: 20px;
   border: 1px solid rgba(92,66,52,.07);
   background: rgba(255,255,255,.66);
-  color: rgba(106,82,70,.84);
-  font-size: 13px;
-  line-height: 1.35;
   box-shadow: none;
 }
 
-.hg-productDetailsSpecs .hg-kpis b{
+.hg-productDetailsSpecLabel{
+  color: rgba(106,82,70,.84);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.hg-productDetailsSpecValue{
   color: #2a1d18;
   font-size: 15px;
   line-height: 1.1;
@@ -385,13 +391,114 @@
   margin-top: 18px;
 }
 
-.hg-productDetailsRelated .hg-panelTitle{
+.hg-productDetailsRelatedTitle{
   margin-bottom: 16px;
   color: #2b1d18;
   font-size: clamp(24px, 2vw, 32px);
   line-height: 1;
   font-weight: 900;
   letter-spacing: -0.05em;
+}
+
+.hg-productDetailsRelatedState{
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(93,66,52,.08);
+  background: rgba(255,255,255,.66);
+  color: rgba(89,68,59,.82);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.hg-productDetailsRelatedGrid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.hg-productDetailsRelatedCard{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 26px;
+  border: 1px solid rgba(92,66,52,.08);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.84), rgba(248,242,237,.74));
+  box-shadow:
+    0 16px 34px rgba(31,23,18,.06),
+    inset 0 1px 0 rgba(255,255,255,.52);
+}
+
+.hg-productDetailsRelatedThumb{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-color: #efe6de;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.hg-productDetailsRelatedBody{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+}
+
+.hg-productDetailsRelatedMeta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hg-productDetailsRelatedPill{
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(85,60,47,.08);
+  background: rgba(255,255,255,.74);
+  color: #72584b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+.hg-productDetailsRelatedCardTitle{
+  margin: 0;
+  color: #2a1c17;
+  font-size: 18px;
+  line-height: 1.28;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  word-break: break-word;
+}
+
+.hg-productDetailsRelatedPrice{
+  color: #4a3026;
+  font-size: 28px;
+  line-height: .98;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+}
+
+.hg-productDetailsRelatedActions{
+  display: flex;
+  gap: 10px;
+  flex-wrap: nowrap;
+  margin-top: 4px;
+}
+
+.hg-productDetailsRelatedActions .hg-btn{
+  flex: 1 1 50%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .03em;
 }
 
 /* =========================================================
@@ -425,6 +532,10 @@
 
   .hg-productDetailsPrice{
     font-size: clamp(28px, 4vw, 38px);
+  }
+
+  .hg-productDetailsRelatedGrid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -484,7 +595,7 @@
     gap: 7px;
   }
 
-  .hg-productDetailsMeta .hg-pill{
+  .hg-productDetailsPill{
     min-height: 26px;
     padding: 0 10px;
     font-size: 9px;
@@ -511,13 +622,16 @@
     margin-bottom: 18px;
   }
 
-  .hg-productDetailsSpecs .hg-kpis{
+  .hg-productDetailsSpec{
     padding: 14px 15px;
     border-radius: 16px;
+  }
+
+  .hg-productDetailsSpecLabel{
     font-size: 12px;
   }
 
-  .hg-productDetailsSpecs .hg-kpis b{
+  .hg-productDetailsSpecValue{
     font-size: 14px;
   }
 
@@ -528,6 +642,32 @@
   .hg-productDetailsActions .hg-btn{
     height: 48px;
     font-size: 11px;
+  }
+
+  .hg-productDetailsRelatedGrid{
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .hg-productDetailsRelatedBody{
+    padding: 16px;
+  }
+
+  .hg-productDetailsRelatedCardTitle{
+    font-size: 17px;
+  }
+
+  .hg-productDetailsRelatedPrice{
+    font-size: 24px;
+  }
+
+  .hg-productDetailsRelatedActions{
+    gap: 8px;
+  }
+
+  .hg-productDetailsRelatedActions .hg-btn{
+    height: 42px;
+    font-size: 10px;
   }
 }
 
@@ -584,14 +724,17 @@
     font-size: clamp(22px, 7vw, 28px);
   }
 
-  .hg-productDetailsSpecs .hg-kpis{
+  .hg-productDetailsSpec{
     grid-template-columns: 1fr;
     gap: 4px;
     padding: 13px 14px;
+  }
+
+  .hg-productDetailsSpecLabel{
     font-size: 12px;
   }
 
-  .hg-productDetailsSpecs .hg-kpis b{
+  .hg-productDetailsSpecValue{
     font-size: 15px;
     text-align: left;
   }
@@ -609,5 +752,51 @@
     height: 46px;
     padding: 0 16px;
     font-size: 11px;
+  }
+
+  .hg-productDetailsRelatedTitle{
+    margin-bottom: 12px;
+    font-size: clamp(22px, 7vw, 28px);
+  }
+
+  .hg-productDetailsRelatedState{
+    padding: 16px;
+    border-radius: 18px;
+    font-size: 13px;
+  }
+
+  .hg-productDetailsRelatedCard{
+    border-radius: 20px;
+  }
+
+  .hg-productDetailsRelatedBody{
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .hg-productDetailsRelatedPill{
+    min-height: 24px;
+    padding: 0 9px;
+    font-size: 9px;
+  }
+
+  .hg-productDetailsRelatedCardTitle{
+    font-size: 16px;
+  }
+
+  .hg-productDetailsRelatedPrice{
+    font-size: 22px;
+  }
+
+  .hg-productDetailsRelatedActions{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .hg-productDetailsRelatedActions .hg-btn{
+    width: 100%;
+    height: 44px;
+    font-size: 10px;
   }
 }
