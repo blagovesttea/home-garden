@@ -985,18 +985,12 @@ function AppShell() {
     activeProductImages[productGalleryIndex] || productImage(productPage);
 
   /* =========================
-     PRODUCT MODAL / PAGE NAV
+     PRODUCT PAGE NAV
   ========================== */
-  const [selectedProduct, setSelectedProduct] = useState(null);
-
   async function openProduct(product) {
     const target = productRouteValue(product);
     if (!target) return;
     navigate(`/products/${target}`);
-  }
-
-  function closeProduct() {
-    setSelectedProduct(null);
   }
 
   /* =========================
@@ -1643,6 +1637,14 @@ function AppShell() {
     navigate("/");
   }
 
+  const isHomeActive = !isProductPage && selectedCategory === "all" && !q;
+  const isCoffeeActive =
+    selectedCategory === "coffee-beans" || selectedCategory === "ground-coffee";
+  const isCapsulesActive = selectedCategory === "capsules";
+  const isMachinesActive = selectedCategory === "machines";
+  const isAccessoriesActive = selectedCategory === "accessories";
+  const isGiftSetsActive = selectedCategory === "gift-sets";
+
   return (
     <div className={`hg ${view === "public" ? "hg--public" : "hg--admin"}`}>
       {view === "public" ? (
@@ -1672,36 +1674,50 @@ function AppShell() {
 
           <div className="hg-publicNav">
             <div className="hg-publicNav__menu">
-              <button className="hg-navLink" onClick={clearPublicFilters}>
+              <button
+                className={`hg-navLink ${isHomeActive ? "is-active" : ""}`}
+                onClick={clearPublicFilters}
+                type="button"
+              >
                 Начало
               </button>
+
               <button
-                className="hg-navLink"
+                className={`hg-navLink ${isCoffeeActive ? "is-active" : ""}`}
                 onClick={() => applyCategoryFilter("coffee-beans")}
+                type="button"
               >
                 Кафе
               </button>
+
               <button
-                className="hg-navLink"
+                className={`hg-navLink ${isCapsulesActive ? "is-active" : ""}`}
                 onClick={() => applyCategoryFilter("capsules")}
+                type="button"
               >
                 Капсули
               </button>
+
               <button
-                className="hg-navLink"
+                className={`hg-navLink ${isMachinesActive ? "is-active" : ""}`}
                 onClick={() => applyCategoryFilter("machines")}
+                type="button"
               >
                 Машини
               </button>
+
               <button
-                className="hg-navLink"
+                className={`hg-navLink ${isAccessoriesActive ? "is-active" : ""}`}
                 onClick={() => applyCategoryFilter("accessories")}
+                type="button"
               >
                 Аксесоари
               </button>
+
               <button
-                className="hg-navLink"
+                className={`hg-navLink ${isGiftSetsActive ? "is-active" : ""}`}
                 onClick={() => applyCategoryFilter("gift-sets")}
+                type="button"
               >
                 Подаръчни комплекти
               </button>
@@ -1715,7 +1731,8 @@ function AppShell() {
                 title="Количка"
                 type="button"
               >
-                🛒 {cartCount}
+                <span aria-hidden="true">🛒</span>
+                <span className="hg-cartCount">{cartCount}</span>
               </button>
             </div>
           </div>
@@ -2968,101 +2985,6 @@ function AppShell() {
                   </div>
                 ))}
               </div>
-
-              {selectedProduct ? (
-                <>
-                  <div className="hg-modalBackdrop" onClick={closeProduct} />
-                  <div className="hg-modal">
-                    <div className="hg-modalHead">
-                      <div className="hg-modalTitle">Детайли за продукта</div>
-                      <button
-                        className="hg-modalClose"
-                        onClick={closeProduct}
-                        aria-label="Затвори"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="hg-productModal">
-                      <div
-                        className="hg-productModal__image"
-                        style={{
-                          backgroundImage: productImage(selectedProduct)
-                            ? `url("${productImage(selectedProduct)}")`
-                            : "linear-gradient(135deg,#eee,#f7f7f7)",
-                        }}
-                      />
-
-                      <div className="hg-productModal__content">
-                        <h2 className="hg-productModal__title">
-                          {selectedProduct.title}
-                        </h2>
-
-                        <div className="hg-meta">
-                          {selectedProduct.brand ? (
-                            <span className="hg-pill">{selectedProduct.brand}</span>
-                          ) : null}
-
-                          {selectedProduct.sku ? (
-                            <span className="hg-pill">SKU: {selectedProduct.sku}</span>
-                          ) : null}
-
-                          <span className="hg-pill">
-                            {selectedProduct.stockStatus || "unknown"}
-                          </span>
-                        </div>
-
-                        <div className="hg-price">
-                          {formatPrice(
-                            productPrice(selectedProduct),
-                            selectedProduct.currency
-                          )}
-                        </div>
-
-                        {selectedProduct.shortDescription ? (
-                          <div className="hg-productModal__text">
-                            {selectedProduct.shortDescription}
-                          </div>
-                        ) : null}
-
-                        {selectedProduct.description ? (
-                          <div className="hg-productModal__text">
-                            {selectedProduct.description}
-                          </div>
-                        ) : null}
-
-                        <div className="hg-kpis">
-                          Наличност: <b>{selectedProduct.stockQty ?? "-"}</b> •
-                          Доставка:{" "}
-                          <b>
-                            {selectedProduct.shippingDays
-                              ? `${selectedProduct.shippingDays} дни`
-                              : "—"}
-                          </b>
-                        </div>
-
-                        <div className="hg-kpis">
-                          Грамаж: <b>{selectedProduct.weight ?? "-"}</b>
-                          {selectedProduct.weightUnit
-                            ? ` ${selectedProduct.weightUnit}`
-                            : ""}{" "}
-                          • Интензитет: <b>{selectedProduct.intensity ?? "-"}</b>
-                        </div>
-
-                        <div className="hg-actions">
-                          <button
-                            className="hg-btn hg-btn--primary"
-                            onClick={() => addToCart(selectedProduct)}
-                          >
-                            Добави в количката
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : null}
             </>
           ) : (
             <div className="hg-publicShell">
