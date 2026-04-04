@@ -2059,7 +2059,7 @@ button{
     position: absolute;
     inset: 0 0 auto 0;
     margin-bottom: 0;
-    padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 0;
     z-index: 45;
   }
 
@@ -2067,7 +2067,7 @@ button{
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 6px;
+    gap: 5px;
     min-height: auto;
     padding: 0;
   }
@@ -2076,16 +2076,16 @@ button{
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
     min-width: 0;
     padding-right: 0;
   }
 
   .hg-publicUtility__logo{
-    font-size: 18px;
-    line-height: .92;
+    font-size: 16px;
+    line-height: .88;
     letter-spacing: -0.06em;
-    max-width: 140px;
+    max-width: 112px;
   }
 
   .hg-publicUtility__copy{
@@ -2095,13 +2095,13 @@ button{
   .hg-publicUtility__info{
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: nowrap;
     overflow-x: auto;
     white-space: nowrap;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding-right: 0;
+    padding-right: 36px;
     max-width: 100%;
   }
 
@@ -2110,17 +2110,17 @@ button{
   }
 
   .hg-publicUtility__info span{
-    font-size: 9px;
-    letter-spacing: .03em;
-    color: rgba(255,255,255,.78);
+    font-size: 8px;
+    letter-spacing: .02em;
+    color: rgba(255,255,255,.76);
   }
 
   .hg-publicNav{
     position: relative;
     grid-template-columns: 1fr;
     align-items: center;
-    gap: 6px;
-    padding: 6px 0 0;
+    gap: 4px;
+    padding: 4px 0 0;
   }
 
   .hg-publicNav__menu{
@@ -2130,7 +2130,7 @@ button{
     overflow-x: auto;
     overflow-y: hidden;
     gap: 2px;
-    padding: 0 0 4px 0;
+    padding: 0 34px 3px 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
     -webkit-overflow-scrolling: touch;
@@ -2142,24 +2142,24 @@ button{
 
   .hg-navLink{
     flex: 0 0 auto;
-    height: 28px;
-    padding: 0 12px;
-    font-size: 8.5px;
-    letter-spacing: .05em;
+    height: 26px;
+    padding: 0 10px;
+    font-size: 8px;
+    letter-spacing: .04em;
     white-space: nowrap;
   }
 
   .hg-navLink::after{
-    left: 12px;
-    right: 12px;
+    left: 10px;
+    right: 10px;
     bottom: 1px;
   }
 
   .hg-publicNav__actions{
     position: absolute;
     right: 0;
-    top: -38px;
-    z-index: 5;
+    top: -32px;
+    z-index: 10;
     width: auto;
     justify-content: flex-end;
     background: transparent;
@@ -2168,10 +2168,10 @@ button{
 
   .hg-publicNav__actions .hg-btn{
     min-width: 0;
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     padding: 0;
-    font-size: 16px;
+    font-size: 15px;
     gap: 0;
     position: relative;
   }
@@ -2182,14 +2182,14 @@ button{
   .hg-publicNav__actions .hg-badge,
   .hg-publicNav__actions .hg-btn sup,
   .hg-publicNav__actions .hg-btn .count{
-    min-width: 16px;
-    height: 16px;
-    font-size: 9px;
+    min-width: 15px;
+    height: 15px;
+    font-size: 8px;
     font-weight: 800;
     padding: 0 4px;
     position: absolute;
-    top: -4px;
-    right: -6px;
+    top: -3px;
+    right: -5px;
   }
 
   .hg--public .hg-grid{
@@ -2232,14 +2232,14 @@ button{
   }
 
   .hg-hero{
-    min-height: 670px;
+    min-height: 650px;
     border-radius: 0 0 22px 22px;
     background-position: 60% center;
     box-shadow: 0 18px 42px rgba(31,23,18,.12);
   }
 
   .hg-hero__content{
-    padding: 138px 16px 112px;
+    padding: 146px 16px 112px;
     max-width: 100%;
   }
 
@@ -2253,8 +2253,8 @@ button{
 
   .hg-hero__title{
     margin-top: 12px;
-    font-size: clamp(22px, 10vw, 34px);
-    line-height: .96;
+    font-size: clamp(22px, 9.6vw, 34px);
+    line-height: .95;
     letter-spacing: -0.055em;
     max-width: 100%;
   }
@@ -2262,8 +2262,8 @@ button{
   .hg-hero__text{
     margin-top: 12px;
     font-size: 13px;
-    line-height: 1.5;
-    max-width: 96%;
+    line-height: 1.45;
+    max-width: 95%;
   }
 
   .hg-hero__cta{
@@ -2356,38 +2356,38 @@ button{
   }
 
   .hg-heroCategory{
-    flex: 0 0 196px;
-    min-height: 68px;
+    flex: 0 0 188px;
+    min-height: 64px;
     flex-direction: row;
     justify-content: flex-start;
     text-align: left;
     gap: 10px;
-    padding: 10px 12px 12px;
-    border-radius: 16px;
+    padding: 10px 11px 11px;
+    border-radius: 15px;
   }
 
   .hg-heroCategoryIcon{
-    flex: 0 0 36px;
-    width: 36px;
-    height: 36px;
-    border-radius: 11px;
-    font-size: 16px;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 15px;
   }
 
   .hg-heroCategoryTitle{
     max-width: none;
-    font-size: 10px;
-    line-height: 1.22;
+    font-size: 9.5px;
+    line-height: 1.2;
   }
 
   .hg-heroCategoryLine{
-    width: 36%;
-    left: 12px;
+    width: 34%;
+    left: 11px;
     transform: none;
   }
 
   .hg-heroCategory:hover .hg-heroCategoryLine{
-    width: 46%;
+    width: 44%;
   }
 }
 
@@ -2396,54 +2396,56 @@ button{
     position: absolute;
     inset: 0 0 auto 0;
     margin-bottom: 0;
-    padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 0;
   }
 
   .hg-publicUtility{
-    gap: 5px;
+    gap: 4px;
   }
 
   .hg-publicUtility__brand{
-    gap: 8px;
+    gap: 6px;
   }
 
   .hg-publicUtility__logo{
-    font-size: 16px;
-    max-width: 120px;
+    font-size: 15px;
+    max-width: 104px;
   }
 
   .hg-publicUtility__info{
-    gap: 7px;
+    gap: 6px;
+    padding-right: 34px;
   }
 
   .hg-publicUtility__info span{
-    font-size: 8.5px;
+    font-size: 7.5px;
   }
 
   .hg-publicNav{
-    gap: 5px;
-    padding-top: 5px;
+    gap: 4px;
+    padding-top: 4px;
   }
 
   .hg-publicNav__menu{
     gap: 2px;
+    padding-right: 32px;
   }
 
   .hg-navLink{
-    height: 26px;
-    padding: 0 10px;
-    font-size: 8px;
+    height: 25px;
+    padding: 0 9px;
+    font-size: 7.5px;
     letter-spacing: .04em;
   }
 
   .hg-publicNav__actions{
-    top: -34px;
+    top: -30px;
   }
 
   .hg-publicNav__actions .hg-btn{
-    width: 28px;
-    height: 28px;
-    font-size: 15px;
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
   }
 
   .hg-publicNav__actions .hg-counter,
@@ -2452,39 +2454,39 @@ button{
   .hg-publicNav__actions .hg-badge,
   .hg-publicNav__actions .hg-btn sup,
   .hg-publicNav__actions .hg-btn .count{
-    min-width: 15px;
-    height: 15px;
-    font-size: 8px;
+    min-width: 14px;
+    height: 14px;
+    font-size: 7.5px;
     top: -3px;
-    right: -5px;
+    right: -4px;
   }
 
   .hg-hero{
-    min-height: 630px;
+    min-height: 620px;
     border-radius: 0 0 20px 20px;
     background-position: 60% center;
   }
 
   .hg-hero__content{
-    padding: 128px 14px 100px;
+    padding: 138px 14px 98px;
   }
 
   .hg-hero__eyebrow{
     min-height: 32px;
     padding: 0 11px;
-    font-size: 7.5px;
+    font-size: 7px;
   }
 
   .hg-hero__title{
-    font-size: clamp(20px, 9.8vw, 30px);
+    font-size: clamp(20px, 9.2vw, 30px);
     margin-top: 10px;
   }
 
   .hg-hero__text{
     font-size: 12px;
-    line-height: 1.46;
+    line-height: 1.42;
     margin-top: 10px;
-    max-width: 98%;
+    max-width: 97%;
   }
 
   .hg-hero__cta{
@@ -2506,21 +2508,21 @@ button{
   }
 
   .hg-heroCategory{
-    flex: 0 0 184px;
-    min-height: 64px;
-    padding: 10px 11px 11px;
-    border-radius: 15px;
+    flex: 0 0 176px;
+    min-height: 60px;
+    padding: 9px 10px 10px;
+    border-radius: 14px;
   }
 
   .hg-heroCategoryIcon{
-    flex: 0 0 34px;
-    width: 34px;
-    height: 34px;
-    font-size: 15px;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
     border-radius: 10px;
   }
 
   .hg-heroCategoryTitle{
-    font-size: 9.5px;
+    font-size: 9px;
   }
 }
