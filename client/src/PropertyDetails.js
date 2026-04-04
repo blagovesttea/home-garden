@@ -21,10 +21,17 @@ export default function PropertyDetails({
   openProduct,
   productImage,
 }) {
+  const stockLabel =
+    productPage?.stockStatus === "in_stock"
+      ? "В наличност"
+      : productPage?.stockStatus === "out_of_stock"
+      ? "Изчерпан"
+      : "Наличност: неизвестна";
+
   return (
     <div className="hg-publicShell hg-productDetailsPage">
-      <div className="hg-toolbarWrap hg-productDetailsTopbar">
-        <div className="hg-toolbar hg-productDetailsTopbar__inner">
+      <div className="hg-productDetailsTopbar">
+        <div className="hg-productDetailsTopbar__inner">
           <button className="hg-btn" onClick={() => navigate(-1)}>
             Назад
           </button>
@@ -42,45 +49,52 @@ export default function PropertyDetails({
 
       {!productPageLoading && !productPageMsg && productPage && (
         <>
-          <section className="hg-panel hg-productDetailsBreadcrumbs">
-            <div className="hg-kpis hg-productDetailsBreadcrumbs__inner">
+          <section className="hg-productDetailsBreadcrumbs">
+            <div className="hg-productDetailsBreadcrumbs__inner">
               <button className="hg-btn" onClick={clearPublicFilters}>
                 Начало
               </button>
-              <span>/</span>
+
+              <span className="hg-productDetailsBreadcrumbs__sep">/</span>
+
               <button
                 className="hg-btn"
                 onClick={() => applyCategoryFilter(productPage.category || "all")}
               >
                 {categoryLabelFromValue(productPage.category) || "Продукти"}
               </button>
-              <span>/</span>
-              <b>{productPage.title}</b>
+
+              <span className="hg-productDetailsBreadcrumbs__sep">/</span>
+
+              <b className="hg-productDetailsBreadcrumbs__current">
+                {productPage.title}
+              </b>
             </div>
           </section>
 
-          <section className="hg-panel hg-productDetailsMainPanel">
-            <div className="hg-productModal hg-productDetailsLayout">
+          <section className="hg-productDetailsMainPanel">
+            <div className="hg-productDetailsLayout">
               <div className="hg-productDetailsGallery">
                 <div
-                  className="hg-productModal__image hg-productDetailsHeroImage"
+                  className="hg-productDetailsHeroImage"
                   style={{
                     backgroundImage: activeProductImage
                       ? `url("${activeProductImage}")`
-                      : "linear-gradient(135deg,#eee,#f7f7f7)",
+                      : "linear-gradient(135deg,#ece7e2,#f7f3ef)",
                   }}
                 />
 
                 {activeProductImages.length > 1 ? (
-                  <div className="hg-actions hg-actions--wrap hg-productDetailsThumbs">
+                  <div className="hg-productDetailsThumbs">
                     {activeProductImages.map((img, idx) => (
                       <button
                         key={`${img}-${idx}`}
                         type="button"
-                        className={`hg-btn hg-productDetailsThumbBtn ${
+                        className={`hg-productDetailsThumbBtn ${
                           idx === productGalleryIndex ? "is-active" : ""
                         }`}
                         onClick={() => setProductGalleryIndex(idx)}
+                        aria-label={`Снимка ${idx + 1}`}
                       >
                         <div
                           className="hg-productDetailsThumb"
@@ -94,8 +108,8 @@ export default function PropertyDetails({
                 ) : null}
               </div>
 
-              <div className="hg-productModal__content hg-productDetailsContent">
-                <div className="hg-meta hg-productDetailsMeta">
+              <div className="hg-productDetailsContent">
+                <div className="hg-productDetailsMeta">
                   {productPage.category ? (
                     <span className="hg-pill">
                       {categoryLabelFromValue(productPage.category)}
@@ -110,42 +124,41 @@ export default function PropertyDetails({
                     <span className="hg-pill">SKU: {productPage.sku}</span>
                   ) : null}
 
-                  <span className="hg-pill">
-                    {productPage.stockStatus === "in_stock"
-                      ? "В наличност"
-                      : productPage.stockStatus === "out_of_stock"
-                      ? "Изчерпан"
-                      : "Наличност: неизвестна"}
-                  </span>
+                  <span className="hg-pill">{stockLabel}</span>
                 </div>
 
-                <h1 className="hg-productModal__title hg-productDetailsTitle">
-                  {productPage.title}
-                </h1>
+                <h1 className="hg-productDetailsTitle">{productPage.title}</h1>
 
-                <div className="hg-price hg-productDetailsPrice">
+                <div className="hg-productDetailsPrice">
                   {formatPrice(productPrice(productPage), productPage.currency)}
                 </div>
 
                 {productPage.shortDescription ? (
-                  <div className="hg-productModal__text hg-productDetailsText">
+                  <div className="hg-productDetailsText">
                     {productPage.shortDescription}
                   </div>
                 ) : null}
 
                 {productPage.description ? (
-                  <div className="hg-productModal__text hg-productDetailsText">
+                  <div className="hg-productDetailsText">
                     {productPage.description}
                   </div>
                 ) : null}
 
                 <div className="hg-productDetailsSpecs">
                   <div className="hg-kpis">
-                    Наличност: <b>{productPage.stockQty ?? "-"}</b>
+                    Наличност:
+                    <b>
+                      {productPage.stockQty !== undefined &&
+                      productPage.stockQty !== null &&
+                      productPage.stockQty !== ""
+                        ? productPage.stockQty
+                        : "-"}
+                    </b>
                   </div>
 
                   <div className="hg-kpis">
-                    Доставка:{" "}
+                    Доставка:
                     <b>
                       {productPage.shippingDays
                         ? `${productPage.shippingDays} дни`
@@ -154,24 +167,41 @@ export default function PropertyDetails({
                   </div>
 
                   <div className="hg-kpis">
-                    Грамаж: <b>{productPage.weight ?? "-"}</b>
-                    {productPage.weightUnit ? ` ${productPage.weightUnit}` : ""}
+                    Грамаж:
+                    <b>
+                      {productPage.weight !== undefined &&
+                      productPage.weight !== null &&
+                      productPage.weight !== ""
+                        ? `${productPage.weight}${
+                            productPage.weightUnit ? ` ${productPage.weightUnit}` : ""
+                          }`
+                        : "-"}
+                    </b>
                   </div>
 
                   <div className="hg-kpis">
-                    Интензитет: <b>{productPage.intensity ?? "-"}</b>
+                    Интензитет:
+                    <b>
+                      {productPage.intensity !== undefined &&
+                      productPage.intensity !== null &&
+                      productPage.intensity !== ""
+                        ? productPage.intensity
+                        : "-"}
+                    </b>
                   </div>
 
                   <div className="hg-kpis">
-                    Изпичане: <b>{productPage.roastLevel || "-"}</b>
+                    Изпичане:
+                    <b>{productPage.roastLevel || "-"}</b>
                   </div>
 
                   <div className="hg-kpis">
-                    Кофеин: <b>{productPage.caffeineType || "-"}</b>
+                    Кофеин:
+                    <b>{productPage.caffeineType || "-"}</b>
                   </div>
                 </div>
 
-                <div className="hg-actions hg-actions--wrap hg-productDetailsActions">
+                <div className="hg-productDetailsActions">
                   <button
                     className="hg-btn hg-btn--primary"
                     onClick={() => addToCart(productPage)}
@@ -193,7 +223,7 @@ export default function PropertyDetails({
             </div>
           </section>
 
-          <section className="hg-panel hg-productDetailsRelated">
+          <section className="hg-productDetailsRelated">
             <div className="hg-panelTitle">Подобни продукти</div>
 
             {relatedLoading ? (
