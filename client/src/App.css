@@ -883,7 +883,7 @@ button{
   grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
   justify-content: center;
   align-items: start;
-  gap: 28px;
+  gap: 34px 26px;
 }
 
 .hg--public .hg-card{
@@ -893,72 +893,62 @@ button{
   width: 100%;
   max-width: 320px;
   min-width: 0;
-  border-radius: 28px;
-  overflow: hidden;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.86) 0%, rgba(255,255,255,.68) 100%);
-  border: 1px solid rgba(255,255,255,.76);
-  box-shadow:
-    0 18px 40px rgba(31,23,18,.06),
-    inset 0 1px 0 rgba(255,255,255,.44);
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+  border: none;
+  box-shadow: none;
   transition:
     transform .20s ease,
-    box-shadow .22s ease,
-    border-color .22s ease,
-    background .22s ease;
-  padding: 12px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+    opacity .20s ease;
+  padding: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .hg--public .hg-card::after{
-  content: "";
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  top: 16px;
-  height: 40%;
-  border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255,255,255,.18), transparent 70%);
-  pointer-events: none;
-  opacity: .7;
+  display: none;
 }
 
 .hg--public .hg-card:hover{
-  transform: translateY(-6px);
-  border-color: rgba(255,255,255,.94);
-  box-shadow:
-    0 28px 52px rgba(31,23,18,.09),
-    inset 0 1px 0 rgba(255,255,255,.52);
+  transform: translateY(-4px);
+  border: none;
+  box-shadow: none;
 }
 
 .hg--public .hg-thumb{
   position: relative;
   z-index: 1;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 1.08;
   height: auto;
-  min-height: 280px;
-  max-height: 320px;
-  border-radius: 22px;
-  border: 1px solid rgba(255,255,255,.54);
-  background-color: rgba(255,255,255,.70);
+  min-height: 320px;
+  max-height: 360px;
+  border-radius: 24px;
+  border: none;
+  background-color: transparent;
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  box-shadow:
-    0 18px 34px rgba(31,23,18,.08),
-    inset 0 1px 0 rgba(255,255,255,.32);
+  box-shadow: none;
   overflow: hidden;
+}
+
+.hg--public .hg-thumb::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0) 34%);
+  pointer-events: none;
 }
 
 .hg--public .hg-cardBody{
   position: relative;
   z-index: 2;
-  padding: 16px 6px 4px;
+  padding: 16px 2px 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   min-height: auto;
   background: transparent;
 }
@@ -967,6 +957,8 @@ button{
   min-height: 14px;
   margin-bottom: 0;
   position: relative;
+  align-items: center;
+  gap: 10px;
 }
 
 .hg--public .hg-meta .hg-pill{
@@ -974,25 +966,28 @@ button{
 }
 
 .hg--public .hg-meta::before{
-  content: "★★★★★";
-  font-size: 11px;
-  letter-spacing: 1px;
-  color: #c7b7ab;
+  content: "premium selection";
+  font-size: 10px;
+  letter-spacing: .14em;
+  color: rgba(114,92,81,.62);
   line-height: 1;
+  text-transform: uppercase;
+  font-weight: 900;
 }
 
 .hg--public .hg-cardTitle{
   margin: 0;
-  font-size: 17px;
-  line-height: 1.30;
-  font-weight: 800;
-  color: rgba(56,42,36,.94);
-  letter-spacing: -0.03em;
+  font-size: 18px;
+  line-height: 1.22;
+  font-weight: 900;
+  color: rgba(40,28,23,.96);
+  letter-spacing: -0.045em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 44px;
+  max-width: 96%;
 }
 
 .hg--public .hg-pill{
@@ -1023,15 +1018,15 @@ button{
 
 .hg--public .hg-price{
   font-size: 30px;
-  line-height: .98;
+  line-height: .96;
   font-weight: 900;
-  letter-spacing: -0.05em;
-  color: rgba(79,60,52,.96);
-  margin-top: 2px;
+  letter-spacing: -0.06em;
+  color: rgba(58,38,31,.98);
+  margin-top: 0;
 }
 
 .hg--public .hg-cardBody .hg-actions{
-  margin-top: 10px;
+  margin-top: 8px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1042,23 +1037,21 @@ button{
   flex: 1;
   height: 42px;
   min-width: 0;
-  padding: 0 16px;
+  padding: 0 14px;
   border-radius: 999px;
-  background: rgba(255,255,255,.82);
-  border: 1px solid rgba(118,92,77,.10);
-  color: rgba(90,74,66,.84);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.42),
-    0 6px 14px rgba(31,23,18,.03);
-  font-size: 12px;
+  background: rgba(255,255,255,.74);
+  border: none;
+  color: rgba(90,74,66,.82);
+  box-shadow: none;
+  font-size: 11px;
   font-weight: 800;
+  letter-spacing: .03em;
+  text-transform: uppercase;
 }
 
 .hg--public .hg-cardBody .hg-actions .hg-btn:first-child:hover{
-  background: rgba(255,255,255,.98);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.52),
-    0 10px 18px rgba(31,23,18,.05);
+  background: rgba(255,255,255,.92);
+  box-shadow: none;
 }
 
 .hg--public .hg-cardBody .hg-actions .hg-btn--primary{
@@ -1070,20 +1063,16 @@ button{
   background: linear-gradient(135deg, #d71d2c, #bd1826);
   border: none;
   color: #fff;
-  box-shadow:
-    0 14px 24px rgba(207,32,47,.16),
-    inset 0 1px 0 rgba(255,255,255,.16);
+  box-shadow: none;
   font-size: 10px;
   font-weight: 900;
-  letter-spacing: .05em;
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
 .hg--public .hg-cardBody .hg-actions .hg-btn--primary:hover{
   background: linear-gradient(135deg, #c91524, #af1220);
-  box-shadow:
-    0 18px 30px rgba(207,32,47,.21),
-    inset 0 1px 0 rgba(255,255,255,.16);
+  box-shadow: none;
 }
 
 /* =========================================================
@@ -1821,7 +1810,7 @@ button{
   .hg--public .hg-grid{
     grid-template-columns: repeat(auto-fit, minmax(260px, 300px));
     justify-content: center;
-    gap: 20px 16px;
+    gap: 24px 18px;
   }
 
   .hg-formGrid{
@@ -2218,7 +2207,7 @@ button{
   .hg--public .hg-grid{
     grid-template-columns: 1fr;
     justify-content: stretch;
-    gap: 20px;
+    gap: 24px;
   }
 
   .hg--public .hg-card{
@@ -2238,18 +2227,16 @@ button{
   }
 
   .hg--public .hg-thumb{
-    min-height: 246px;
-    max-height: 246px;
-    border-radius: 28px;
-    border: 1px solid rgba(255,255,255,.82);
-    background-color: rgba(255,255,255,.50);
-    box-shadow:
-      0 14px 28px rgba(31,23,18,.06),
-      inset 0 1px 0 rgba(255,255,255,.42);
+    min-height: 252px;
+    max-height: 252px;
+    border-radius: 26px;
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
   }
 
   .hg--public .hg-cardBody{
-    padding: 16px 8px 0;
+    padding: 16px 2px 0;
     gap: 8px;
   }
 
@@ -2258,7 +2245,8 @@ button{
   }
 
   .hg--public .hg-meta::before{
-    font-size: 10px;
+    font-size: 9px;
+    letter-spacing: .14em;
   }
 
   .hg--public .hg-cardTitle{
@@ -2607,17 +2595,17 @@ button{
   }
 
   .hg--public .hg-grid{
-    gap: 18px;
+    gap: 20px;
   }
 
   .hg--public .hg-thumb{
-    min-height: 214px;
-    max-height: 214px;
+    min-height: 222px;
+    max-height: 222px;
     border-radius: 24px;
   }
 
   .hg--public .hg-cardBody{
-    padding: 14px 6px 0;
+    padding: 14px 2px 0;
   }
 
   .hg--public .hg-cardTitle{

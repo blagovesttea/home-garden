@@ -119,7 +119,7 @@ function toNum(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function formatPrice(v, currency = "BGN") {
+function formatPrice(v, currency = "EU") {
   const n = Number(v);
   if (!Number.isFinite(n)) return "—";
   return `${n.toFixed(2)} ${currency}`;
