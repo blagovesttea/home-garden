@@ -1,7 +1,7 @@
-/* src/PropertyDetails.css - Premium compact product details */
+/* src/PropertyDetails.css - Premium centered compact product details */
 
 .hg-productDetailsPage {
-  max-width: 1280px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 8px 0 28px;
   display: grid;
@@ -97,14 +97,19 @@
 }
 
 .hg-productDetailsLayout {
+  width: min(100%, 1120px);
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 360px);
-  gap: 22px;
+  grid-template-columns: minmax(0, 640px) minmax(300px, 360px);
+  justify-content: center;
+  gap: 28px;
   align-items: start;
 }
 
 .hg-productDetailsGallery {
   min-width: 0;
+  max-width: 640px;
+  width: 100%;
   display: grid;
   gap: 10px;
 }
@@ -121,9 +126,9 @@
 
 .hg-productDetailsHeroImage {
   width: 100%;
-  min-height: 280px;
-  max-height: 360px;
-  aspect-ratio: 16 / 8.8;
+  min-height: 360px;
+  max-height: 420px;
+  aspect-ratio: 1 / 1;
   border-radius: 28px;
   background-size: cover;
   background-position: center;
@@ -211,9 +216,9 @@
 
 .hg-productDetailsHeroTitle {
   margin: 0;
-  max-width: 540px;
+  max-width: 440px;
   color: #fff9f5;
-  font-size: clamp(22px, 3vw, 42px);
+  font-size: clamp(22px, 2.5vw, 36px);
   line-height: 0.94;
   font-weight: 900;
   letter-spacing: -0.07em;
@@ -269,8 +274,8 @@
 }
 
 .hg-productDetailsThumb {
-  width: 60px;
-  height: 60px;
+  width: 58px;
+  height: 58px;
   border-radius: 14px;
   background-size: cover;
   background-position: center;
@@ -280,6 +285,7 @@
 .hg-productDetailsContent {
   min-width: 0;
   max-width: 360px;
+  width: 100%;
   display: grid;
   grid-template-areas:
     "header"
@@ -287,7 +293,7 @@
     "actions"
     "info";
   gap: 10px;
-  padding-top: 2px;
+  padding-top: 4px;
   align-content: start;
 }
 
@@ -503,7 +509,8 @@
 }
 
 .hg-productDetailsRelated {
-  margin-top: 10px;
+  width: min(100%, 1120px);
+  margin: 10px auto 0;
   display: grid;
   gap: 12px;
 }
@@ -572,17 +579,26 @@
 
 @media (max-width: 1180px) {
   .hg-productDetailsPage {
-    max-width: 1140px;
+    max-width: 1160px;
+  }
+
+  .hg-productDetailsLayout,
+  .hg-productDetailsRelated {
+    width: min(100%, 1040px);
   }
 
   .hg-productDetailsLayout {
-    grid-template-columns: minmax(0, 1.45fr) minmax(290px, 340px);
-    gap: 18px;
+    grid-template-columns: minmax(0, 580px) minmax(290px, 340px);
+    gap: 22px;
+  }
+
+  .hg-productDetailsGallery {
+    max-width: 580px;
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 270px;
-    max-height: 340px;
+    min-height: 320px;
+    max-height: 380px;
   }
 
   .hg-productDetailsRelatedGrid {
@@ -594,6 +610,11 @@
   .hg-productDetailsPage {
     padding: 8px 0 22px;
     gap: 12px;
+  }
+
+  .hg-productDetailsLayout,
+  .hg-productDetailsRelated {
+    width: 100%;
   }
 
   .hg-productDetailsLayout {
@@ -616,7 +637,7 @@
   .hg-productDetailsHeroImage {
     min-height: 250px;
     max-height: none;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 16 / 10;
   }
 
   .hg-productDetailsHeroContent {
@@ -669,6 +690,7 @@
 
   .hg-productDetailsHeroImage {
     min-height: 220px;
+    aspect-ratio: 1 / 1;
   }
 
   .hg-productDetailsHeroBadges {
