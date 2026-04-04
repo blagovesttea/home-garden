@@ -1,11 +1,11 @@
-/* src/PropertyDetails.css - Premium clean editorial product details */
+/* src/PropertyDetails.css - Premium compact product details */
 
 .hg-productDetailsPage {
-  max-width: 1180px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 10px 0 34px;
+  padding: 8px 0 28px;
   display: grid;
-  gap: 14px;
+  gap: 12px;
   color: #1d1714;
   background: transparent;
 }
@@ -98,15 +98,13 @@
 
 .hg-productDetailsLayout {
   display: grid;
-  grid-template-columns: minmax(0, 760px) minmax(320px, 360px);
-  justify-content: space-between;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 360px);
+  gap: 22px;
   align-items: start;
 }
 
 .hg-productDetailsGallery {
   min-width: 0;
-  max-width: 760px;
   display: grid;
   gap: 10px;
 }
@@ -115,7 +113,7 @@
   position: relative;
   overflow: hidden;
   border: none;
-  border-radius: 30px;
+  border-radius: 28px;
   background: transparent;
   box-shadow: none;
   padding: 0;
@@ -123,31 +121,31 @@
 
 .hg-productDetailsHeroImage {
   width: 100%;
-  min-height: 350px;
-  max-height: 440px;
-  aspect-ratio: 16 / 9.3;
-  border-radius: 30px;
+  min-height: 280px;
+  max-height: 360px;
+  aspect-ratio: 16 / 8.8;
+  border-radius: 28px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  transition: transform 0.3s ease;
+  transition: transform 0.28s ease;
 }
 
 .hg-productDetailsHeroWrap:hover .hg-productDetailsHeroImage {
-  transform: scale(1.01);
+  transform: scale(1.008);
 }
 
 .hg-productDetailsHeroOverlay {
   position: absolute;
   inset: 0;
-  border-radius: 30px;
+  border-radius: 28px;
   background:
     linear-gradient(
       180deg,
-      rgba(14, 10, 8, 0.08) 0%,
+      rgba(14, 10, 8, 0.06) 0%,
       rgba(14, 10, 8, 0.04) 28%,
-      rgba(14, 10, 8, 0.16) 58%,
-      rgba(14, 10, 8, 0.56) 100%
+      rgba(14, 10, 8, 0.14) 58%,
+      rgba(14, 10, 8, 0.42) 100%
     );
   pointer-events: none;
   z-index: 1;
@@ -155,7 +153,7 @@
 
 .hg-productDetailsHeroBadges {
   position: absolute;
-  top: 18px;
+  top: 16px;
   left: 18px;
   right: 18px;
   display: flex;
@@ -193,30 +191,30 @@
   position: absolute;
   left: 24px;
   right: 24px;
-  bottom: 22px;
+  bottom: 18px;
   z-index: 3;
   display: grid;
-  gap: 8px;
+  gap: 6px;
   align-content: end;
   pointer-events: none;
 }
 
 .hg-productDetailsHeroEyebrow {
   margin: 0;
-  color: rgba(255, 247, 241, 0.72);
+  color: rgba(255, 247, 241, 0.76);
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   text-shadow: 0 3px 18px rgba(0, 0, 0, 0.28);
 }
 
 .hg-productDetailsHeroTitle {
   margin: 0;
-  max-width: 620px;
+  max-width: 540px;
   color: #fff9f5;
-  font-size: clamp(28px, 3.6vw, 50px);
-  line-height: 0.96;
+  font-size: clamp(22px, 3vw, 42px);
+  line-height: 0.94;
   font-weight: 900;
   letter-spacing: -0.07em;
   text-shadow: 0 6px 24px rgba(0, 0, 0, 0.24);
@@ -230,7 +228,7 @@
 }
 
 .hg-productDetailsHeroMetaItem {
-  color: rgba(255, 247, 242, 0.86);
+  color: rgba(255, 247, 242, 0.88);
   font-size: 12px;
   font-weight: 700;
   text-shadow: 0 3px 14px rgba(0, 0, 0, 0.22);
@@ -271,9 +269,9 @@
 }
 
 .hg-productDetailsThumb {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -289,7 +287,7 @@
     "actions"
     "info";
   gap: 10px;
-  padding-top: 0;
+  padding-top: 2px;
   align-content: start;
 }
 
@@ -297,7 +295,7 @@
   grid-area: header;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   padding: 0;
   border: none;
   border-radius: 0;
@@ -310,13 +308,13 @@
   color: rgba(33, 24, 19, 0.42);
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
 .hg-productDetailsTitle {
   margin: 0;
-  font-size: clamp(24px, 2.3vw, 38px);
+  font-size: clamp(22px, 2vw, 34px);
   line-height: 0.95;
   font-weight: 900;
   letter-spacing: -0.07em;
@@ -344,7 +342,7 @@
 
 .hg-productDetailsPriceWrap {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   margin-top: 4px;
 }
 
@@ -358,10 +356,10 @@
 
 .hg-productDetailsPrice {
   margin-top: 0;
-  font-size: clamp(24px, 2vw, 34px);
+  font-size: clamp(22px, 1.8vw, 30px);
   line-height: 1;
   font-weight: 900;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.05em;
   color: #341d17;
 }
 
@@ -375,7 +373,7 @@
   background: transparent;
   color: rgba(43, 30, 24, 0.76);
   font-size: 13px;
-  line-height: 1.72;
+  line-height: 1.68;
   box-shadow: none;
 }
 
@@ -429,7 +427,7 @@
 .hg-productDetailsInfo {
   grid-area: info;
   display: grid;
-  gap: 16px;
+  gap: 14px;
   width: 100%;
   margin-top: 2px;
 }
@@ -440,7 +438,7 @@
 }
 
 .hg-productDetailsInfoSection--description {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .hg-productDetailsSectionHead {
@@ -451,7 +449,7 @@
 }
 
 .hg-productDetailsSectionEyebrow {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   color: rgba(33, 24, 19, 0.36);
   font-size: 9px;
   font-weight: 800;
@@ -462,15 +460,15 @@
 .hg-productDetailsSectionTitle {
   margin: 0;
   color: #201714;
-  font-size: clamp(16px, 1.5vw, 22px);
-  line-height: 1.06;
+  font-size: clamp(15px, 1.3vw, 20px);
+  line-height: 1.08;
   font-weight: 900;
   letter-spacing: -0.04em;
 }
 
 .hg-productDetailsText {
   font-size: 13px;
-  line-height: 1.74;
+  line-height: 1.72;
   color: rgba(43, 30, 24, 0.76);
   white-space: pre-line;
 }
@@ -483,9 +481,9 @@
 .hg-productDetailsSpec {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 3px;
+  gap: 2px;
   align-items: start;
-  padding: 8px 0;
+  padding: 7px 0;
   border: none;
 }
 
@@ -501,11 +499,11 @@
   color: #201714;
   font-size: 13px;
   font-weight: 800;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .hg-productDetailsRelated {
-  margin-top: 12px;
+  margin-top: 10px;
   display: grid;
   gap: 12px;
 }
@@ -537,7 +535,7 @@
 .hg-productDetailsRelatedThumb {
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 22px;
+  border-radius: 20px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -574,20 +572,17 @@
 
 @media (max-width: 1180px) {
   .hg-productDetailsPage {
-    max-width: 1100px;
+    max-width: 1140px;
   }
 
   .hg-productDetailsLayout {
-    grid-template-columns: minmax(0, 700px) minmax(300px, 340px);
-  }
-
-  .hg-productDetailsGallery {
-    max-width: 700px;
+    grid-template-columns: minmax(0, 1.45fr) minmax(290px, 340px);
+    gap: 18px;
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 320px;
-    max-height: 405px;
+    min-height: 270px;
+    max-height: 340px;
   }
 
   .hg-productDetailsRelatedGrid {
@@ -619,7 +614,7 @@
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 270px;
+    min-height: 250px;
     max-height: none;
     aspect-ratio: 16 / 9;
   }
@@ -632,6 +627,7 @@
 
   .hg-productDetailsContent {
     gap: 10px;
+    max-width: 100%;
   }
 
   .hg-productDetailsTitle {
@@ -672,7 +668,7 @@
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 228px;
+    min-height: 220px;
   }
 
   .hg-productDetailsHeroBadges {
@@ -698,21 +694,17 @@
   }
 
   .hg-productDetailsHeroTitle {
-    font-size: clamp(21px, 8vw, 30px);
+    font-size: clamp(20px, 8vw, 28px);
   }
 
   .hg-productDetailsHeroMetaItem {
     font-size: 10px;
   }
 
-  .hg-productDetailsThumbs {
-    gap: 8px;
-  }
-
   .hg-productDetailsThumb {
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
   }
 
   .hg-productDetailsEyebrow {
@@ -738,7 +730,7 @@
   .hg-productDetailsLead,
   .hg-productDetailsText {
     font-size: 12px;
-    line-height: 1.68;
+    line-height: 1.66;
   }
 
   .hg-productDetailsActionPrimary,
@@ -768,7 +760,7 @@
 
 @media (max-width: 420px) {
   .hg-productDetailsHeroImage {
-    min-height: 204px;
+    min-height: 200px;
   }
 
   .hg-productDetailsRelatedGrid {
