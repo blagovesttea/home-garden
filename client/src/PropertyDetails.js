@@ -28,6 +28,39 @@ export default function PropertyDetails({
       ? "Изчерпан"
       : "Наличност: неизвестна";
 
+  const shippingLabel = productPage?.shippingDays
+    ? `${productPage.shippingDays} дни`
+    : "По договаряне";
+
+  const weightLabel =
+    productPage?.weight !== undefined &&
+    productPage?.weight !== null &&
+    productPage?.weight !== ""
+      ? `${productPage.weight}${
+          productPage.weightUnit ? ` ${productPage.weightUnit}` : ""
+        }`
+      : "Няма информация";
+
+  const intensityLabel =
+    productPage?.intensity !== undefined &&
+    productPage?.intensity !== null &&
+    productPage?.intensity !== ""
+      ? productPage.intensity
+      : "Няма информация";
+
+  const stockQtyLabel =
+    productPage?.stockQty !== undefined &&
+    productPage?.stockQty !== null &&
+    productPage?.stockQty !== ""
+      ? productPage.stockQty
+      : "—";
+
+  const roastLabel = productPage?.roastLevel || "Няма информация";
+  const caffeineLabel = productPage?.caffeineType || "Няма информация";
+  const priceLabel = productPage
+    ? formatPrice(productPrice(productPage), productPage.currency)
+    : "";
+
   return (
     <div className="hg-publicShell hg-productDetailsPage">
       <div className="hg-productDetailsTopbar">
@@ -120,18 +153,12 @@ export default function PropertyDetails({
                     <span className="hg-pill">{productPage.brand}</span>
                   ) : null}
 
-                  {productPage.sku ? (
-                    <span className="hg-pill">SKU: {productPage.sku}</span>
-                  ) : null}
-
                   <span className="hg-pill">{stockLabel}</span>
                 </div>
 
                 <h1 className="hg-productDetailsTitle">{productPage.title}</h1>
 
-                <div className="hg-productDetailsPrice">
-                  {formatPrice(productPrice(productPage), productPage.currency)}
-                </div>
+                <div className="hg-productDetailsPrice">{priceLabel}</div>
 
                 {productPage.shortDescription ? (
                   <div className="hg-productDetailsText">
@@ -147,58 +174,41 @@ export default function PropertyDetails({
 
                 <div className="hg-productDetailsSpecs">
                   <div className="hg-kpis">
-                    Наличност:
-                    <b>
-                      {productPage.stockQty !== undefined &&
-                      productPage.stockQty !== null &&
-                      productPage.stockQty !== ""
-                        ? productPage.stockQty
-                        : "-"}
-                    </b>
+                    Наличност
+                    <b>{stockQtyLabel}</b>
                   </div>
 
                   <div className="hg-kpis">
-                    Доставка:
-                    <b>
-                      {productPage.shippingDays
-                        ? `${productPage.shippingDays} дни`
-                        : "—"}
-                    </b>
+                    Доставка
+                    <b>{shippingLabel}</b>
                   </div>
 
                   <div className="hg-kpis">
-                    Грамаж:
-                    <b>
-                      {productPage.weight !== undefined &&
-                      productPage.weight !== null &&
-                      productPage.weight !== ""
-                        ? `${productPage.weight}${
-                            productPage.weightUnit ? ` ${productPage.weightUnit}` : ""
-                          }`
-                        : "-"}
-                    </b>
+                    Грамаж
+                    <b>{weightLabel}</b>
                   </div>
 
                   <div className="hg-kpis">
-                    Интензитет:
-                    <b>
-                      {productPage.intensity !== undefined &&
-                      productPage.intensity !== null &&
-                      productPage.intensity !== ""
-                        ? productPage.intensity
-                        : "-"}
-                    </b>
+                    Интензитет
+                    <b>{intensityLabel}</b>
                   </div>
 
                   <div className="hg-kpis">
-                    Изпичане:
-                    <b>{productPage.roastLevel || "-"}</b>
+                    Изпичане
+                    <b>{roastLabel}</b>
                   </div>
 
                   <div className="hg-kpis">
-                    Кофеин:
-                    <b>{productPage.caffeineType || "-"}</b>
+                    Кофеин
+                    <b>{caffeineLabel}</b>
                   </div>
+
+                  {productPage.sku ? (
+                    <div className="hg-kpis">
+                      SKU
+                      <b>{productPage.sku}</b>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="hg-productDetailsActions">
@@ -217,6 +227,13 @@ export default function PropertyDetails({
                     }}
                   >
                     Добави и отвори количката
+                  </button>
+
+                  <button
+                    className="hg-btn"
+                    onClick={() => applyCategoryFilter(productPage.category || "all")}
+                  >
+                    Виж още от категорията
                   </button>
                 </div>
               </div>
