@@ -61,6 +61,16 @@ export default function PropertyDetails({
     ? formatPrice(productPrice(productPage), productPage.currency)
     : "";
 
+  const detailRows = [
+    { label: "Наличност", value: stockQtyLabel },
+    { label: "Доставка", value: shippingLabel },
+    { label: "Грамаж", value: weightLabel },
+    { label: "Интензитет", value: intensityLabel },
+    { label: "Изпичане", value: roastLabel },
+    { label: "Кофеин", value: caffeineLabel },
+    ...(productPage?.sku ? [{ label: "SKU", value: productPage.sku }] : []),
+  ];
+
   return (
     <div className="hg-publicShell hg-productDetailsPage">
       <div className="hg-productDetailsTopbar">
@@ -175,44 +185,14 @@ export default function PropertyDetails({
                 ) : null}
 
                 <div className="hg-productDetailsSpecs">
-                  <div className="hg-productDetailsSpec">
-                    <span className="hg-productDetailsSpecLabel">Наличност</span>
-                    <b className="hg-productDetailsSpecValue">{stockQtyLabel}</b>
-                  </div>
-
-                  <div className="hg-productDetailsSpec">
-                    <span className="hg-productDetailsSpecLabel">Доставка</span>
-                    <b className="hg-productDetailsSpecValue">{shippingLabel}</b>
-                  </div>
-
-                  <div className="hg-productDetailsSpec">
-                    <span className="hg-productDetailsSpecLabel">Грамаж</span>
-                    <b className="hg-productDetailsSpecValue">{weightLabel}</b>
-                  </div>
-
-                  <div className="hg-productDetailsSpec">
-                    <span className="hg-productDetailsSpecLabel">Интензитет</span>
-                    <b className="hg-productDetailsSpecValue">{intensityLabel}</b>
-                  </div>
-
-                  <div className="hg-productDetailsSpec">
-                    <span className="hg-productDetailsSpecLabel">Изпичане</span>
-                    <b className="hg-productDetailsSpecValue">{roastLabel}</b>
-                  </div>
-
-                  <div className="hg-productDetailsSpec">
-                    <span className="hg-productDetailsSpecLabel">Кофеин</span>
-                    <b className="hg-productDetailsSpecValue">{caffeineLabel}</b>
-                  </div>
-
-                  {productPage.sku ? (
-                    <div className="hg-productDetailsSpec">
-                      <span className="hg-productDetailsSpecLabel">SKU</span>
-                      <b className="hg-productDetailsSpecValue">
-                        {productPage.sku}
-                      </b>
+                  {detailRows.map((row) => (
+                    <div className="hg-productDetailsSpec" key={row.label}>
+                      <span className="hg-productDetailsSpecLabel">
+                        {row.label}
+                      </span>
+                      <b className="hg-productDetailsSpecValue">{row.value}</b>
                     </div>
-                  ) : null}
+                  ))}
                 </div>
 
                 <div className="hg-productDetailsActions">
@@ -273,6 +253,7 @@ export default function PropertyDetails({
                             {p.brand}
                           </span>
                         ) : null}
+
                         <span className="hg-productDetailsRelatedPill">
                           {categoryLabelFromValue(p.category)}
                         </span>
