@@ -1,7 +1,7 @@
 /* src/PropertyDetails.css - Airy luxury minimal product details */
 
 .hg-productDetailsPage {
-  max-width: 1180px;
+  max-width: 1140px;
   margin: 0 auto;
   padding: 12px 0 28px;
   display: grid;
@@ -92,15 +92,17 @@
 
 .hg-productDetailsLayout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 26px;
+  grid-template-columns: minmax(0, 760px) 300px;
+  justify-content: space-between;
+  gap: 28px;
   align-items: start;
 }
 
 .hg-productDetailsGallery {
   min-width: 0;
+  max-width: 760px;
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .hg-productDetailsHeroWrap {
@@ -114,7 +116,9 @@
 }
 
 .hg-productDetailsHeroImage {
-  min-height: 360px;
+  min-height: 300px;
+  max-height: 420px;
+  aspect-ratio: 16 / 9.2;
   border-radius: 26px;
   background-size: cover;
   background-position: center;
@@ -163,22 +167,23 @@
 }
 
 .hg-productDetailsThumbs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(64px, 84px));
-  gap: 8px;
-  justify-content: start;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .hg-productDetailsThumbBtn {
   appearance: none;
   border: none;
   background: transparent;
-  border-radius: 18px;
+  border-radius: 0;
   padding: 0;
   cursor: pointer;
-  transition: transform 0.18s ease, opacity 0.18s ease;
+  transition: transform 0.18s ease, opacity 0.18s ease, filter 0.18s ease;
   box-shadow: none;
-  opacity: 0.8;
+  opacity: 0.78;
 }
 
 .hg-productDetailsThumbBtn:hover {
@@ -191,8 +196,8 @@
 }
 
 .hg-productDetailsThumb {
-  width: 100%;
-  aspect-ratio: 1 / 1;
+  width: 78px;
+  height: 78px;
   border-radius: 18px;
   background-size: cover;
   background-position: center;
@@ -201,6 +206,8 @@
 
 .hg-productDetailsContent {
   min-width: 0;
+  width: 100%;
+  max-width: 300px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -470,12 +477,17 @@
 
 @media (max-width: 1180px) {
   .hg-productDetailsLayout {
-    grid-template-columns: minmax(0, 1fr) 300px;
-    gap: 18px;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 20px;
+  }
+
+  .hg-productDetailsGallery {
+    max-width: 700px;
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 320px;
+    min-height: 280px;
+    max-height: 380px;
   }
 
   .hg-productDetailsRelatedGrid {
@@ -486,7 +498,7 @@
 @media (max-width: 920px) {
   .hg-productDetailsPage {
     padding: 10px 0 22px;
-    gap: 12px;
+    gap: 16px;
   }
 
   .hg-productDetailsLayout {
@@ -496,11 +508,14 @@
 
   .hg-productDetailsGallery,
   .hg-productDetailsContent {
+    max-width: 100%;
     width: 100%;
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 280px;
+    min-height: 260px;
+    max-height: none;
+    aspect-ratio: 16 / 9;
   }
 
   .hg-productDetailsRelatedGrid {
@@ -521,7 +536,7 @@
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 220px;
+    min-height: 210px;
     border-radius: 18px;
   }
 
@@ -539,11 +554,12 @@
   }
 
   .hg-productDetailsThumbs {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
+    gap: 8px;
   }
 
   .hg-productDetailsThumb {
+    width: 64px;
+    height: 64px;
     border-radius: 14px;
   }
 
@@ -598,7 +614,7 @@
 
 @media (max-width: 420px) {
   .hg-productDetailsHeroImage {
-    min-height: 200px;
+    min-height: 190px;
   }
 
   .hg-productDetailsRelatedGrid {
