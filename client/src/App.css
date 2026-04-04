@@ -296,12 +296,12 @@ button{
 
 .hg-publicUtility{
   min-height: 68px;
-  padding: 0 0 10px;
+  padding: 0 0 14px;
   background: transparent;
   color: rgba(255,255,255,.92);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
+  gap: 18px;
   align-items: center;
   border: none;
   box-shadow: none;
@@ -333,16 +333,16 @@ button{
   letter-spacing: -0.06em;
   color: #ff3343;
   text-shadow:
-    0 10px 30px rgba(207,32,47,.18),
-    0 2px 14px rgba(0,0,0,.28);
+    0 10px 30px rgba(207,32,47,.16),
+    0 2px 12px rgba(0,0,0,.24);
 }
 
 .hg-publicUtility__copy{
   max-width: 720px;
   font-size: 12px;
   line-height: 1.6;
-  color: rgba(255,255,255,.78);
-  text-shadow: 0 2px 12px rgba(0,0,0,.26);
+  color: rgba(255,255,255,.76);
+  text-shadow: 0 2px 10px rgba(0,0,0,.22);
 }
 
 .hg-publicUtility__info{
@@ -355,10 +355,10 @@ button{
 
 .hg-publicUtility__info span{
   font-size: 12px;
-  color: rgba(255,255,255,.88);
+  color: rgba(255,255,255,.86);
   white-space: nowrap;
   font-weight: 700;
-  text-shadow: 0 2px 12px rgba(0,0,0,.26);
+  text-shadow: 0 2px 10px rgba(0,0,0,.22);
 }
 
 .hg-publicNav{
@@ -366,7 +366,7 @@ button{
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
-  padding: 10px 0 0;
+  padding: 8px 0 0;
   background: transparent;
   color: #fff;
   border: none;
@@ -393,11 +393,11 @@ button{
   font-size: 11px;
   font-weight: 900;
   cursor: pointer;
-  transition: background .18s ease, color .18s ease, transform .18s ease;
+  transition: background .18s ease, color .18s ease, transform .18s ease, opacity .18s ease;
   position: relative;
   text-transform: uppercase;
   letter-spacing: .06em;
-  text-shadow: 0 2px 12px rgba(0,0,0,.28);
+  text-shadow: 0 2px 12px rgba(0,0,0,.26);
 }
 
 .hg-navLink::after{
@@ -415,7 +415,7 @@ button{
 }
 
 .hg-navLink:hover{
-  background: rgba(255,255,255,.08);
+  background: rgba(255,255,255,.06);
   transform: translateY(-1px);
 }
 
@@ -452,7 +452,7 @@ button{
   gap: 8px;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  text-shadow: 0 2px 12px rgba(0,0,0,.28);
+  text-shadow: 0 2px 12px rgba(0,0,0,.26);
 }
 
 .hg-publicNav__actions .hg-btn:hover{
@@ -512,9 +512,9 @@ button{
   padding-top: 0;
   background-color: #8f847b;
   background-image:
-    linear-gradient(180deg, rgba(11,8,7,.40) 0%, rgba(11,8,7,.24) 16%, rgba(11,8,7,.10) 26%, rgba(11,8,7,.18) 100%),
-    linear-gradient(90deg, rgba(11,8,7,.72) 0%, rgba(11,8,7,.44) 36%, rgba(11,8,7,.18) 68%, rgba(11,8,7,.06) 100%),
-    linear-gradient(180deg, rgba(0,0,0,.12) 0%, rgba(0,0,0,.20) 100%),
+    linear-gradient(180deg, rgba(7,5,5,.34) 0%, rgba(7,5,5,.18) 12%, rgba(7,5,5,.08) 24%, rgba(7,5,5,.18) 100%),
+    linear-gradient(90deg, rgba(11,8,7,.72) 0%, rgba(11,8,7,.46) 36%, rgba(11,8,7,.18) 68%, rgba(11,8,7,.06) 100%),
+    linear-gradient(180deg, rgba(0,0,0,.10) 0%, rgba(0,0,0,.18) 100%),
     url("https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=2200");
   background-size: cover;
   background-position: center center;
@@ -526,15 +526,15 @@ button{
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(900px 460px at 18% 16%, rgba(255,255,255,.05), transparent 60%),
-    linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,.12));
+    radial-gradient(900px 460px at 18% 16%, rgba(255,255,255,.04), transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,.01), rgba(0,0,0,.10));
   pointer-events: none;
 }
 
 .hg-hero__content{
   position: relative;
   z-index: 2;
-  padding: 168px 64px 220px;
+  padding: 174px 64px 220px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1863,6 +1863,7 @@ button{
   .hg-publicUtility{
     grid-template-columns: 1fr;
     align-items: start;
+    gap: 10px;
   }
 
   .hg-publicUtility__info{
@@ -1872,6 +1873,7 @@ button{
   .hg-publicNav{
     grid-template-columns: 1fr;
     justify-items: start;
+    gap: 10px;
   }
 
   .hg-publicNav__actions{
@@ -1925,7 +1927,7 @@ button{
   }
 
   .hg-hero__content{
-    padding: 156px 28px 250px;
+    padding: 160px 28px 250px;
   }
 
   .hg-toolbarWrap{
@@ -1948,22 +1950,39 @@ button{
   }
 
   .hg-publicHeader{
-    margin-bottom: -100px;
+    margin-bottom: -92px;
     padding: 14px 18px 0;
   }
 
   .hg-publicUtility{
     padding: 0 0 10px;
+    gap: 8px;
   }
 
   .hg-publicUtility__brand{
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
+  }
+
+  .hg-publicUtility__copy{
+    max-width: 100%;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .hg-publicUtility__info{
+    gap: 12px;
+    row-gap: 6px;
   }
 
   .hg-publicNav{
-    padding: 8px 0 0;
+    padding: 6px 0 0;
+    gap: 10px;
+  }
+
+  .hg-publicNav__menu{
+    gap: 2px 4px;
   }
 
   .hg-publicShell{
@@ -1998,7 +2017,7 @@ button{
   }
 
   .hg-hero__content{
-    padding: 150px 28px 300px;
+    padding: 154px 28px 300px;
   }
 
   .hg-hero__title{
@@ -2031,26 +2050,76 @@ button{
 }
 
 @media (max-width: 680px){
+  .hg--public{
+    padding: 0 8px 72px;
+  }
+
+  .hg-publicHeader{
+    margin-bottom: -74px;
+    padding: 12px 14px 0;
+  }
+
+  .hg-publicUtility{
+    min-height: auto;
+    gap: 8px;
+    padding: 0 0 8px;
+  }
+
+  .hg-publicUtility__brand{
+    gap: 6px;
+  }
+
   .hg-publicUtility__logo{
-    font-size: 38px;
+    font-size: 34px;
   }
 
   .hg-publicUtility__copy{
-    font-size: 13px;
+    display: none;
   }
 
   .hg-publicUtility__info{
-    gap: 10px;
+    width: 100%;
+    gap: 8px 12px;
+    justify-content: flex-start;
+  }
+
+  .hg-publicUtility__info span{
+    font-size: 11px;
+    line-height: 1.35;
   }
 
   .hg-publicNav{
-    padding: 8px 0 0;
+    grid-template-columns: 1fr;
+    align-items: start;
+    justify-items: stretch;
+    gap: 8px;
+    padding: 4px 0 0;
+  }
+
+  .hg-publicNav__menu{
+    display: flex;
+    align-items: center;
+    gap: 4px 2px;
+    flex-wrap: wrap;
+    width: 100%;
   }
 
   .hg-navLink{
-    height: 40px;
-    padding: 0 12px;
-    font-size: 12px;
+    height: 34px;
+    padding: 0 10px;
+    font-size: 10px;
+    letter-spacing: .04em;
+  }
+
+  .hg-navLink::after{
+    left: 10px;
+    right: 10px;
+  }
+
+  .hg-publicNav__actions{
+    width: 100%;
+    justify-content: flex-end;
+    gap: 10px;
   }
 
   .hg--public .hg-grid{
@@ -2093,12 +2162,45 @@ button{
   }
 
   .hg-hero{
-    min-height: 980px;
+    min-height: 960px;
     border-radius: 24px;
+    background-position: 58% center;
   }
 
   .hg-hero__content{
-    padding: 132px 20px 410px;
+    padding: 148px 20px 410px;
+    max-width: 100%;
+  }
+
+  .hg-hero__eyebrow{
+    min-height: 40px;
+    padding: 0 16px;
+    font-size: 10px;
+    letter-spacing: .08em;
+  }
+
+  .hg-hero__title{
+    margin-top: 18px;
+    font-size: clamp(30px, 13vw, 52px);
+    line-height: .95;
+  }
+
+  .hg-hero__text{
+    margin-top: 18px;
+    font-size: 15px;
+    line-height: 1.65;
+    max-width: 100%;
+  }
+
+  .hg-hero__cta{
+    margin-top: 22px;
+    gap: 10px;
+  }
+
+  .hg-hero__cta .hg-btn{
+    height: 46px;
+    padding: 0 18px;
+    font-size: 12px;
   }
 
   .hg-btn{
@@ -2109,7 +2211,7 @@ button{
     min-width: 0;
     height: auto;
     padding: 0;
-    font-size: 22px;
+    font-size: 21px;
     gap: 8px;
   }
 
@@ -2121,8 +2223,8 @@ button{
   .hg-publicNav__actions .hg-btn .count{
     min-width: 18px;
     height: 18px;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 700;
     padding: 0 5px;
   }
 
@@ -2217,5 +2319,87 @@ button{
 
   .hg-heroCategory:hover .hg-heroCategoryLine{
     width: 58%;
+  }
+}
+
+@media (max-width: 480px){
+  .hg-publicHeader{
+    margin-bottom: -66px;
+    padding: 10px 12px 0;
+  }
+
+  .hg-publicUtility__logo{
+    font-size: 30px;
+  }
+
+  .hg-publicUtility__info{
+    gap: 6px 10px;
+  }
+
+  .hg-publicUtility__info span{
+    font-size: 10px;
+  }
+
+  .hg-publicNav{
+    gap: 6px;
+  }
+
+  .hg-publicNav__menu{
+    gap: 2px;
+  }
+
+  .hg-navLink{
+    height: 32px;
+    padding: 0 9px;
+    font-size: 9px;
+  }
+
+  .hg-publicNav__actions .hg-btn{
+    font-size: 20px;
+  }
+
+  .hg-hero{
+    min-height: 920px;
+    border-radius: 22px;
+    background-position: 60% center;
+  }
+
+  .hg-hero__content{
+    padding: 142px 16px 402px;
+  }
+
+  .hg-hero__title{
+    font-size: clamp(28px, 12vw, 44px);
+  }
+
+  .hg-hero__text{
+    font-size: 14px;
+  }
+
+  .hg-hero__cta .hg-btn{
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hg-heroCategories{
+    width: calc(100% - 18px);
+    gap: 10px;
+    bottom: 10px;
+  }
+
+  .hg-heroCategory{
+    min-height: 84px;
+    padding: 12px 12px 14px;
+  }
+
+  .hg-heroCategoryIcon{
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+  }
+
+  .hg-heroCategoryTitle{
+    font-size: 11px;
   }
 }
