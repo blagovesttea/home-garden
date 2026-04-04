@@ -1088,81 +1088,153 @@ button{
 
 /* =========================================================
    PRODUCT DETAILS PAGE SHELL OVERRIDES
+   СКОУПНАТО САМО ЗА PRODUCT DETAILS
 ========================================================= */
 
+.hg--public:has(.hg-productDetailsPage){
+  max-width: 1760px;
+}
+
+.hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
+  position: relative;
+  z-index: 60;
+  margin-bottom: 0;
+  padding: 18px 24px 0;
+}
+
+.hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
+  min-height: auto;
+  padding: 0 0 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.hg--public:has(.hg-productDetailsPage) .hg-publicUtility__logo{
+  color: #ff3343;
+  text-shadow:
+    0 8px 22px rgba(207,32,47,.14),
+    0 2px 8px rgba(0,0,0,.08);
+}
+
+.hg--public:has(.hg-productDetailsPage) .hg-publicUtility__copy{
+  color: rgba(84,63,54,.52);
+  text-shadow: none;
+}
+
+.hg--public:has(.hg-productDetailsPage) .hg-publicUtility__info span{
+  color: rgba(76,58,50,.74);
+  text-shadow: none;
+}
+
+.hg--public:has(.hg-productDetailsPage) .hg-publicNav{
+  margin-top: 4px;
+  padding: 12px 16px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.92), rgba(247,241,236,.90));
+  border: 1px solid rgba(255,255,255,.76);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.72),
+    0 16px 34px rgba(31,23,18,.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.hg--public:has(.hg-productDetailsPage) .hg-navLink{
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: rgba(67,50,42,.88);
+  background: transparent;
+  text-shadow: none;
+}
+
+.hg--public:has(.hg-productDetailsPage) .hg-navLink:hover{
+  background: rgba(255,255,255,.72);
+}
+
+.hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-btn{
+  color: #4a362d;
+  text-shadow: none;
+}
+
 .hg--public .hg-productDetailsPage{
-  max-width: 1420px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding-top: 138px;
+  padding-top: 22px;
 }
 
 .hg--public .hg-productDetailsPage .hg-toolbarWrap{
   margin-top: 0;
-  padding: 10px 12px;
-  border-radius: 28px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.14));
-  border: 1px solid rgba(255,255,255,.52);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.42),
-    0 18px 40px rgba(31,23,18,.05);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .hg--public .hg-productDetailsPage .hg-toolbar{
   margin: 0;
-  padding: 8px;
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.82));
-  border: 1px solid rgba(255,255,255,.74);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.60),
-    0 10px 24px rgba(31,23,18,.04);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-toolbar{
+.hg--public .hg-productDetailsPage .hg-productDetailsTopbar{
+  margin-top: 2px;
+}
+
+.hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-toolbar,
+.hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-productDetailsTopbar__inner{
   justify-content: flex-start;
   gap: 10px;
 }
 
 .hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-btn{
-  height: 44px;
+  height: 46px;
   padding: 0 20px;
   border-radius: 999px;
-  background: rgba(255,255,255,.88);
-  border: 1px solid rgba(118,92,77,.10);
-  color: rgba(66,51,44,.92);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(246,239,233,.98));
+  border: 1px solid rgba(100,74,60,.10);
+  color: rgba(58,43,36,.94);
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.50),
-    0 8px 18px rgba(31,23,18,.04);
+    0 10px 22px rgba(31,23,18,.05),
+    inset 0 1px 0 rgba(255,255,255,.86);
 }
 
 .hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-btn:hover{
-  background: rgba(255,255,255,.98);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,1), rgba(249,244,239,1));
+  border-color: rgba(207,32,47,.18);
+  box-shadow:
+    0 14px 28px rgba(31,23,18,.07),
+    inset 0 1px 0 rgba(255,255,255,.92);
 }
 
 .hg--public .hg-productDetailsPage .hg-panel{
   margin: 0;
-  padding: 22px;
-  border-radius: 30px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.56));
-  border: 1px solid rgba(255,255,255,.72);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.48),
-    0 22px 46px rgba(31,23,18,.05);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs{
-  padding: 12px 16px;
+  padding: 0;
 }
 
-.hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs .hg-kpis{
-  color: rgba(98,80,71,.76);
+.hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs .hg-kpis,
+.hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs__inner{
+  color: rgba(89,68,58,.78);
   font-size: 13px;
 }
 
@@ -1170,20 +1242,30 @@ button{
   height: 42px;
   padding: 0 18px;
   border-radius: 999px;
-  background: rgba(255,255,255,.78);
-  border: 1px solid rgba(118,92,77,.10);
-  color: rgba(66,51,44,.92);
-  box-shadow: none;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.96), rgba(248,242,237,.96));
+  border: 1px solid rgba(102,76,61,.08);
+  color: rgba(71,54,46,.92);
+  box-shadow:
+    0 8px 18px rgba(31,23,18,.04),
+    inset 0 1px 0 rgba(255,255,255,.88);
 }
 
 .hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs .hg-btn:hover{
-  background: #fff;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,1), rgba(250,245,241,1));
 }
 
 .hg--public .hg-productDetailsPage .hg-productDetailsMainPanel{
+  padding: 0;
   background:
-    radial-gradient(900px 500px at 0% 0%, rgba(207,32,47,.03), transparent 50%),
-    linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.54));
+    radial-gradient(760px 280px at 0% 0%, rgba(207,32,47,.04), transparent 54%),
+    radial-gradient(600px 240px at 100% 100%, rgba(78,55,43,.04), transparent 56%),
+    linear-gradient(180deg, rgba(255,253,251,.98), rgba(247,240,234,.98));
+  border: 1px solid rgba(255,255,255,.74);
+  box-shadow:
+    0 26px 56px rgba(31,23,18,.07),
+    inset 0 1px 0 rgba(255,255,255,.62);
 }
 
 .hg--public .hg-productDetailsPage .hg-grid{
@@ -1219,12 +1301,16 @@ button{
   min-width: 0;
 }
 
+.hg--public .hg-productDetailsPage .hg-productDetailsRelated{
+  margin-top: 10px;
+}
+
 .hg--public .hg-productDetailsPage .hg-productDetailsRelated .hg-panelTitle{
   margin-bottom: 18px;
   font-size: 26px;
   line-height: 1;
   letter-spacing: -0.04em;
-  color: rgba(56,42,36,.96);
+  color: rgba(42,29,24,.96);
 }
 
 /* =========================================================
@@ -1692,6 +1778,14 @@ button{
   .hg--public .hg-productDetailsPage{
     max-width: 1260px;
   }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
+    padding: 16px 18px 0;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
+    padding: 10px 12px;
+  }
 }
 
 @media (max-width: 1180px){
@@ -1716,7 +1810,27 @@ button{
   }
 
   .hg--public .hg-productDetailsPage{
-    padding-top: 128px;
+    padding-top: 18px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 10px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__info{
+    justify-content: flex-start;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
+    grid-template-columns: 1fr;
+    gap: 10px;
+    justify-items: start;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions{
+    justify-content: flex-start;
   }
 }
 
@@ -1753,11 +1867,19 @@ button{
   }
 
   .hg--public .hg-productDetailsPage{
-    padding-top: 122px;
+    padding-top: 16px;
   }
 
   .hg--public .hg-productDetailsPage .hg-productDetailsMainPanel{
-    padding: 18px;
+    padding: 0;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
+    padding: 14px 14px 0;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
+    border-radius: 20px;
   }
 }
 
@@ -1854,21 +1976,45 @@ button{
   }
 
   .hg--public .hg-productDetailsPage{
-    padding-top: 116px;
+    padding-top: 14px;
   }
 
   .hg--public .hg-productDetailsPage .hg-toolbarWrap{
-    border-radius: 24px;
+    border-radius: 0;
   }
 
   .hg--public .hg-productDetailsPage .hg-panel{
-    border-radius: 24px;
-    padding: 18px;
+    border-radius: 0;
+    padding: 0;
   }
 
   .hg--public .hg-productDetailsPage .hg-grid{
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     justify-content: stretch;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
+    margin-bottom: 0;
+    padding: 12px 12px 0;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
+    padding: 0 0 8px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__brand{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__copy{
+    max-width: 100%;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
+    padding: 10px 10px;
+    gap: 10px;
   }
 }
 
@@ -2277,7 +2423,7 @@ button{
   }
 
   .hg--public .hg-productDetailsPage{
-    padding-top: 108px;
+    padding-top: 10px;
     gap: 14px;
   }
 
@@ -2292,13 +2438,11 @@ button{
   }
 
   .hg--public .hg-productDetailsPage .hg-toolbar{
-    padding: 10px;
-    border-radius: 22px;
-    background: rgba(255,255,255,.74);
-    border: 1px solid rgba(255,255,255,.72);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.52),
-      0 10px 22px rgba(31,23,18,.04);
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   .hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-toolbar{
@@ -2315,12 +2459,12 @@ button{
   }
 
   .hg--public .hg-productDetailsPage .hg-panel{
-    border-radius: 24px;
-    padding: 14px;
+    border-radius: 0;
+    padding: 0;
   }
 
   .hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs{
-    padding: 8px 10px;
+    padding: 0;
   }
 
   .hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs .hg-btn{
@@ -2375,6 +2519,90 @@ button{
   .hg-cartItem__image{
     width: 100%;
     height: 180px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
+    position: relative;
+    inset: auto;
+    padding: 10px 10px 0;
+    z-index: 50;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 0 0 6px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__brand{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__logo{
+    font-size: 28px;
+    max-width: none;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__copy{
+    display: none;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__info{
+    padding-right: 0;
+    gap: 8px;
+    flex-wrap: wrap;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__info span{
+    font-size: 10px;
+    color: rgba(78,60,52,.74);
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
+    position: relative;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 18px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.92), rgba(246,239,233,.92));
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__menu{
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px;
+    padding: 0 36px 2px 0;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions{
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    justify-content: flex-end;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-navLink{
+    flex: 0 0 auto;
+    height: 32px;
+    padding: 0 12px;
+    font-size: 9px;
+    white-space: nowrap;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-btn{
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
   }
 }
 
@@ -2599,14 +2827,14 @@ button{
   }
 
   .hg--public .hg-productDetailsPage{
-    padding-top: 100px;
+    padding-top: 8px;
     gap: 12px;
   }
 
   .hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-toolbar{
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    padding: 8px;
+    padding: 0;
   }
 
   .hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-btn{
@@ -2616,12 +2844,12 @@ button{
   }
 
   .hg--public .hg-productDetailsPage .hg-panel{
-    padding: 12px;
-    border-radius: 20px;
+    padding: 0;
+    border-radius: 0;
   }
 
   .hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs{
-    padding: 8px;
+    padding: 0;
   }
 
   .hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs .hg-btn{
@@ -2644,5 +2872,43 @@ button{
     min-height: 204px;
     max-height: 204px;
     border-radius: 18px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
+    padding: 8px 8px 0;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
+    gap: 4px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__logo{
+    font-size: 24px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__info span{
+    font-size: 8px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
+    padding: 8px;
+    border-radius: 16px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-navLink{
+    height: 30px;
+    padding: 0 10px;
+    font-size: 8px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions{
+    right: 8px;
+    top: 7px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-btn{
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
   }
 }
