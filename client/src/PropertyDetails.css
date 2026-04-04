@@ -96,9 +96,9 @@
 
 .hg-productDetailsLayout {
   display: grid;
-  grid-template-columns: minmax(0, 760px) minmax(260px, 300px);
+  grid-template-columns: minmax(0, 760px) minmax(320px, 360px);
   justify-content: space-between;
-  gap: 18px;
+  gap: 14px;
   align-items: start;
 }
 
@@ -211,14 +211,20 @@
 
 .hg-productDetailsContent {
   min-width: 0;
-  max-width: 300px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 2px;
+  max-width: 360px;
+  display: grid;
+  grid-template-areas:
+    "header"
+    "lead"
+    "actions"
+    "info";
+  gap: 8px;
+  padding-top: 0;
+  align-content: start;
 }
 
 .hg-productDetailsHeader {
+  grid-area: header;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -276,8 +282,10 @@
 }
 
 .hg-productDetailsLead {
+  grid-area: lead;
   max-width: 100%;
   padding: 0;
+  margin: 0;
   border: none;
   border-radius: 0;
   background: transparent;
@@ -288,6 +296,7 @@
 }
 
 .hg-productDetailsActions {
+  grid-area: actions;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -328,10 +337,11 @@
 }
 
 .hg-productDetailsInfoGrid {
+  grid-area: info;
   display: grid;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .hg-productDetailsCard {
@@ -343,7 +353,7 @@
 }
 
 .hg-productDetailsCardTitle {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: #1d1410;
   font-size: 12px;
   font-weight: 900;
@@ -486,7 +496,7 @@
   }
 
   .hg-productDetailsLayout {
-    grid-template-columns: minmax(0, 700px) minmax(250px, 280px);
+    grid-template-columns: minmax(0, 700px) minmax(300px, 340px);
   }
 
   .hg-productDetailsGallery {
