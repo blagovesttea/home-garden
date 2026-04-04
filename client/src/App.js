@@ -7,6 +7,7 @@ import {
   useParams,
 } from "react-router-dom";
 import "./App.css";
+import PropertyDetails from "./PropertyDetails";
 
 // API base
 const API =
@@ -2987,263 +2988,27 @@ function AppShell() {
               </div>
             </>
           ) : (
-            <div className="hg-publicShell">
-              <div className="hg-toolbarWrap">
-                <div className="hg-toolbar">
-                  <button className="hg-btn" onClick={() => navigate(-1)}>
-                    Назад
-                  </button>
-                  <button className="hg-btn" onClick={clearPublicFilters}>
-                    Към каталога
-                  </button>
-                </div>
-              </div>
-
-              {productPageLoading && <div className="hg-panel">Зареждане…</div>}
-
-              {!productPageLoading && productPageMsg && (
-                <div className="hg-panel hg-panel--bad">{productPageMsg}</div>
-              )}
-
-              {!productPageLoading && !productPageMsg && productPage && (
-                <>
-                  <section className="hg-panel" style={{ marginBottom: 18 }}>
-                    <div
-                      className="hg-kpis"
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: 8,
-                        alignItems: "center",
-                      }}
-                    >
-                      <button className="hg-btn" onClick={clearPublicFilters}>
-                        Начало
-                      </button>
-                      <span>/</span>
-                      <button
-                        className="hg-btn"
-                        onClick={() => applyCategoryFilter(productPage.category || "all")}
-                      >
-                        {categoryLabelFromValue(productPage.category) || "Продукти"}
-                      </button>
-                      <span>/</span>
-                      <b>{productPage.title}</b>
-                    </div>
-                  </section>
-
-                  <section className="hg-panel">
-                    <div className="hg-productModal" style={{ gap: 24 }}>
-                      <div>
-                        <div
-                          className="hg-productModal__image"
-                          style={{
-                            minHeight: 520,
-                            backgroundImage: activeProductImage
-                              ? `url("${activeProductImage}")`
-                              : "linear-gradient(135deg,#eee,#f7f7f7)",
-                          }}
-                        />
-
-                        {activeProductImages.length > 1 ? (
-                          <div
-                            className="hg-actions hg-actions--wrap"
-                            style={{ marginTop: 14 }}
-                          >
-                            {activeProductImages.map((img, idx) => (
-                              <button
-                                key={`${img}-${idx}`}
-                                type="button"
-                                className="hg-btn"
-                                onClick={() => setProductGalleryIndex(idx)}
-                                style={{
-                                  padding: 0,
-                                  border:
-                                    idx === productGalleryIndex
-                                      ? "2px solid #111"
-                                      : undefined,
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    width: 72,
-                                    height: 72,
-                                    borderRadius: 12,
-                                    backgroundImage: `url("${img}")`,
-                                    backgroundSize: "cover",
-                                    backgroundPosition: "center",
-                                  }}
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="hg-productModal__content">
-                        <div className="hg-meta" style={{ marginBottom: 14 }}>
-                          {productPage.category ? (
-                            <span className="hg-pill">
-                              {categoryLabelFromValue(productPage.category)}
-                            </span>
-                          ) : null}
-                          {productPage.brand ? (
-                            <span className="hg-pill">{productPage.brand}</span>
-                          ) : null}
-                          {productPage.sku ? (
-                            <span className="hg-pill">SKU: {productPage.sku}</span>
-                          ) : null}
-                          <span className="hg-pill">
-                            {productPage.stockStatus === "in_stock"
-                              ? "В наличност"
-                              : productPage.stockStatus === "out_of_stock"
-                              ? "Изчерпан"
-                              : "Наличност: неизвестна"}
-                          </span>
-                        </div>
-
-                        <h1
-                          className="hg-productModal__title"
-                          style={{ marginBottom: 16 }}
-                        >
-                          {productPage.title}
-                        </h1>
-
-                        <div className="hg-price" style={{ marginBottom: 18 }}>
-                          {formatPrice(productPrice(productPage), productPage.currency)}
-                        </div>
-
-                        {productPage.shortDescription ? (
-                          <div
-                            className="hg-productModal__text"
-                            style={{ marginBottom: 14 }}
-                          >
-                            {productPage.shortDescription}
-                          </div>
-                        ) : null}
-
-                        {productPage.description ? (
-                          <div
-                            className="hg-productModal__text"
-                            style={{ marginBottom: 14 }}
-                          >
-                            {productPage.description}
-                          </div>
-                        ) : null}
-
-                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
-                          Наличност: <b>{productPage.stockQty ?? "-"}</b>
-                        </div>
-
-                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
-                          Доставка:{" "}
-                          <b>
-                            {productPage.shippingDays
-                              ? `${productPage.shippingDays} дни`
-                              : "—"}
-                          </b>
-                        </div>
-
-                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
-                          Грамаж: <b>{productPage.weight ?? "-"}</b>
-                          {productPage.weightUnit
-                            ? ` ${productPage.weightUnit}`
-                            : ""}
-                        </div>
-
-                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
-                          Интензитет: <b>{productPage.intensity ?? "-"}</b>
-                        </div>
-
-                        <div className="hg-kpis" style={{ marginBottom: 8 }}>
-                          Изпичане: <b>{productPage.roastLevel || "-"}</b>
-                        </div>
-
-                        <div className="hg-kpis" style={{ marginBottom: 18 }}>
-                          Кофеин: <b>{productPage.caffeineType || "-"}</b>
-                        </div>
-
-                        <div className="hg-actions hg-actions--wrap">
-                          <button
-                            className="hg-btn hg-btn--primary"
-                            onClick={() => addToCart(productPage)}
-                          >
-                            Добави в количката
-                          </button>
-
-                          <button
-                            className="hg-btn"
-                            onClick={() => {
-                              addToCart(productPage);
-                              setCartOpen(true);
-                            }}
-                          >
-                            Добави и отвори количката
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className="hg-panel" style={{ marginTop: 18 }}>
-                    <div className="hg-panelTitle">Подобни продукти</div>
-
-                    {relatedLoading ? (
-                      <div className="hg-kpis">Зареждане…</div>
-                    ) : relatedProducts.length === 0 ? (
-                      <div className="hg-kpis">Няма други продукти в тази категория.</div>
-                    ) : (
-                      <div className="hg-grid">
-                        {relatedProducts.map((p) => (
-                          <div className="hg-card" key={p._id}>
-                            <div
-                              className="hg-thumb"
-                              style={{
-                                backgroundImage: productImage(p)
-                                  ? `url("${productImage(p)}")`
-                                  : "linear-gradient(135deg,#eee,#f7f7f7)",
-                              }}
-                            />
-                            <div className="hg-cardBody">
-                              <h3 className="hg-cardTitle">{p.title}</h3>
-
-                              <div className="hg-meta">
-                                {p.brand ? <span className="hg-pill">{p.brand}</span> : null}
-                                <span className="hg-pill">
-                                  {categoryLabelFromValue(p.category)}
-                                </span>
-                              </div>
-
-                              <div className="hg-price">
-                                {formatPrice(productPrice(p), p.currency)}
-                              </div>
-
-                              <div className="hg-actions">
-                                <button
-                                  className="hg-btn"
-                                  type="button"
-                                  onClick={() => openProduct(p)}
-                                >
-                                  Детайли
-                                </button>
-
-                                <button
-                                  className="hg-btn hg-btn--primary"
-                                  type="button"
-                                  onClick={() => addToCart(p)}
-                                >
-                                  Добави
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </section>
-                </>
-              )}
-            </div>
+            <PropertyDetails
+              navigate={navigate}
+              clearPublicFilters={clearPublicFilters}
+              productPageLoading={productPageLoading}
+              productPageMsg={productPageMsg}
+              productPage={productPage}
+              applyCategoryFilter={applyCategoryFilter}
+              categoryLabelFromValue={categoryLabelFromValue}
+              activeProductImage={activeProductImage}
+              activeProductImages={activeProductImages}
+              productGalleryIndex={productGalleryIndex}
+              setProductGalleryIndex={setProductGalleryIndex}
+              formatPrice={formatPrice}
+              productPrice={productPrice}
+              addToCart={addToCart}
+              setCartOpen={setCartOpen}
+              relatedLoading={relatedLoading}
+              relatedProducts={relatedProducts}
+              openProduct={openProduct}
+              productImage={productImage}
+            />
           )}
 
           {cartOpen ? (
