@@ -2064,26 +2064,28 @@ button{
   }
 
   .hg-publicUtility{
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
     min-height: auto;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    gap: 8px;
     padding: 0;
   }
 
   .hg-publicUtility__brand{
     display: flex;
-    flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    justify-content: space-between;
+    gap: 10px;
     min-width: 0;
-    padding-right: 54px;
+    padding-right: 0;
   }
 
   .hg-publicUtility__logo{
-    font-size: 22px;
+    font-size: 18px;
     line-height: .92;
-    letter-spacing: -0.055em;
+    letter-spacing: -0.06em;
+    max-width: 140px;
   }
 
   .hg-publicUtility__copy{
@@ -2092,14 +2094,14 @@ button{
 
   .hg-publicUtility__info{
     display: flex;
-    justify-content: flex-start;
-    gap: 10px;
+    align-items: center;
+    gap: 8px;
     flex-wrap: nowrap;
     overflow-x: auto;
     white-space: nowrap;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding-right: 54px;
+    padding-right: 0;
     max-width: 100%;
   }
 
@@ -2108,17 +2110,17 @@ button{
   }
 
   .hg-publicUtility__info span{
-    font-size: 10px;
-    letter-spacing: .04em;
-    color: rgba(255,255,255,.82);
+    font-size: 9px;
+    letter-spacing: .03em;
+    color: rgba(255,255,255,.78);
   }
 
   .hg-publicNav{
     position: relative;
     grid-template-columns: 1fr;
     align-items: center;
-    gap: 8px;
-    padding: 8px 0 0;
+    gap: 6px;
+    padding: 6px 0 0;
   }
 
   .hg-publicNav__menu{
@@ -2127,7 +2129,7 @@ button{
     flex-wrap: nowrap;
     overflow-x: auto;
     overflow-y: hidden;
-    gap: 6px;
+    gap: 2px;
     padding: 0 0 4px 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -2140,36 +2142,36 @@ button{
 
   .hg-navLink{
     flex: 0 0 auto;
-    height: 30px;
-    padding: 0 10px;
-    font-size: 9px;
+    height: 28px;
+    padding: 0 12px;
+    font-size: 8.5px;
     letter-spacing: .05em;
     white-space: nowrap;
   }
 
   .hg-navLink::after{
-    left: 10px;
-    right: 10px;
+    left: 12px;
+    right: 12px;
     bottom: 1px;
   }
 
   .hg-publicNav__actions{
-    width: auto;
-    justify-content: flex-end;
     position: absolute;
     right: 0;
-    top: -42px;
+    top: -38px;
     z-index: 5;
-    padding-left: 0;
+    width: auto;
+    justify-content: flex-end;
     background: transparent;
+    padding-left: 0;
   }
 
   .hg-publicNav__actions .hg-btn{
     min-width: 0;
-    height: 34px;
-    width: 34px;
+    width: 30px;
+    height: 30px;
     padding: 0;
-    font-size: 18px;
+    font-size: 16px;
     gap: 0;
     position: relative;
   }
@@ -2180,9 +2182,9 @@ button{
   .hg-publicNav__actions .hg-badge,
   .hg-publicNav__actions .hg-btn sup,
   .hg-publicNav__actions .hg-btn .count{
-    min-width: 17px;
-    height: 17px;
-    font-size: 10px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 9px;
     font-weight: 800;
     padding: 0 4px;
     position: absolute;
@@ -2230,49 +2232,49 @@ button{
   }
 
   .hg-hero{
-    min-height: 760px;
-    border-radius: 0 0 24px 24px;
-    background-position: 58% center;
-    box-shadow: 0 22px 48px rgba(31,23,18,.14);
+    min-height: 670px;
+    border-radius: 0 0 22px 22px;
+    background-position: 60% center;
+    box-shadow: 0 18px 42px rgba(31,23,18,.12);
   }
 
   .hg-hero__content{
-    padding: 164px 18px 150px;
+    padding: 138px 16px 112px;
     max-width: 100%;
   }
 
   .hg-hero__eyebrow{
-    min-height: 36px;
-    padding: 0 14px;
-    font-size: 9px;
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 8px;
     letter-spacing: .08em;
     max-width: 100%;
   }
 
   .hg-hero__title{
-    margin-top: 14px;
-    font-size: clamp(24px, 10.5vw, 38px);
-    line-height: .95;
-    letter-spacing: -0.06em;
+    margin-top: 12px;
+    font-size: clamp(22px, 10vw, 34px);
+    line-height: .96;
+    letter-spacing: -0.055em;
     max-width: 100%;
   }
 
   .hg-hero__text{
-    margin-top: 14px;
-    font-size: 14px;
-    line-height: 1.52;
-    max-width: 92%;
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 96%;
   }
 
   .hg-hero__cta{
-    margin-top: 18px;
+    margin-top: 14px;
     gap: 8px;
   }
 
   .hg-hero__cta .hg-btn{
-    height: 44px;
-    padding: 0 18px;
-    font-size: 12px;
+    height: 42px;
+    padding: 0 16px;
+    font-size: 11px;
   }
 
   .hg-btn{
@@ -2334,14 +2336,14 @@ button{
   }
 
   .hg-heroCategories{
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
     transform: none;
     width: auto;
     display: flex;
     grid-template-columns: none;
-    gap: 10px;
+    gap: 8px;
     overflow-x: auto;
     overflow-y: hidden;
     padding: 0 2px 2px;
@@ -2354,38 +2356,38 @@ button{
   }
 
   .hg-heroCategory{
-    flex: 0 0 220px;
-    min-height: 76px;
+    flex: 0 0 196px;
+    min-height: 68px;
     flex-direction: row;
     justify-content: flex-start;
     text-align: left;
-    gap: 12px;
-    padding: 12px 14px 14px;
-    border-radius: 18px;
+    gap: 10px;
+    padding: 10px 12px 12px;
+    border-radius: 16px;
   }
 
   .hg-heroCategoryIcon{
-    flex: 0 0 40px;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    font-size: 18px;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    font-size: 16px;
   }
 
   .hg-heroCategoryTitle{
     max-width: none;
-    font-size: 11px;
-    line-height: 1.25;
+    font-size: 10px;
+    line-height: 1.22;
   }
 
   .hg-heroCategoryLine{
-    width: 38%;
-    left: 14px;
+    width: 36%;
+    left: 12px;
     transform: none;
   }
 
   .hg-heroCategory:hover .hg-heroCategoryLine{
-    width: 50%;
+    width: 46%;
   }
 }
 
@@ -2398,52 +2400,50 @@ button{
   }
 
   .hg-publicUtility{
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 6px;
+    gap: 5px;
   }
 
   .hg-publicUtility__brand{
-    gap: 3px;
-    padding-right: 50px;
+    gap: 8px;
   }
 
   .hg-publicUtility__logo{
-    font-size: 18px;
+    font-size: 16px;
+    max-width: 120px;
   }
 
   .hg-publicUtility__info{
-    gap: 8px;
-    padding-right: 50px;
+    gap: 7px;
   }
 
   .hg-publicUtility__info span{
-    font-size: 9px;
+    font-size: 8.5px;
   }
 
   .hg-publicNav{
-    gap: 6px;
-    padding-top: 6px;
+    gap: 5px;
+    padding-top: 5px;
   }
 
   .hg-publicNav__menu{
-    gap: 4px;
+    gap: 2px;
   }
 
   .hg-navLink{
-    height: 28px;
-    padding: 0 9px;
-    font-size: 8.5px;
+    height: 26px;
+    padding: 0 10px;
+    font-size: 8px;
     letter-spacing: .04em;
   }
 
   .hg-publicNav__actions{
-    top: -38px;
+    top: -34px;
   }
 
   .hg-publicNav__actions .hg-btn{
-    width: 32px;
-    height: 32px;
-    font-size: 17px;
+    width: 28px;
+    height: 28px;
+    font-size: 15px;
   }
 
   .hg-publicNav__actions .hg-counter,
@@ -2452,74 +2452,75 @@ button{
   .hg-publicNav__actions .hg-badge,
   .hg-publicNav__actions .hg-btn sup,
   .hg-publicNav__actions .hg-btn .count{
-    min-width: 16px;
-    height: 16px;
-    font-size: 9px;
+    min-width: 15px;
+    height: 15px;
+    font-size: 8px;
     top: -3px;
     right: -5px;
   }
 
   .hg-hero{
-    min-height: 700px;
-    border-radius: 0 0 22px 22px;
+    min-height: 630px;
+    border-radius: 0 0 20px 20px;
     background-position: 60% center;
   }
 
   .hg-hero__content{
-    padding: 150px 16px 136px;
+    padding: 128px 14px 100px;
   }
 
   .hg-hero__eyebrow{
-    min-height: 34px;
-    padding: 0 12px;
-    font-size: 8px;
+    min-height: 32px;
+    padding: 0 11px;
+    font-size: 7.5px;
   }
 
   .hg-hero__title{
-    font-size: clamp(22px, 10.2vw, 34px);
-    margin-top: 12px;
+    font-size: clamp(20px, 9.8vw, 30px);
+    margin-top: 10px;
   }
 
   .hg-hero__text{
-    font-size: 13px;
-    line-height: 1.48;
-    margin-top: 12px;
-    max-width: 96%;
+    font-size: 12px;
+    line-height: 1.46;
+    margin-top: 10px;
+    max-width: 98%;
   }
 
   .hg-hero__cta{
-    margin-top: 16px;
+    margin-top: 12px;
   }
 
   .hg-hero__cta .hg-btn{
     width: 100%;
     justify-content: center;
-    height: 44px;
+    height: 42px;
+    font-size: 11px;
   }
 
   .hg-heroCategories{
-    left: 10px;
-    right: 10px;
+    left: 8px;
+    right: 8px;
     gap: 8px;
-    bottom: 10px;
+    bottom: 8px;
   }
 
   .hg-heroCategory{
-    flex: 0 0 196px;
-    min-height: 70px;
-    padding: 11px 12px 13px;
-    border-radius: 16px;
+    flex: 0 0 184px;
+    min-height: 64px;
+    padding: 10px 11px 11px;
+    border-radius: 15px;
   }
 
   .hg-heroCategoryIcon{
-    flex: 0 0 36px;
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-    border-radius: 11px;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+    border-radius: 10px;
   }
 
   .hg-heroCategoryTitle{
-    font-size: 10px;
+    font-size: 9.5px;
   }
 }
