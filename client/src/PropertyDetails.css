@@ -744,8 +744,9 @@
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 220px;
-    aspect-ratio: 1 / 1;
+    min-height: 240px;
+    max-height: none;
+    aspect-ratio: 16 / 10;
   }
 
   .hg-productDetailsHeroBadges {
@@ -760,9 +761,9 @@
   }
 
   .hg-productDetailsHeroContent {
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
     gap: 4px;
   }
 
@@ -771,8 +772,8 @@
   }
 
   .hg-productDetailsHeroTitle {
-    font-size: clamp(17px, 7vw, 22px);
-    max-width: 230px;
+    font-size: clamp(18px, 6.8vw, 24px);
+    max-width: 250px;
   }
 
   .hg-productDetailsHeroMetaItem {
@@ -799,6 +800,7 @@
 
   .hg-productDetailsTitle {
     font-size: clamp(22px, 7vw, 28px);
+    line-height: 1;
   }
 
   .hg-productDetailsMetaItem {
@@ -817,14 +819,15 @@
   .hg-productDetailsText {
     font-size: 12px;
     line-height: 1.62;
+    max-width: 100%;
   }
 
   .hg-productDetailsActionPrimary,
   .hg-productDetailsActionSecondary,
   .hg-productDetailsActions .hg-btn {
-    min-height: 42px;
-    height: 42px;
-    font-size: 11px;
+    min-height: 44px;
+    height: 44px;
+    font-size: 12px;
   }
 
   .hg-productDetailsBottom {
@@ -875,12 +878,13 @@
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 200px;
+    min-height: 220px;
+    aspect-ratio: 16 / 10;
   }
 
   .hg-productDetailsHeroTitle {
-    max-width: 190px;
-    font-size: clamp(16px, 7vw, 20px);
+    max-width: 210px;
+    font-size: clamp(17px, 6.8vw, 21px);
   }
 
   .hg-productDetailsThumb {
@@ -895,7 +899,7 @@
   .hg-productDetailsActionPrimary,
   .hg-productDetailsActionSecondary,
   .hg-productDetailsActions .hg-btn {
-    min-height: 40px;
-    height: 40px;
+    min-height: 42px;
+    height: 42px;
   }
 }
