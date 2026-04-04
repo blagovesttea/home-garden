@@ -1087,6 +1087,147 @@ button{
 }
 
 /* =========================================================
+   PRODUCT DETAILS PAGE SHELL OVERRIDES
+========================================================= */
+
+.hg--public .hg-productDetailsPage{
+  max-width: 1420px;
+  margin: 0 auto;
+  padding-top: 138px;
+}
+
+.hg--public .hg-productDetailsPage .hg-toolbarWrap{
+  margin-top: 0;
+  padding: 10px 12px;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.14));
+  border: 1px solid rgba(255,255,255,.52);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.42),
+    0 18px 40px rgba(31,23,18,.05);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.hg--public .hg-productDetailsPage .hg-toolbar{
+  margin: 0;
+  padding: 8px;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.82));
+  border: 1px solid rgba(255,255,255,.74);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.60),
+    0 10px 24px rgba(31,23,18,.04);
+}
+
+.hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-toolbar{
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-btn{
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.88);
+  border: 1px solid rgba(118,92,77,.10);
+  color: rgba(66,51,44,.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.50),
+    0 8px 18px rgba(31,23,18,.04);
+}
+
+.hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-btn:hover{
+  background: rgba(255,255,255,.98);
+}
+
+.hg--public .hg-productDetailsPage .hg-panel{
+  margin: 0;
+  padding: 22px;
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.56));
+  border: 1px solid rgba(255,255,255,.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.48),
+    0 22px 46px rgba(31,23,18,.05);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs{
+  padding: 12px 16px;
+}
+
+.hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs .hg-kpis{
+  color: rgba(98,80,71,.76);
+  font-size: 13px;
+}
+
+.hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs .hg-btn{
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(118,92,77,.10);
+  color: rgba(66,51,44,.92);
+  box-shadow: none;
+}
+
+.hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs .hg-btn:hover{
+  background: #fff;
+}
+
+.hg--public .hg-productDetailsPage .hg-productDetailsMainPanel{
+  background:
+    radial-gradient(900px 500px at 0% 0%, rgba(207,32,47,.03), transparent 50%),
+    linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.54));
+}
+
+.hg--public .hg-productDetailsPage .hg-grid{
+  grid-template-columns: repeat(auto-fit, minmax(240px, 290px));
+  gap: 22px;
+  justify-content: start;
+}
+
+.hg--public .hg-productDetailsPage .hg-card{
+  max-width: 100%;
+  border-radius: 24px;
+}
+
+.hg--public .hg-productDetailsPage .hg-card .hg-thumb{
+  min-height: 230px;
+  max-height: 230px;
+}
+
+.hg--public .hg-productDetailsPage .hg-cardBody{
+  padding: 14px 6px 4px;
+}
+
+.hg--public .hg-productDetailsPage .hg-cardTitle{
+  min-height: auto;
+  font-size: 16px;
+}
+
+.hg--public .hg-productDetailsPage .hg-price{
+  font-size: 26px;
+}
+
+.hg--public .hg-productDetailsPage .hg-actions .hg-btn{
+  min-width: 0;
+}
+
+.hg--public .hg-productDetailsPage .hg-productDetailsRelated .hg-panelTitle{
+  margin-bottom: 18px;
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: rgba(56,42,36,.96);
+}
+
+/* =========================================================
    CART / CHECKOUT
 ========================================================= */
 
@@ -1547,6 +1688,10 @@ button{
     grid-template-columns: repeat(3, minmax(0, 1fr));
     width: calc(100% - 56px);
   }
+
+  .hg--public .hg-productDetailsPage{
+    max-width: 1260px;
+  }
 }
 
 @media (max-width: 1180px){
@@ -1568,6 +1713,10 @@ button{
 
   .hg-publicNav__actions{
     justify-content: flex-start;
+  }
+
+  .hg--public .hg-productDetailsPage{
+    padding-top: 128px;
   }
 }
 
@@ -1601,6 +1750,14 @@ button{
   .hg--public .hg-grid{
     grid-template-columns: repeat(auto-fit, minmax(270px, 310px));
     justify-content: center;
+  }
+
+  .hg--public .hg-productDetailsPage{
+    padding-top: 122px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-productDetailsMainPanel{
+    padding: 18px;
   }
 }
 
@@ -1694,6 +1851,24 @@ button{
 
   .hg-heroCategories{
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hg--public .hg-productDetailsPage{
+    padding-top: 116px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-toolbarWrap{
+    border-radius: 24px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-panel{
+    border-radius: 24px;
+    padding: 18px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-grid{
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    justify-content: stretch;
   }
 }
 
@@ -2101,6 +2276,90 @@ button{
     letter-spacing: .04em;
   }
 
+  .hg--public .hg-productDetailsPage{
+    padding-top: 108px;
+    gap: 14px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-toolbarWrap{
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-toolbar{
+    padding: 10px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.74);
+    border: 1px solid rgba(255,255,255,.72);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.52),
+      0 10px 22px rgba(31,23,18,.04);
+  }
+
+  .hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-toolbar{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: grid;
+    gap: 8px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-btn{
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-panel{
+    border-radius: 24px;
+    padding: 14px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs{
+    padding: 8px 10px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs .hg-btn{
+    height: 38px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs .hg-kpis{
+    font-size: 12px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-grid{
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-card{
+    max-width: 100%;
+    padding: 12px;
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,.76);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.84), rgba(255,255,255,.68));
+    box-shadow:
+      0 16px 34px rgba(31,23,18,.05),
+      inset 0 1px 0 rgba(255,255,255,.42);
+  }
+
+  .hg--public .hg-productDetailsPage .hg-card::after{
+    display: none;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-card .hg-thumb{
+    min-height: 220px;
+    max-height: 220px;
+    border-radius: 20px;
+  }
+
   .hg--admin .hg-grid{
     grid-template-columns: 1fr;
   }
@@ -2337,5 +2596,53 @@ button{
   .hg--public .hg-cardBody .hg-actions .hg-btn--primary{
     height: 44px;
     font-size: 10px;
+  }
+
+  .hg--public .hg-productDetailsPage{
+    padding-top: 100px;
+    gap: 12px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-toolbar{
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-productDetailsTopbar .hg-btn{
+    height: 42px;
+    font-size: 11px;
+    padding: 0 10px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-panel{
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs{
+    padding: 8px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-productDetailsBreadcrumbs .hg-btn{
+    height: 36px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-productDetailsRelated .hg-panelTitle{
+    font-size: 22px;
+    margin-bottom: 14px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-card{
+    padding: 10px;
+    border-radius: 20px;
+  }
+
+  .hg--public .hg-productDetailsPage .hg-card .hg-thumb{
+    min-height: 204px;
+    max-height: 204px;
+    border-radius: 18px;
   }
 }
