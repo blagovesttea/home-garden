@@ -1,11 +1,11 @@
-/* src/PropertyDetails.css - Premium centered compact product details */
+/* src/PropertyDetails.css - Premium centered polished product details */
 
 .hg-productDetailsPage {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 8px 0 28px;
+  padding: 2px 0 24px;
   display: grid;
-  gap: 12px;
+  gap: 10px;
   color: #1d1714;
   background: transparent;
 }
@@ -23,9 +23,9 @@
 
 .hg-productDetailsTopbarBtn,
 .hg-productDetailsTopbar__inner .hg-btn {
-  min-height: 34px;
-  height: 34px;
-  padding: 0 6px;
+  min-height: 32px;
+  height: 32px;
+  padding: 0 4px;
   border: none;
   border-radius: 0;
   background: transparent;
@@ -44,7 +44,7 @@
 }
 
 .hg-productDetailsState {
-  padding: 6px 0;
+  padding: 4px 0;
   border: none;
   background: transparent;
   color: rgba(36, 25, 21, 0.74);
@@ -97,28 +97,28 @@
 }
 
 .hg-productDetailsLayout {
-  width: min(100%, 1120px);
+  width: min(100%, 1080px);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 640px) minmax(300px, 360px);
+  grid-template-columns: minmax(0, 610px) minmax(300px, 350px);
   justify-content: center;
-  gap: 28px;
+  gap: 24px;
   align-items: start;
 }
 
 .hg-productDetailsGallery {
   min-width: 0;
-  max-width: 640px;
+  max-width: 610px;
   width: 100%;
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .hg-productDetailsHeroWrap {
   position: relative;
   overflow: hidden;
   border: none;
-  border-radius: 28px;
+  border-radius: 26px;
   background: transparent;
   box-shadow: none;
   padding: 0;
@@ -126,10 +126,10 @@
 
 .hg-productDetailsHeroImage {
   width: 100%;
-  min-height: 360px;
-  max-height: 420px;
+  min-height: 340px;
+  max-height: 390px;
   aspect-ratio: 1 / 1;
-  border-radius: 28px;
+  border-radius: 26px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -143,14 +143,14 @@
 .hg-productDetailsHeroOverlay {
   position: absolute;
   inset: 0;
-  border-radius: 28px;
+  border-radius: 26px;
   background:
     linear-gradient(
       180deg,
-      rgba(14, 10, 8, 0.06) 0%,
-      rgba(14, 10, 8, 0.04) 28%,
-      rgba(14, 10, 8, 0.14) 58%,
-      rgba(14, 10, 8, 0.42) 100%
+      rgba(14, 10, 8, 0.04) 0%,
+      rgba(14, 10, 8, 0.03) 30%,
+      rgba(14, 10, 8, 0.12) 58%,
+      rgba(14, 10, 8, 0.36) 100%
     );
   pointer-events: none;
   z-index: 1;
@@ -177,10 +177,10 @@
   border-radius: 0;
   background: transparent;
   color: rgba(255, 249, 243, 0.96);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.03em;
-  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.26);
   box-shadow: none;
 }
 
@@ -199,30 +199,30 @@
   bottom: 18px;
   z-index: 3;
   display: grid;
-  gap: 6px;
+  gap: 4px;
   align-content: end;
   pointer-events: none;
 }
 
 .hg-productDetailsHeroEyebrow {
   margin: 0;
-  color: rgba(255, 247, 241, 0.76);
+  color: rgba(255, 247, 241, 0.78);
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.28);
+  text-shadow: 0 3px 16px rgba(0, 0, 0, 0.25);
 }
 
 .hg-productDetailsHeroTitle {
   margin: 0;
-  max-width: 440px;
+  max-width: 380px;
   color: #fff9f5;
-  font-size: clamp(22px, 2.5vw, 36px);
-  line-height: 0.94;
+  font-size: clamp(20px, 2.3vw, 32px);
+  line-height: 0.95;
   font-weight: 900;
   letter-spacing: -0.07em;
-  text-shadow: 0 6px 24px rgba(0, 0, 0, 0.24);
+  text-shadow: 0 6px 22px rgba(0, 0, 0, 0.22);
 }
 
 .hg-productDetailsHeroMeta {
@@ -234,14 +234,14 @@
 
 .hg-productDetailsHeroMetaItem {
   color: rgba(255, 247, 242, 0.88);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.22);
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
 }
 
 .hg-productDetailsHeroMetaDot {
   color: rgba(255, 247, 242, 0.42);
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .hg-productDetailsThumbs {
@@ -261,7 +261,7 @@
   cursor: pointer;
   transition: transform 0.18s ease, opacity 0.18s ease;
   box-shadow: none;
-  opacity: 0.82;
+  opacity: 0.76;
 }
 
 .hg-productDetailsThumbBtn:hover {
@@ -274,9 +274,9 @@
 }
 
 .hg-productDetailsThumb {
-  width: 58px;
-  height: 58px;
-  border-radius: 14px;
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -284,7 +284,7 @@
 
 .hg-productDetailsContent {
   min-width: 0;
-  max-width: 360px;
+  max-width: 350px;
   width: 100%;
   display: grid;
   grid-template-areas:
@@ -293,7 +293,7 @@
     "actions"
     "info";
   gap: 10px;
-  padding-top: 4px;
+  padding-top: 2px;
   align-content: start;
 }
 
@@ -301,7 +301,7 @@
   grid-area: header;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   padding: 0;
   border: none;
   border-radius: 0;
@@ -320,7 +320,7 @@
 
 .hg-productDetailsTitle {
   margin: 0;
-  font-size: clamp(22px, 2vw, 34px);
+  font-size: clamp(20px, 1.9vw, 32px);
   line-height: 0.95;
   font-weight: 900;
   letter-spacing: -0.07em;
@@ -336,7 +336,7 @@
 }
 
 .hg-productDetailsMetaItem {
-  color: rgba(33, 24, 19, 0.68);
+  color: rgba(33, 24, 19, 0.7);
   font-size: 12px;
   font-weight: 700;
 }
@@ -348,7 +348,7 @@
 
 .hg-productDetailsPriceWrap {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   margin-top: 4px;
 }
 
@@ -362,7 +362,7 @@
 
 .hg-productDetailsPrice {
   margin-top: 0;
-  font-size: clamp(22px, 1.8vw, 30px);
+  font-size: clamp(20px, 1.7vw, 28px);
   line-height: 1;
   font-weight: 900;
   letter-spacing: -0.05em;
@@ -379,7 +379,7 @@
   background: transparent;
   color: rgba(43, 30, 24, 0.76);
   font-size: 13px;
-  line-height: 1.68;
+  line-height: 1.66;
   box-shadow: none;
 }
 
@@ -389,13 +389,14 @@
   flex-direction: column;
   gap: 8px;
   width: 100%;
+  margin-top: 2px;
 }
 
 .hg-productDetailsActionPrimary,
 .hg-productDetailsActionSecondary,
 .hg-productDetailsActions .hg-btn {
-  min-height: 44px;
-  height: 44px;
+  min-height: 46px;
+  height: 46px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 800;
@@ -403,7 +404,8 @@
     transform 0.16s ease,
     background 0.16s ease,
     color 0.16s ease,
-    opacity 0.16s ease;
+    opacity 0.16s ease,
+    box-shadow 0.16s ease;
   box-shadow: none;
 }
 
@@ -418,29 +420,29 @@
 .hg-productDetailsActions .hg-btn.hg-btn--primary {
   width: 100%;
   border: none;
-  background: linear-gradient(135deg, #2a1b16, #4a2b22);
+  background: linear-gradient(135deg, #2b1711, #5b3024);
   color: #fff8f3;
 }
 
 .hg-productDetailsActionSecondary,
 .hg-productDetailsActions .hg-btn:not(.hg-btn--primary) {
   width: 100%;
-  border: none;
-  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(53, 33, 25, 0.08);
+  background: rgba(255, 255, 255, 0.82);
   color: #241915;
 }
 
 .hg-productDetailsInfo {
   grid-area: info;
   display: grid;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
   margin-top: 2px;
 }
 
 .hg-productDetailsInfoSection {
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
 
 .hg-productDetailsInfoSection--description {
@@ -466,7 +468,7 @@
 .hg-productDetailsSectionTitle {
   margin: 0;
   color: #201714;
-  font-size: clamp(15px, 1.3vw, 20px);
+  font-size: clamp(15px, 1.2vw, 19px);
   line-height: 1.08;
   font-weight: 900;
   letter-spacing: -0.04em;
@@ -474,7 +476,7 @@
 
 .hg-productDetailsText {
   font-size: 13px;
-  line-height: 1.72;
+  line-height: 1.7;
   color: rgba(43, 30, 24, 0.76);
   white-space: pre-line;
 }
@@ -489,7 +491,7 @@
   grid-template-columns: 1fr;
   gap: 2px;
   align-items: start;
-  padding: 7px 0;
+  padding: 6px 0;
   border: none;
 }
 
@@ -505,12 +507,12 @@
   color: #201714;
   font-size: 13px;
   font-weight: 800;
-  line-height: 1.4;
+  line-height: 1.38;
 }
 
 .hg-productDetailsRelated {
-  width: min(100%, 1120px);
-  margin: 10px auto 0;
+  width: min(100%, 1080px);
+  margin: 8px auto 0;
   display: grid;
   gap: 12px;
 }
@@ -542,7 +544,7 @@
 .hg-productDetailsRelatedThumb {
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 20px;
+  border-radius: 18px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -584,21 +586,21 @@
 
   .hg-productDetailsLayout,
   .hg-productDetailsRelated {
-    width: min(100%, 1040px);
+    width: min(100%, 1000px);
   }
 
   .hg-productDetailsLayout {
-    grid-template-columns: minmax(0, 580px) minmax(290px, 340px);
-    gap: 22px;
+    grid-template-columns: minmax(0, 560px) minmax(290px, 330px);
+    gap: 20px;
   }
 
   .hg-productDetailsGallery {
-    max-width: 580px;
+    max-width: 560px;
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 320px;
-    max-height: 380px;
+    min-height: 310px;
+    max-height: 360px;
   }
 
   .hg-productDetailsRelatedGrid {
@@ -608,8 +610,8 @@
 
 @media (max-width: 920px) {
   .hg-productDetailsPage {
-    padding: 8px 0 22px;
-    gap: 12px;
+    padding: 4px 0 20px;
+    gap: 10px;
   }
 
   .hg-productDetailsLayout,
@@ -631,7 +633,7 @@
   .hg-productDetailsHeroWrap,
   .hg-productDetailsHeroImage,
   .hg-productDetailsHeroOverlay {
-    border-radius: 24px;
+    border-radius: 22px;
   }
 
   .hg-productDetailsHeroImage {
@@ -649,6 +651,7 @@
   .hg-productDetailsContent {
     gap: 10px;
     max-width: 100%;
+    padding-top: 0;
   }
 
   .hg-productDetailsTitle {
@@ -667,7 +670,7 @@
 @media (max-width: 640px) {
   .hg-productDetailsPage {
     gap: 10px;
-    padding: 8px 0 18px;
+    padding: 4px 0 16px;
   }
 
   .hg-productDetailsTopbar__inner {
@@ -676,9 +679,9 @@
 
   .hg-productDetailsTopbarBtn,
   .hg-productDetailsTopbar__inner .hg-btn {
-    min-height: 32px;
-    height: 32px;
-    padding: 0 6px;
+    min-height: 30px;
+    height: 30px;
+    padding: 0 4px;
     font-size: 11px;
   }
 
@@ -708,7 +711,7 @@
     left: 14px;
     right: 14px;
     bottom: 14px;
-    gap: 6px;
+    gap: 5px;
   }
 
   .hg-productDetailsHeroEyebrow {
@@ -724,8 +727,8 @@
   }
 
   .hg-productDetailsThumb {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     border-radius: 12px;
   }
 
@@ -752,7 +755,7 @@
   .hg-productDetailsLead,
   .hg-productDetailsText {
     font-size: 12px;
-    line-height: 1.66;
+    line-height: 1.64;
   }
 
   .hg-productDetailsActionPrimary,
