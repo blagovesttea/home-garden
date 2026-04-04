@@ -2192,45 +2192,6 @@ button{
     right: -5px;
   }
 
-  .hg--public .hg-grid{
-    grid-template-columns: 1fr;
-    justify-content: stretch;
-  }
-
-  .hg--public .hg-card{
-    max-width: 100%;
-    padding: 12px 12px 14px;
-    border-radius: 26px;
-  }
-
-  .hg--public .hg-thumb{
-    min-height: 232px;
-    max-height: 232px;
-    border-radius: 20px;
-  }
-
-  .hg--admin .hg-grid{
-    grid-template-columns: 1fr;
-  }
-
-  .hg-formGrid{
-    grid-template-columns: 1fr;
-  }
-
-  .hg-productModal__title{
-    font-size: 18px;
-    line-height: 1.18;
-  }
-
-  .hg-cartItem{
-    grid-template-columns: 1fr;
-  }
-
-  .hg-cartItem__image{
-    width: 100%;
-    height: 180px;
-  }
-
   .hg-hero{
     min-height: 650px;
     border-radius: 0 0 22px 22px;
@@ -2274,64 +2235,6 @@ button{
   .hg-hero__cta .hg-btn{
     height: 42px;
     padding: 0 16px;
-    font-size: 11px;
-  }
-
-  .hg-btn{
-    width: auto;
-  }
-
-  .hg--public .hg-cardBody .hg-actions{
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .hg--public .hg-cardBody .hg-actions .hg-btn:first-child,
-  .hg--public .hg-cardBody .hg-actions .hg-btn--primary{
-    width: 100%;
-    min-width: 0;
-    flex: initial;
-  }
-
-  .hg-modal{
-    width: calc(100vw - 12px);
-    max-height: calc(100vh - 12px);
-    padding: 12px;
-    border-radius: 16px;
-  }
-
-  .hg-productModal{
-    gap: 14px;
-  }
-
-  .hg-productModal__image{
-    min-height: 220px;
-    border-radius: 16px;
-  }
-
-  .hg-productModal__actions .hg-btn,
-  .hg-productModal .hg-actions .hg-btn{
-    width: 100%;
-    min-width: 0;
-  }
-
-  .hg-productModal__thumb,
-  .hg-productModal__galleryThumb,
-  .hg-productModal__thumbnail{
-    width: 50px !important;
-    min-width: 50px !important;
-    max-width: 50px !important;
-    height: 50px !important;
-    min-height: 50px !important;
-    max-height: 50px !important;
-    border-radius: 12px;
-  }
-
-  .hg-productModal__description,
-  .hg-productModal__text,
-  .hg-productModal__row,
-  .hg-productModal__spec,
-  .hg-productModal__detail{
     font-size: 11px;
   }
 
@@ -2388,6 +2291,231 @@ button{
 
   .hg-heroCategory:hover .hg-heroCategoryLine{
     width: 44%;
+  }
+
+  .hg-toolbarWrap{
+    margin-top: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .hg-sectionHead{
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 0 6px;
+  }
+
+  .hg-sectionEyebrow{
+    font-size: 11px;
+    letter-spacing: .10em;
+  }
+
+  .hg-sectionTitle{
+    font-size: clamp(28px, 7.8vw, 40px);
+    line-height: .94;
+  }
+
+  .hg--public .hg-toolbar{
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 14px;
+    margin: 0 0 14px;
+    border: 1px solid rgba(255,255,255,.74);
+    border-radius: 26px;
+    background: rgba(255,255,255,.74);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.54),
+      0 10px 24px rgba(31,23,18,.04);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .hg--public .hg-input,
+  .hg--public .hg-select{
+    width: 100%;
+    min-width: 0;
+    flex: initial;
+    height: 54px;
+    border-radius: 18px;
+    padding: 0 18px;
+    font-size: 14px;
+    border-color: rgba(118,92,77,.12);
+    box-shadow: none;
+  }
+
+  .hg-pager{
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    padding: 0 4px;
+  }
+
+  .hg-pager .hg-btn{
+    height: 42px;
+    min-width: 110px;
+    padding: 0 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 6px 14px rgba(31,23,18,.04);
+  }
+
+  .hg-pager .hg-counter,
+  .hg-pager span,
+  .hg-pager div:not(.hg-btn){
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .hg--public .hg-grid{
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+    gap: 20px;
+  }
+
+  .hg--public .hg-card{
+    max-width: 100%;
+    padding: 0 0 18px;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: visible;
+  }
+
+  .hg--public .hg-card::after{
+    display: none;
+  }
+
+  .hg--public .hg-thumb{
+    min-height: 246px;
+    max-height: 246px;
+    border-radius: 28px;
+    border: 1px solid rgba(255,255,255,.82);
+    background-color: rgba(255,255,255,.50);
+    box-shadow:
+      0 14px 28px rgba(31,23,18,.06),
+      inset 0 1px 0 rgba(255,255,255,.42);
+  }
+
+  .hg--public .hg-cardBody{
+    padding: 16px 8px 0;
+    gap: 8px;
+  }
+
+  .hg--public .hg-meta{
+    min-height: 12px;
+  }
+
+  .hg--public .hg-meta::before{
+    font-size: 10px;
+  }
+
+  .hg--public .hg-cardTitle{
+    min-height: auto;
+    font-size: 18px;
+    line-height: 1.22;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+  }
+
+  .hg--public .hg-price{
+    font-size: 26px;
+    line-height: .96;
+    margin-top: 0;
+  }
+
+  .hg--public .hg-cardBody .hg-actions{
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    flex-wrap: initial;
+  }
+
+  .hg--public .hg-cardBody .hg-actions .hg-btn:first-child,
+  .hg--public .hg-cardBody .hg-actions .hg-btn--primary{
+    width: 100%;
+    min-width: 0;
+    flex: initial;
+    height: 46px;
+    padding: 0 14px;
+    font-size: 11px;
+    letter-spacing: .04em;
+  }
+
+  .hg-modal{
+    width: calc(100vw - 12px);
+    max-height: calc(100vh - 12px);
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .hg-productModal{
+    gap: 14px;
+  }
+
+  .hg-productModal__title{
+    font-size: 18px;
+    line-height: 1.18;
+  }
+
+  .hg-productModal__image{
+    min-height: 220px;
+    border-radius: 16px;
+  }
+
+  .hg-productModal__actions .hg-btn,
+  .hg-productModal .hg-actions .hg-btn{
+    width: 100%;
+    min-width: 0;
+  }
+
+  .hg-productModal__thumb,
+  .hg-productModal__galleryThumb,
+  .hg-productModal__thumbnail{
+    width: 50px !important;
+    min-width: 50px !important;
+    max-width: 50px !important;
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+    border-radius: 12px;
+  }
+
+  .hg-productModal__description,
+  .hg-productModal__text,
+  .hg-productModal__row,
+  .hg-productModal__spec,
+  .hg-productModal__detail{
+    font-size: 11px;
+  }
+
+  .hg--admin .hg-grid{
+    grid-template-columns: 1fr;
+  }
+
+  .hg-formGrid{
+    grid-template-columns: 1fr;
+  }
+
+  .hg-cartItem{
+    grid-template-columns: 1fr;
+  }
+
+  .hg-cartItem__image{
+    width: 100%;
+    height: 180px;
   }
 }
 
@@ -2524,5 +2652,90 @@ button{
 
   .hg-heroCategoryTitle{
     font-size: 9px;
+  }
+
+  .hg-toolbarWrap{
+    margin-top: 16px;
+  }
+
+  .hg-sectionHead{
+    padding: 0 4px;
+    margin-bottom: 8px;
+  }
+
+  .hg-sectionEyebrow{
+    font-size: 10px;
+  }
+
+  .hg-sectionTitle{
+    font-size: clamp(24px, 8vw, 34px);
+  }
+
+  .hg--public .hg-toolbar{
+    padding: 12px;
+    gap: 8px;
+    margin-bottom: 12px;
+    border-radius: 22px;
+  }
+
+  .hg--public .hg-input,
+  .hg--public .hg-select{
+    height: 50px;
+    padding: 0 16px;
+    border-radius: 16px;
+    font-size: 13px;
+  }
+
+  .hg-pager{
+    grid-template-columns: auto 1fr auto;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding: 0 2px;
+  }
+
+  .hg-pager .hg-btn{
+    min-width: 92px;
+    height: 40px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .hg-pager .hg-counter,
+  .hg-pager span,
+  .hg-pager div:not(.hg-btn){
+    font-size: 12px;
+  }
+
+  .hg--public .hg-grid{
+    gap: 18px;
+  }
+
+  .hg--public .hg-thumb{
+    min-height: 214px;
+    max-height: 214px;
+    border-radius: 24px;
+  }
+
+  .hg--public .hg-cardBody{
+    padding: 14px 6px 0;
+  }
+
+  .hg--public .hg-cardTitle{
+    font-size: 17px;
+  }
+
+  .hg--public .hg-price{
+    font-size: 24px;
+  }
+
+  .hg--public .hg-cardBody .hg-actions{
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .hg--public .hg-cardBody .hg-actions .hg-btn:first-child,
+  .hg--public .hg-cardBody .hg-actions .hg-btn--primary{
+    height: 44px;
+    font-size: 10px;
   }
 }
