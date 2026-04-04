@@ -64,10 +64,13 @@ export default function PropertyDetails({
     <div className="hg-publicShell hg-productDetailsPage">
       <div className="hg-productDetailsTopbar">
         <div className="hg-productDetailsTopbar__inner">
-          <button className="hg-btn" onClick={() => navigate(-1)}>
+          <button className="hg-btn hg-productDetailsTopbarBtn" onClick={() => navigate(-1)}>
             Назад
           </button>
-          <button className="hg-btn" onClick={clearPublicFilters}>
+          <button
+            className="hg-btn hg-productDetailsTopbarBtn"
+            onClick={clearPublicFilters}
+          >
             Към каталога
           </button>
         </div>
@@ -129,6 +132,8 @@ export default function PropertyDetails({
                   }}
                 />
 
+                <div className="hg-productDetailsHeroOverlay" />
+
                 <div className="hg-productDetailsHeroBadges">
                   <span className="hg-productDetailsBadge">
                     {categoryLabel}
@@ -144,6 +149,31 @@ export default function PropertyDetails({
                   >
                     {stockLabel}
                   </span>
+                </div>
+
+                <div className="hg-productDetailsHeroContent">
+                  <div className="hg-productDetailsHeroEyebrow">
+                    {productPage?.brand ? productPage.brand : categoryLabel}
+                  </div>
+
+                  <h1 className="hg-productDetailsHeroTitle">
+                    {productPage.title}
+                  </h1>
+
+                  <div className="hg-productDetailsHeroMeta">
+                    <span className="hg-productDetailsHeroMetaItem">
+                      {stockLabel}
+                    </span>
+
+                    {productPage?.shippingDays ? (
+                      <>
+                        <span className="hg-productDetailsHeroMetaDot">•</span>
+                        <span className="hg-productDetailsHeroMetaItem">
+                          Доставка: {shippingLabel}
+                        </span>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
               </div>
 
@@ -189,8 +219,14 @@ export default function PropertyDetails({
                   ) : null}
                 </div>
 
-                <div className="hg-productDetailsPrice">
-                  {formatPrice(productPrice(productPage), productPage.currency)}
+                <div className="hg-productDetailsPriceWrap">
+                  <div className="hg-productDetailsPriceLabel">Цена</div>
+                  <div className="hg-productDetailsPrice">
+                    {formatPrice(
+                      productPrice(productPage),
+                      productPage.currency
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -200,22 +236,16 @@ export default function PropertyDetails({
                 </div>
               )}
 
-              {productPage.description && (
-                <div className="hg-productDetailsText">
-                  {productPage.description}
-                </div>
-              )}
-
               <div className="hg-productDetailsActions">
                 <button
-                  className="hg-btn hg-btn--primary"
+                  className="hg-btn hg-btn--primary hg-productDetailsActionPrimary"
                   onClick={() => addToCart(productPage)}
                 >
                   Добави в количката
                 </button>
 
                 <button
-                  className="hg-btn"
+                  className="hg-btn hg-productDetailsActionSecondary"
                   onClick={() => {
                     addToCart(productPage);
                     setCartOpen(true);
@@ -225,11 +255,14 @@ export default function PropertyDetails({
                 </button>
               </div>
 
-              <div className="hg-productDetailsInfoGrid">
-                <div className="hg-productDetailsCard">
-                  <div className="hg-productDetailsCardTitle">
-                    Основна информация
+              <div className="hg-productDetailsInfo">
+                <div className="hg-productDetailsInfoSection">
+                  <div className="hg-productDetailsSectionEyebrow">
+                    Детайли
                   </div>
+                  <h2 className="hg-productDetailsSectionTitle">
+                    Основна информация
+                  </h2>
 
                   <div className="hg-productDetailsSpecs">
                     {detailRows.map((row) => (
@@ -244,6 +277,21 @@ export default function PropertyDetails({
                     ))}
                   </div>
                 </div>
+
+                {productPage.description && (
+                  <div className="hg-productDetailsInfoSection hg-productDetailsInfoSection--description">
+                    <div className="hg-productDetailsSectionEyebrow">
+                      Представяне
+                    </div>
+                    <h2 className="hg-productDetailsSectionTitle">
+                      Описание
+                    </h2>
+
+                    <div className="hg-productDetailsText">
+                      {productPage.description}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -282,6 +330,7 @@ export default function PropertyDetails({
                         : "linear-gradient(135deg,#eee,#f7f7f7)",
                     }}
                   />
+
                   <div className="hg-productDetailsRelatedBody">
                     <div className="hg-productDetailsRelatedCategory">
                       {p?.category

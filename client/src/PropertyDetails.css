@@ -1,11 +1,11 @@
-/* src/PropertyDetails.css - Clean luxury compact product details */
+/* src/PropertyDetails.css - Premium clean editorial product details */
 
 .hg-productDetailsPage {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 10px 0 32px;
+  padding: 10px 0 34px;
   display: grid;
-  gap: 12px;
+  gap: 14px;
   color: #1d1714;
   background: transparent;
 }
@@ -21,6 +21,7 @@
   align-items: center;
 }
 
+.hg-productDetailsTopbarBtn,
 .hg-productDetailsTopbar__inner .hg-btn {
   min-height: 34px;
   height: 34px;
@@ -34,6 +35,7 @@
   box-shadow: none;
 }
 
+.hg-productDetailsTopbarBtn:hover,
 .hg-productDetailsTopbar__inner .hg-btn:hover {
   background: transparent;
   color: #1d1714;
@@ -98,7 +100,7 @@
   display: grid;
   grid-template-columns: minmax(0, 760px) minmax(320px, 360px);
   justify-content: space-between;
-  gap: 14px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -113,7 +115,7 @@
   position: relative;
   overflow: hidden;
   border: none;
-  border-radius: 28px;
+  border-radius: 30px;
   background: transparent;
   box-shadow: none;
   padding: 0;
@@ -121,18 +123,34 @@
 
 .hg-productDetailsHeroImage {
   width: 100%;
-  min-height: 340px;
-  max-height: 430px;
-  aspect-ratio: 16 / 9.4;
-  border-radius: 28px;
+  min-height: 350px;
+  max-height: 440px;
+  aspect-ratio: 16 / 9.3;
+  border-radius: 30px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  transition: transform 0.24s ease;
+  transition: transform 0.3s ease;
 }
 
 .hg-productDetailsHeroWrap:hover .hg-productDetailsHeroImage {
-  transform: scale(1.008);
+  transform: scale(1.01);
+}
+
+.hg-productDetailsHeroOverlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 30px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(14, 10, 8, 0.08) 0%,
+      rgba(14, 10, 8, 0.04) 28%,
+      rgba(14, 10, 8, 0.16) 58%,
+      rgba(14, 10, 8, 0.56) 100%
+    );
+  pointer-events: none;
+  z-index: 1;
 }
 
 .hg-productDetailsHeroBadges {
@@ -143,7 +161,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  z-index: 2;
+  z-index: 3;
   pointer-events: none;
 }
 
@@ -169,6 +187,58 @@
 
 .hg-productDetailsBadge.is-outofstock {
   color: #ffd0cb;
+}
+
+.hg-productDetailsHeroContent {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 22px;
+  z-index: 3;
+  display: grid;
+  gap: 8px;
+  align-content: end;
+  pointer-events: none;
+}
+
+.hg-productDetailsHeroEyebrow {
+  margin: 0;
+  color: rgba(255, 247, 241, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.28);
+}
+
+.hg-productDetailsHeroTitle {
+  margin: 0;
+  max-width: 620px;
+  color: #fff9f5;
+  font-size: clamp(28px, 3.6vw, 50px);
+  line-height: 0.96;
+  font-weight: 900;
+  letter-spacing: -0.07em;
+  text-shadow: 0 6px 24px rgba(0, 0, 0, 0.24);
+}
+
+.hg-productDetailsHeroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.hg-productDetailsHeroMetaItem {
+  color: rgba(255, 247, 242, 0.86);
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.22);
+}
+
+.hg-productDetailsHeroMetaDot {
+  color: rgba(255, 247, 242, 0.42);
+  font-size: 11px;
 }
 
 .hg-productDetailsThumbs {
@@ -218,7 +288,7 @@
     "lead"
     "actions"
     "info";
-  gap: 8px;
+  gap: 10px;
   padding-top: 0;
   align-content: start;
 }
@@ -246,7 +316,7 @@
 
 .hg-productDetailsTitle {
   margin: 0;
-  font-size: clamp(24px, 2.2vw, 38px);
+  font-size: clamp(24px, 2.3vw, 38px);
   line-height: 0.95;
   font-weight: 900;
   letter-spacing: -0.07em;
@@ -272,8 +342,22 @@
   font-size: 11px;
 }
 
-.hg-productDetailsPrice {
+.hg-productDetailsPriceWrap {
+  display: grid;
+  gap: 4px;
   margin-top: 4px;
+}
+
+.hg-productDetailsPriceLabel {
+  color: rgba(33, 24, 19, 0.38);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hg-productDetailsPrice {
+  margin-top: 0;
   font-size: clamp(24px, 2vw, 34px);
   line-height: 1;
   font-weight: 900;
@@ -291,7 +375,7 @@
   background: transparent;
   color: rgba(43, 30, 24, 0.76);
   font-size: 13px;
-  line-height: 1.7;
+  line-height: 1.72;
   box-shadow: none;
 }
 
@@ -303,6 +387,8 @@
   width: 100%;
 }
 
+.hg-productDetailsActionPrimary,
+.hg-productDetailsActionSecondary,
 .hg-productDetailsActions .hg-btn {
   min-height: 44px;
   height: 44px;
@@ -317,11 +403,14 @@
   box-shadow: none;
 }
 
-.hg-productDetailsActions .hg-btn:hover {
+.hg-productDetailsActions .hg-btn:hover,
+.hg-productDetailsActionPrimary:hover,
+.hg-productDetailsActionSecondary:hover {
   transform: translateY(-1px);
   box-shadow: none;
 }
 
+.hg-productDetailsActionPrimary,
 .hg-productDetailsActions .hg-btn.hg-btn--primary {
   width: 100%;
   border: none;
@@ -329,6 +418,7 @@
   color: #fff8f3;
 }
 
+.hg-productDetailsActionSecondary,
 .hg-productDetailsActions .hg-btn:not(.hg-btn--primary) {
   width: 100%;
   border: none;
@@ -336,29 +426,46 @@
   color: #241915;
 }
 
-.hg-productDetailsInfoGrid {
+.hg-productDetailsInfo {
   grid-area: info;
   display: grid;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
   margin-top: 2px;
 }
 
-.hg-productDetailsCard {
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+.hg-productDetailsInfoSection {
+  display: grid;
+  gap: 8px;
 }
 
-.hg-productDetailsCardTitle {
-  margin-bottom: 8px;
-  color: #1d1410;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
+.hg-productDetailsInfoSection--description {
+  margin-top: 4px;
+}
+
+.hg-productDetailsSectionHead {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hg-productDetailsSectionEyebrow {
+  margin-bottom: 4px;
+  color: rgba(33, 24, 19, 0.36);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
+}
+
+.hg-productDetailsSectionTitle {
+  margin: 0;
+  color: #201714;
+  font-size: clamp(16px, 1.5vw, 22px);
+  line-height: 1.06;
+  font-weight: 900;
+  letter-spacing: -0.04em;
 }
 
 .hg-productDetailsText {
@@ -398,34 +505,9 @@
 }
 
 .hg-productDetailsRelated {
-  margin-top: 10px;
+  margin-top: 12px;
   display: grid;
   gap: 12px;
-}
-
-.hg-productDetailsSectionHead {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.hg-productDetailsSectionEyebrow {
-  margin-bottom: 4px;
-  color: rgba(33, 24, 19, 0.36);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.hg-productDetailsSectionTitle {
-  margin: 0;
-  color: #201714;
-  font-size: clamp(16px, 1.5vw, 22px);
-  line-height: 1.06;
-  font-weight: 900;
-  letter-spacing: -0.04em;
 }
 
 .hg-productDetailsRelatedGrid {
@@ -455,7 +537,7 @@
 .hg-productDetailsRelatedThumb {
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 20px;
+  border-radius: 22px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -505,7 +587,7 @@
 
   .hg-productDetailsHeroImage {
     min-height: 320px;
-    max-height: 400px;
+    max-height: 405px;
   }
 
   .hg-productDetailsRelatedGrid {
@@ -531,14 +613,21 @@
   }
 
   .hg-productDetailsHeroWrap,
-  .hg-productDetailsHeroImage {
-    border-radius: 22px;
+  .hg-productDetailsHeroImage,
+  .hg-productDetailsHeroOverlay {
+    border-radius: 24px;
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 260px;
+    min-height: 270px;
     max-height: none;
     aspect-ratio: 16 / 9;
+  }
+
+  .hg-productDetailsHeroContent {
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
   }
 
   .hg-productDetailsContent {
@@ -568,6 +657,7 @@
     gap: 6px;
   }
 
+  .hg-productDetailsTopbarBtn,
   .hg-productDetailsTopbar__inner .hg-btn {
     min-height: 32px;
     height: 32px;
@@ -576,21 +666,42 @@
   }
 
   .hg-productDetailsHeroWrap,
-  .hg-productDetailsHeroImage {
+  .hg-productDetailsHeroImage,
+  .hg-productDetailsHeroOverlay {
     border-radius: 18px;
   }
 
   .hg-productDetailsHeroImage {
-    min-height: 220px;
+    min-height: 228px;
   }
 
   .hg-productDetailsHeroBadges {
     top: 14px;
     left: 14px;
+    right: 14px;
     gap: 10px;
   }
 
   .hg-productDetailsBadge {
+    font-size: 10px;
+  }
+
+  .hg-productDetailsHeroContent {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    gap: 6px;
+  }
+
+  .hg-productDetailsHeroEyebrow {
+    font-size: 9px;
+  }
+
+  .hg-productDetailsHeroTitle {
+    font-size: clamp(21px, 8vw, 30px);
+  }
+
+  .hg-productDetailsHeroMetaItem {
     font-size: 10px;
   }
 
@@ -616,6 +727,10 @@
     font-size: 11px;
   }
 
+  .hg-productDetailsPriceLabel {
+    font-size: 9px;
+  }
+
   .hg-productDetailsPrice {
     font-size: 22px;
   }
@@ -626,6 +741,8 @@
     line-height: 1.68;
   }
 
+  .hg-productDetailsActionPrimary,
+  .hg-productDetailsActionSecondary,
   .hg-productDetailsActions .hg-btn {
     min-height: 42px;
     height: 42px;
@@ -651,7 +768,7 @@
 
 @media (max-width: 420px) {
   .hg-productDetailsHeroImage {
-    min-height: 200px;
+    min-height: 204px;
   }
 
   .hg-productDetailsRelatedGrid {
