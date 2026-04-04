@@ -2052,14 +2052,14 @@ button{
 
 @media (max-width: 680px){
   .hg--public{
-    padding: 0 8px 72px;
+    padding: 0 0 72px;
   }
 
   .hg-publicHeader{
     position: absolute;
     inset: 0 0 auto 0;
     margin-bottom: 0;
-    padding: 14px 16px 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px 0;
     z-index: 45;
   }
 
@@ -2067,7 +2067,7 @@ button{
     min-height: auto;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    gap: 10px;
+    gap: 8px;
     padding: 0;
   }
 
@@ -2075,13 +2075,15 @@ button{
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
+    padding-right: 54px;
   }
 
   .hg-publicUtility__logo{
-    font-size: 30px;
-    line-height: .94;
+    font-size: 22px;
+    line-height: .92;
+    letter-spacing: -0.055em;
   }
 
   .hg-publicUtility__copy{
@@ -2089,15 +2091,34 @@ button{
   }
 
   .hg-publicUtility__info{
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-right: 54px;
+    max-width: 100%;
+  }
+
+  .hg-publicUtility__info::-webkit-scrollbar{
     display: none;
+  }
+
+  .hg-publicUtility__info span{
+    font-size: 10px;
+    letter-spacing: .04em;
+    color: rgba(255,255,255,.82);
   }
 
   .hg-publicNav{
     position: relative;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     align-items: center;
-    gap: 10px;
-    padding: 10px 0 0;
+    gap: 8px;
+    padding: 8px 0 0;
   }
 
   .hg-publicNav__menu{
@@ -2107,7 +2128,7 @@ button{
     overflow-x: auto;
     overflow-y: hidden;
     gap: 6px;
-    padding: 0 40px 6px 0;
+    padding: 0 0 4px 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
     -webkit-overflow-scrolling: touch;
@@ -2119,28 +2140,54 @@ button{
 
   .hg-navLink{
     flex: 0 0 auto;
-    height: 34px;
-    padding: 0 12px;
-    font-size: 10px;
-    letter-spacing: .04em;
+    height: 30px;
+    padding: 0 10px;
+    font-size: 9px;
+    letter-spacing: .05em;
     white-space: nowrap;
   }
 
   .hg-navLink::after{
-    left: 12px;
-    right: 12px;
+    left: 10px;
+    right: 10px;
+    bottom: 1px;
   }
 
   .hg-publicNav__actions{
     width: auto;
     justify-content: flex-end;
-    align-self: flex-start;
     position: absolute;
     right: 0;
-    top: 8px;
-    z-index: 3;
-    padding-left: 12px;
-    background: linear-gradient(90deg, rgba(11,8,7,0) 0%, rgba(11,8,7,.32) 30%, rgba(11,8,7,.50) 100%);
+    top: -42px;
+    z-index: 5;
+    padding-left: 0;
+    background: transparent;
+  }
+
+  .hg-publicNav__actions .hg-btn{
+    min-width: 0;
+    height: 34px;
+    width: 34px;
+    padding: 0;
+    font-size: 18px;
+    gap: 0;
+    position: relative;
+  }
+
+  .hg-publicNav__actions .hg-counter,
+  .hg-publicNav__actions .hg-cartCount,
+  .hg-publicNav__actions .hg-count,
+  .hg-publicNav__actions .hg-badge,
+  .hg-publicNav__actions .hg-btn sup,
+  .hg-publicNav__actions .hg-btn .count{
+    min-width: 17px;
+    height: 17px;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 0 4px;
+    position: absolute;
+    top: -4px;
+    right: -6px;
   }
 
   .hg--public .hg-grid{
@@ -2183,71 +2230,53 @@ button{
   }
 
   .hg-hero{
-    min-height: 980px;
-    border-radius: 24px;
+    min-height: 760px;
+    border-radius: 0 0 24px 24px;
     background-position: 58% center;
+    box-shadow: 0 22px 48px rgba(31,23,18,.14);
   }
 
   .hg-hero__content{
-    padding: 250px 20px 410px;
+    padding: 164px 18px 150px;
     max-width: 100%;
   }
 
   .hg-hero__eyebrow{
-    min-height: 40px;
-    padding: 0 16px;
-    font-size: 10px;
+    min-height: 36px;
+    padding: 0 14px;
+    font-size: 9px;
     letter-spacing: .08em;
+    max-width: 100%;
   }
 
   .hg-hero__title{
-    margin-top: 18px;
-    font-size: clamp(28px, 11.8vw, 46px);
-    line-height: .96;
+    margin-top: 14px;
+    font-size: clamp(24px, 10.5vw, 38px);
+    line-height: .95;
+    letter-spacing: -0.06em;
     max-width: 100%;
   }
 
   .hg-hero__text{
-    margin-top: 18px;
-    font-size: 15px;
-    line-height: 1.65;
-    max-width: 100%;
+    margin-top: 14px;
+    font-size: 14px;
+    line-height: 1.52;
+    max-width: 92%;
   }
 
   .hg-hero__cta{
-    margin-top: 22px;
-    gap: 10px;
+    margin-top: 18px;
+    gap: 8px;
   }
 
   .hg-hero__cta .hg-btn{
-    height: 48px;
+    height: 44px;
     padding: 0 18px;
     font-size: 12px;
   }
 
   .hg-btn{
     width: auto;
-  }
-
-  .hg-publicNav__actions .hg-btn{
-    min-width: 0;
-    height: auto;
-    padding: 0;
-    font-size: 21px;
-    gap: 8px;
-  }
-
-  .hg-publicNav__actions .hg-counter,
-  .hg-publicNav__actions .hg-cartCount,
-  .hg-publicNav__actions .hg-count,
-  .hg-publicNav__actions .hg-badge,
-  .hg-publicNav__actions .hg-btn sup,
-  .hg-publicNav__actions .hg-btn .count{
-    min-width: 18px;
-    height: 18px;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 0 5px;
   }
 
   .hg--public .hg-cardBody .hg-actions{
@@ -2305,42 +2334,58 @@ button{
   }
 
   .hg-heroCategories{
-    grid-template-columns: 1fr;
-    width: calc(100% - 24px);
-    bottom: 14px;
-    gap: 12px;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    transform: none;
+    width: auto;
+    display: flex;
+    grid-template-columns: none;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 2px 2px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .hg-heroCategories::-webkit-scrollbar{
+    display: none;
   }
 
   .hg-heroCategory{
-    min-height: 90px;
+    flex: 0 0 220px;
+    min-height: 76px;
     flex-direction: row;
     justify-content: flex-start;
     text-align: left;
     gap: 12px;
-    padding: 14px 14px 16px;
+    padding: 12px 14px 14px;
+    border-radius: 18px;
   }
 
   .hg-heroCategoryIcon{
-    flex: 0 0 46px;
-    width: 46px;
-    height: 46px;
-    border-radius: 14px;
-    font-size: 20px;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 18px;
   }
 
   .hg-heroCategoryTitle{
     max-width: none;
-    font-size: 12px;
+    font-size: 11px;
+    line-height: 1.25;
   }
 
   .hg-heroCategoryLine{
-    width: 42%;
+    width: 38%;
     left: 14px;
     transform: none;
   }
 
   .hg-heroCategory:hover .hg-heroCategoryLine{
-    width: 58%;
+    width: 50%;
   }
 }
 
@@ -2349,84 +2394,132 @@ button{
     position: absolute;
     inset: 0 0 auto 0;
     margin-bottom: 0;
-    padding: 12px 12px 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 0;
   }
 
   .hg-publicUtility{
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px;
+    gap: 6px;
+  }
+
+  .hg-publicUtility__brand{
+    gap: 3px;
+    padding-right: 50px;
   }
 
   .hg-publicUtility__logo{
-    font-size: 28px;
+    font-size: 18px;
+  }
+
+  .hg-publicUtility__info{
+    gap: 8px;
+    padding-right: 50px;
+  }
+
+  .hg-publicUtility__info span{
+    font-size: 9px;
   }
 
   .hg-publicNav{
-    gap: 8px;
-    padding-top: 8px;
+    gap: 6px;
+    padding-top: 6px;
   }
 
   .hg-publicNav__menu{
     gap: 4px;
-    padding-right: 34px;
   }
 
   .hg-navLink{
-    height: 32px;
-    padding: 0 10px;
-    font-size: 9px;
+    height: 28px;
+    padding: 0 9px;
+    font-size: 8.5px;
+    letter-spacing: .04em;
   }
 
   .hg-publicNav__actions{
-    top: 6px;
+    top: -38px;
   }
 
   .hg-publicNav__actions .hg-btn{
-    font-size: 20px;
+    width: 32px;
+    height: 32px;
+    font-size: 17px;
+  }
+
+  .hg-publicNav__actions .hg-counter,
+  .hg-publicNav__actions .hg-cartCount,
+  .hg-publicNav__actions .hg-count,
+  .hg-publicNav__actions .hg-badge,
+  .hg-publicNav__actions .hg-btn sup,
+  .hg-publicNav__actions .hg-btn .count{
+    min-width: 16px;
+    height: 16px;
+    font-size: 9px;
+    top: -3px;
+    right: -5px;
   }
 
   .hg-hero{
-    min-height: 940px;
-    border-radius: 22px;
+    min-height: 700px;
+    border-radius: 0 0 22px 22px;
     background-position: 60% center;
   }
 
   .hg-hero__content{
-    padding: 234px 16px 402px;
+    padding: 150px 16px 136px;
+  }
+
+  .hg-hero__eyebrow{
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 8px;
   }
 
   .hg-hero__title{
-    font-size: clamp(26px, 11vw, 40px);
+    font-size: clamp(22px, 10.2vw, 34px);
+    margin-top: 12px;
   }
 
   .hg-hero__text{
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.48;
+    margin-top: 12px;
+    max-width: 96%;
+  }
+
+  .hg-hero__cta{
+    margin-top: 16px;
   }
 
   .hg-hero__cta .hg-btn{
     width: 100%;
     justify-content: center;
+    height: 44px;
   }
 
   .hg-heroCategories{
-    width: calc(100% - 18px);
-    gap: 10px;
+    left: 10px;
+    right: 10px;
+    gap: 8px;
     bottom: 10px;
   }
 
   .hg-heroCategory{
-    min-height: 84px;
-    padding: 12px 12px 14px;
+    flex: 0 0 196px;
+    min-height: 70px;
+    padding: 11px 12px 13px;
+    border-radius: 16px;
   }
 
   .hg-heroCategoryIcon{
-    flex: 0 0 42px;
-    width: 42px;
-    height: 42px;
-    font-size: 18px;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    border-radius: 11px;
   }
 
   .hg-heroCategoryTitle{
-    font-size: 11px;
+    font-size: 10px;
   }
 }
