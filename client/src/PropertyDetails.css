@@ -403,13 +403,13 @@
 
 .hg-productDetailsActionPrimary {
   border: none;
-  background: linear-gradient(135deg, #2b1711, #7a3e2d);
+  background: linear-gradient(135deg, #2b1711, #a95037);
   color: #f6f4f4;
 }
 
 .hg-productDetailsActionSecondary {
   border: none;
-  background: linear-gradient(135deg,  #7a3e2d, #2b1711);
+  background: linear-gradient(135deg,  #a95037, #2b1711);
   color: #f6f4f4;
 }
 
