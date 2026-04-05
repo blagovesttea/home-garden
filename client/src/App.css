@@ -301,7 +301,7 @@ button{
 
 .hg-publicUtility{
   min-height: 68px;
-  padding: 30px 0 16px;
+  padding: 60px 0 16px;
   background: transparent;
   color: rgba(255,255,255,.92);
   display: grid;
@@ -332,7 +332,7 @@ button{
 
 .hg-publicUtility__logo{
   display: block;
-  font-size: clamp(28px, 3.2vw, 50px);
+  font-size: clamp(20px, 2.4vw, 36px);
   line-height: .92;
   font-weight: 900;
   letter-spacing: -0.06em;
