@@ -100,7 +100,7 @@
   display: grid;
   grid-template-columns: minmax(0, 550px) minmax(340px, 390px);
   justify-content: space-between;
-  gap: 30px;
+  gap: 14px;
   align-items: start;
 }
 
@@ -281,7 +281,7 @@
   padding-top: 2px;
   align-content: start;
   justify-self: stretch;
-  padding-right: 0;
+  padding-right: -100;
 }
 
 .hg-productDetailsHeader {
