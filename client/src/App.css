@@ -289,8 +289,9 @@ button{
 .hg-publicHeader{
   position: relative;
   z-index: 40;
+  margin-top: -18px;
   margin-bottom: -120px;
-  padding: 18px 28px 0;
+  padding: 0 28px 0;
   pointer-events: none;
 }
 
@@ -300,7 +301,7 @@ button{
 
 .hg-publicUtility{
   min-height: 68px;
-  padding: 10px 0 18px;
+  padding: 18px 0 16px;
   background: transparent;
   color: rgba(255,255,255,.92);
   display: grid;
@@ -370,7 +371,7 @@ button{
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
-  padding: 12px 0 0;
+  padding: 18px 0 0;
   background: transparent;
   color: #fff;
   border: none;
@@ -437,7 +438,7 @@ button{
   justify-content: flex-end;
   gap: 12px;
   flex-wrap: wrap;
-  padding-top: 6px;
+  padding-top: 10px;
 }
 
 .hg-publicNav__actions .hg-btn{
@@ -1089,13 +1090,14 @@ button{
 .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
   position: relative;
   z-index: 60;
+  margin-top: -18px;
   margin-bottom: 0;
-  padding: 18px 24px 0;
+  padding: 0 24px 0;
 }
 
 .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
   min-height: auto;
-  padding: 8px 0 12px;
+  padding: 18px 0 12px;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
@@ -1120,7 +1122,7 @@ button{
 
 .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
   margin-top: 4px;
-  padding: 14px 16px 0;
+  padding: 18px 16px 0;
   border-radius: 0;
   background: transparent;
   border: none;
@@ -1657,11 +1659,12 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
-    padding: 18px 18px 0;
+    margin-top: -16px;
+    padding: 0 18px 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
-    padding: 10px 12px;
+    padding: 14px 12px 0;
   }
 }
 
@@ -1756,8 +1759,22 @@ button{
     padding-top: 0;
   }
 
+  .hg-publicHeader{
+    margin-top: -16px;
+    padding: 0 20px 0;
+  }
+
+  .hg-publicUtility{
+    padding: 16px 0 14px;
+  }
+
+  .hg-publicNav{
+    padding: 16px 0 0;
+  }
+
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
-    padding: 18px 14px 0;
+    margin-top: -16px;
+    padding: 0 14px 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
@@ -1775,12 +1792,13 @@ button{
   }
 
   .hg-publicHeader{
+    margin-top: -14px;
     margin-bottom: -92px;
-    padding: 14px 18px 0;
+    padding: 0 18px 0;
   }
 
   .hg-publicUtility{
-    padding: 0 0 10px;
+    padding: 16px 0 12px;
     gap: 8px;
   }
 
@@ -1802,7 +1820,7 @@ button{
   }
 
   .hg-publicNav{
-    padding: 8px 0 0;
+    padding: 14px 0 0;
     gap: 12px;
   }
 
@@ -1871,12 +1889,13 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
+    margin-top: -14px;
     margin-bottom: 0;
-    padding: 14px 12px 0;
+    padding: 0 12px 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
-    padding: 0 0 8px;
+    padding: 16px 0 8px;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__brand{
@@ -1890,7 +1909,7 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
-    padding: 10px 10px;
+    padding: 14px 10px 0;
     gap: 10px;
   }
 }
@@ -1903,8 +1922,9 @@ button{
   .hg-publicHeader{
     position: absolute;
     inset: 0 0 auto 0;
+    margin-top: -8px;
     margin-bottom: 0;
-    padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 0px) 12px 0;
     z-index: 45;
   }
 
@@ -1914,7 +1934,7 @@ button{
     align-items: stretch;
     gap: 5px;
     min-height: auto;
-    padding: 0;
+    padding: 14px 0 8px;
   }
 
   .hg-publicUtility__brand{
@@ -1965,7 +1985,7 @@ button{
     grid-template-columns: 1fr;
     align-items: center;
     gap: 4px;
-    padding: 4px 0 0;
+    padding: 12px 0 0;
   }
 
   .hg-publicNav__menu{
@@ -2003,7 +2023,7 @@ button{
   .hg-publicNav__actions{
     position: absolute;
     right: 0;
-    top: -32px;
+    top: -24px;
     z-index: 10;
     width: auto;
     justify-content: flex-end;
@@ -2323,7 +2343,8 @@ button{
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
     position: relative;
     inset: auto;
-    padding: 12px 10px 0;
+    margin-top: -8px;
+    padding: 0 10px 0;
     z-index: 50;
   }
 
@@ -2332,7 +2353,7 @@ button{
     flex-direction: column;
     align-items: stretch;
     gap: 6px;
-    padding: 0 0 6px;
+    padding: 14px 0 6px;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__brand{
@@ -2368,7 +2389,7 @@ button{
     position: relative;
     grid-template-columns: 1fr;
     gap: 8px;
-    padding: 10px 0 0;
+    padding: 12px 0 0;
     border-radius: 0;
     background: transparent;
   }
@@ -2385,7 +2406,7 @@ button{
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions{
     position: absolute;
     right: 10px;
-    top: 8px;
+    top: 10px;
     justify-content: flex-end;
   }
 
@@ -2425,12 +2446,14 @@ button{
   .hg-publicHeader{
     position: absolute;
     inset: 0 0 auto 0;
+    margin-top: -6px;
     margin-bottom: 0;
-    padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 0px) 10px 0;
   }
 
   .hg-publicUtility{
     gap: 4px;
+    padding: 12px 0 6px;
   }
 
   .hg-publicUtility__brand{
@@ -2453,7 +2476,7 @@ button{
 
   .hg-publicNav{
     gap: 4px;
-    padding-top: 4px;
+    padding-top: 10px;
   }
 
   .hg-publicNav__menu{
@@ -2469,7 +2492,7 @@ button{
   }
 
   .hg-publicNav__actions{
-    top: -30px;
+    top: -22px;
   }
 
   .hg-publicNav__actions .hg-btn{
@@ -2620,6 +2643,7 @@ button{
 
   .hg--public .hg-cardBody{
     padding: 14px 2px 0;
+    gap: 8px;
   }
 
   .hg--public .hg-cardTitle{
@@ -2665,11 +2689,13 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
-    padding: 8px 8px 0;
+    margin-top: -6px;
+    padding: 0 8px 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
     gap: 4px;
+    padding: 12px 0 4px;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__logo{
@@ -2681,7 +2707,7 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
-    padding: 8px 0 0;
+    padding: 10px 0 0;
     border-radius: 0;
   }
 
@@ -2693,7 +2719,7 @@ button{
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions{
     right: 8px;
-    top: 7px;
+    top: 8px;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-btn{
