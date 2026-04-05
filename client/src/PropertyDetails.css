@@ -61,7 +61,7 @@
 .hg-productDetailsBreadcrumbs__inner {
   min-height: auto;
   padding: 6px 0 0 12px; /* top right bottom left */
-  padding-right: 20;
+  padding-right: -40;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
