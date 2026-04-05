@@ -337,6 +337,8 @@ button{
   font-weight: 900;
   letter-spacing: -0.06em;
   color: #ff3343;
+  position: relative;
+  top: 12px;
   text-shadow:
     0 10px 30px rgba(207,32,47,.16),
     0 2px 12px rgba(0,0,0,.24);
