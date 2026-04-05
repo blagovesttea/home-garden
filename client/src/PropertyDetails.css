@@ -380,7 +380,7 @@
   height: 46px;
   width: fit-content;      /* бутонът да е само толкова широк, колкото текста */
   padding: 0 20px;         /* от двете страни малко въздух */
-  border-radius: 0;
+  border-radius: 5px;
   font-size: 12px;
   font-weight: 800;
   transition:
@@ -409,7 +409,7 @@
 
 .hg-productDetailsActionSecondary {
   border: none;
-  background: linear-gradient(135deg,  #a95037, #2b1711);
+  background: linear-gradient(135deg,  #a96a58, #502e24);
   color: #f6f4f4;
 }
 
