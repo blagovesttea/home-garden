@@ -415,7 +415,7 @@
 
 .hg-productDetailsBottom {
   width: min(100%, 1180px);
-  margin: 18px auto 0;
+  margin: -10px auto 0;
 }
 
 .hg-productDetailsBottomGrid {
