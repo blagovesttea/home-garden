@@ -2248,82 +2248,69 @@ button{
   }
 
   .hg--public .hg-grid{
-    grid-template-columns: 1fr;
-    justify-content: stretch;
-    gap: 24px;
-  }
+  grid-template-columns: repeat(2, minmax(0, 145px));
+  justify-content: center;
+  gap: 12px;
+}
 
-  .hg--public .hg-card{
-    max-width: 100%;
-    padding: 0 0 18px;
-    border-radius: 0;
-    border: none;
-    background: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    overflow: visible;
-  }
+.hg--public .hg-card{
+  max-width: 145px;
+  padding: 0 0 12px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow: visible;
+}
 
-  .hg--public .hg-card::after{
-    display: none;
-  }
+.hg--public .hg-thumb{
+  min-height: 125px;
+  max-height: 125px;
+  border-radius: 16px;
+  border: none;
+  background-color: transparent;
+  box-shadow: none;
+}
 
-  .hg--public .hg-thumb{
-    min-height: 220px;
-    max-height: 220px;
-    border-radius: 24px;
-    border: none;
-    background-color: transparent;
-    box-shadow: none;
-  }
+.hg--public .hg-cardBody{
+  padding: 8px 2px 0;
+  gap: 5px;
+}
 
-  .hg--public .hg-cardBody{
-    padding: 14px 2px 0;
-    gap: 8px;
-  }
+.hg--public .hg-cardTitle{
+  min-height: auto;
+  font-size: 12px;
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
 
-  .hg--public .hg-meta{
-    min-height: 12px;
-  }
+.hg--public .hg-price{
+  font-size: 16px;
+  line-height: 1;
+  margin-top: 0;
+}
 
-  .hg--public .hg-meta::before{
-    font-size: 9px;
-    letter-spacing: .14em;
-  }
+.hg--public .hg-cardBody .hg-actions{
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 5px;
+  flex-wrap: initial;
+}
 
-  .hg--public .hg-cardTitle{
-    min-height: auto;
-    font-size: 17px;
-    line-height: 1.22;
-    font-weight: 900;
-    letter-spacing: -0.04em;
-  }
-
-  .hg--public .hg-price{
-    font-size: 24px;
-    line-height: .96;
-    margin-top: 0;
-  }
-
-  .hg--public .hg-cardBody .hg-actions{
-    margin-top: 10px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    flex-wrap: initial;
-  }
-
-  .hg--public .hg-cardBody .hg-actions .hg-btn:first-child,
-  .hg--public .hg-cardBody .hg-actions .hg-btn--primary{
-    width: 100%;
-    min-width: 0;
-    flex: initial;
-    height: 46px;
-    padding: 0 14px;
-    font-size: 11px;
-    letter-spacing: .04em;
-  }
+.hg--public .hg-cardBody .hg-actions .hg-btn:first-child,
+.hg--public .hg-cardBody .hg-actions .hg-btn--primary{
+  width: 100%;
+  min-width: 0;
+  flex: initial;
+  height: 34px;
+  padding: 0 6px;
+  font-size: 7px;
+  letter-spacing: .02em;
+}
 
   .hg--public .hg-productDetailsPage{
     padding-top: 0;

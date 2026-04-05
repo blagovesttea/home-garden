@@ -366,7 +366,7 @@ function buildProductDescription(product) {
       .trim() || "";
   const categoryLabel = categoryLabelFromValue(product?.category);
   const priceText = Number.isFinite(Number(productPrice(product)))
-    ? `Цена: ${formatPrice(productPrice(product), product?.currency || "BGN")}.`
+    ? `Цена: ${formatPrice(productPrice(product), product?.currency || "EU")}.`
     : "";
   const stockText =
     product?.stockStatus === "in_stock"
