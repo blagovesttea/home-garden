@@ -256,7 +256,7 @@ function emptyProductForm() {
     markupType: "none",
     markupValue: "",
     finalPrice: "",
-    currency: "BGN",
+    currency: "EU",
     shippingPrice: "0",
     shippingToBG: true,
     shippingDays: "",
@@ -684,7 +684,7 @@ function AppShell() {
         offers: {
           "@type": "Offer",
           url: currentUrl,
-          priceCurrency: productPage?.currency || "BGN",
+          priceCurrency: productPage?.currency || "EU",
           price:
             Number.isFinite(Number(price)) && Number(price) >= 0
               ? Number(price).toFixed(2)
@@ -1040,7 +1040,7 @@ function AppShell() {
           _id: product._id,
           title: product.title,
           price: productPrice(product),
-          currency: product.currency || "BGN",
+          currency: product.currency || "EU",
           imageUrl: productImage(product),
           qty: 1,
         },
@@ -1316,7 +1316,7 @@ function AppShell() {
       markupType: product?.markupType || "none",
       markupValue: product?.markupValue ?? "",
       finalPrice: product?.finalPrice ?? "",
-      currency: product?.currency || "BGN",
+      currency: product?.currency || "EU",
       shippingPrice: product?.shippingPrice ?? 0,
       shippingToBG:
         typeof product?.shippingToBG === "boolean" ? product.shippingToBG : true,
@@ -1488,7 +1488,7 @@ function AppShell() {
           productForm.markupValue === "" ? 0 : toNum(productForm.markupValue),
         finalPrice:
           productForm.finalPrice === "" ? null : toNum(productForm.finalPrice),
-        currency: String(productForm.currency || "BGN").trim(),
+        currency: String(productForm.currency || "EU").trim(),
 
         shippingPrice:
           productForm.shippingPrice === "" ? 0 : toNum(productForm.shippingPrice),
@@ -2618,7 +2618,7 @@ function AppShell() {
                             {ADMIN_ORDER_STATUS_LABELS[order.status] || order.status}
                           </span>
                           <span className="hg-pill">
-                            общо: {formatPrice(order.total, order.currency || "BGN")}
+                            общо: {formatPrice(order.total, order.currency || "EU")}
                           </span>
                           <span className="hg-pill">
                             артикули:{" "}
@@ -2757,14 +2757,14 @@ function AppShell() {
                                         Ед. цена:{" "}
                                         {formatPrice(
                                           price,
-                                          order.currency || "BGN"
+                                          order.currency || "EU"
                                         )}
                                       </span>
                                       <span className="hg-pill">
                                         Общо ред:{" "}
                                         {formatPrice(
                                           lineTotal,
-                                          order.currency || "BGN"
+                                          order.currency || "EU"
                                         )}
                                       </span>
                                     </div>
@@ -3083,7 +3083,7 @@ function AppShell() {
 
                       <div className="hg-cartFooter">
                         <div className="hg-cartTotal">
-                          Общо: <b>{formatPrice(cartTotal, "BGN")}</b>
+                          Общо: <b>{formatPrice(cartTotal, "EU")}</b>
                         </div>
 
                         <form className="hg-checkoutForm" onSubmit={submitOrder}>

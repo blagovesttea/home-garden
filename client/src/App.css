@@ -1203,7 +1203,7 @@ button{
 ========================================================= */
 
 .hg-modalBackdrop{
-  position: relative;
+  position: fixed;
   inset: 0;
   background: rgba(20,14,10,.44);
   backdrop-filter: blur(4px);
