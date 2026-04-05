@@ -616,9 +616,12 @@
 }
 
 @media (max-width: 920px) {
-  .hg-productDetailsPage {
-    padding: 4px 0 20px;
-    gap: 10px;
+  .hg-productDetailsLayout,
+  .hg-productDetailsBottom,
+  .hg-productDetailsRelated {
+    width: 100%;
+    padding-inline: 12px;
+    box-sizing: border-box;
   }
 
   .hg-productDetailsLayout,
@@ -706,6 +709,13 @@
   .hg-productDetailsPage {
     gap: 8px;
     padding: 2px 0 14px;
+  }
+
+  .hg-productDetailsLayout,
+  .hg-productDetailsBottom,
+  .hg-productDetailsRelated {
+    padding-inline: 10px;
+    box-sizing: border-box;
   }
 
   .hg-productDetailsTopbar__inner {
