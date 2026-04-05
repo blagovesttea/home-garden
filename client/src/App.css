@@ -1839,18 +1839,18 @@ button{
   }
 
   .hg--public .hg-grid{
-    grid-template-columns: repeat(auto-fit, minmax(190px, 230px));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 200px));
     justify-content: center;
-    gap: 22px 16px;
+    gap: 18px 14px;
   }
 
   .hg--public .hg-card{
-    max-width: 230px;
+    max-width: 200px;
   }
 
   .hg--public .hg-thumb{
-    min-height: 210px;
-    max-height: 210px;
+    min-height: 180px;
+    max-height: 180px;
   }
 
   .hg-formGrid{
@@ -1958,7 +1958,7 @@ button{
     letter-spacing: -0.06em;
     max-width: 112px;
     position: relative;
-    top: -5px;
+    top: -3px;
   }
 
   .hg-publicUtility__copy{
