@@ -404,12 +404,12 @@
 .hg-productDetailsActionPrimary {
   border: none;
   background: linear-gradient(135deg, #2b1711, #5b3024);
-  color: #aeaeae;
+  color: #f6f4f4;
 }
 
 .hg-productDetailsActionSecondary {
   border: 1px solid rgba(53, 33, 25, 0.08);
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(161, 161, 161, 0.82);
   color: #241915;
 }
 
