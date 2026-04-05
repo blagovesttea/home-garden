@@ -301,9 +301,9 @@ button{
 
 .hg-publicUtility{
   min-height: 68px;
-  padding: 60px 0 16px;
+  padding: 10px 0 16px;
   background: transparent;
-  color: rgba(255,255,255,.92);
+  color: rgba(216, 216, 216, 0.92);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 20px;
