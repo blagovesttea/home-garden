@@ -11,7 +11,7 @@
 }
 
 .hg-productDetailsTopbar {
-  margin: 0;
+  display: none;
 }
 
 .hg-productDetailsTopbar__inner {
