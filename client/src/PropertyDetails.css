@@ -378,6 +378,8 @@
 .hg-productDetailsActions .hg-btn {
   min-height: 46px;
   height: 46px;
+  width: fit-content;      /* бутонът да е само толкова широк, колкото текста */
+  padding: 0 20px;         /* от двете страни да има малко въздух */
   border-radius: 999px;
   font-size: 12px;
   font-weight: 800;
