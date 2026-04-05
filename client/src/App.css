@@ -338,7 +338,7 @@ button{
   letter-spacing: -0.06em;
   color: #ff3343;
   position: relative;
-  top: 12px;
+  top: 14px;
   text-shadow:
     0 10px 30px rgba(207,32,47,.16),
     0 2px 12px rgba(0,0,0,.24);
@@ -350,6 +350,8 @@ button{
   line-height: 1.6;
   color: rgba(255,255,255,.70);
   text-shadow: 0 2px 10px rgba(0,0,0,.22);
+  position: relative;
+  top: 14px;
 }
 
 .hg-publicUtility__info{
