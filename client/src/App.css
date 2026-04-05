@@ -351,7 +351,7 @@ button{
   color: rgba(255,255,255,.70);
   text-shadow: 0 2px 10px rgba(0,0,0,.22);
   position: relative;
-  top: 14px;
+  top: 18px;
 }
 
 .hg-publicUtility__info{
@@ -368,6 +368,8 @@ button{
   white-space: nowrap;
   font-weight: 700;
   text-shadow: 0 2px 10px rgba(0,0,0,.22);
+  position: relative;
+  top: 18px;
 }
 
 .hg-publicNav{
