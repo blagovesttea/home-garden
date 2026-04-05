@@ -289,7 +289,7 @@ button{
 .hg-publicHeader{
   position: relative;
   z-index: 40;
-  margin-top: -18px;
+  margin-top: -6px;
   margin-bottom: -120px;
   padding: 0 28px 0;
   pointer-events: none;
@@ -301,7 +301,7 @@ button{
 
 .hg-publicUtility{
   min-height: 68px;
-  padding: 18px 0 16px;
+  padding: 24px 0 16px;
   background: transparent;
   color: rgba(255,255,255,.92);
   display: grid;
@@ -371,7 +371,7 @@ button{
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
-  padding: 18px 0 0;
+  padding: 20px 0 0;
   background: transparent;
   color: #fff;
   border: none;
@@ -1090,14 +1090,14 @@ button{
 .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
   position: relative;
   z-index: 60;
-  margin-top: -18px;
+  margin-top: -6px;
   margin-bottom: 0;
   padding: 0 24px 0;
 }
 
 .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
   min-height: auto;
-  padding: 18px 0 12px;
+  padding: 24px 0 12px;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
@@ -1122,7 +1122,7 @@ button{
 
 .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
   margin-top: 4px;
-  padding: 18px 16px 0;
+  padding: 20px 16px 0;
   border-radius: 0;
   background: transparent;
   border: none;
@@ -1659,12 +1659,12 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
-    margin-top: -16px;
+    margin-top: -4px;
     padding: 0 18px 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
-    padding: 14px 12px 0;
+    padding: 16px 12px 0;
   }
 }
 
@@ -1760,20 +1760,20 @@ button{
   }
 
   .hg-publicHeader{
-    margin-top: -16px;
+    margin-top: -4px;
     padding: 0 20px 0;
   }
 
   .hg-publicUtility{
-    padding: 16px 0 14px;
+    padding: 20px 0 14px;
   }
 
   .hg-publicNav{
-    padding: 16px 0 0;
+    padding: 18px 0 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
-    margin-top: -16px;
+    margin-top: -4px;
     padding: 0 14px 0;
   }
 
@@ -1792,13 +1792,13 @@ button{
   }
 
   .hg-publicHeader{
-    margin-top: -14px;
+    margin-top: -2px;
     margin-bottom: -92px;
     padding: 0 18px 0;
   }
 
   .hg-publicUtility{
-    padding: 16px 0 12px;
+    padding: 18px 0 12px;
     gap: 8px;
   }
 
@@ -1820,7 +1820,7 @@ button{
   }
 
   .hg-publicNav{
-    padding: 14px 0 0;
+    padding: 16px 0 0;
     gap: 12px;
   }
 
@@ -1889,13 +1889,13 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
-    margin-top: -14px;
+    margin-top: -2px;
     margin-bottom: 0;
     padding: 0 12px 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
-    padding: 16px 0 8px;
+    padding: 18px 0 8px;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__brand{
@@ -1909,7 +1909,7 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
-    padding: 14px 10px 0;
+    padding: 16px 10px 0;
     gap: 10px;
   }
 }
@@ -1922,7 +1922,7 @@ button{
   .hg-publicHeader{
     position: absolute;
     inset: 0 0 auto 0;
-    margin-top: -8px;
+    margin-top: 4px;
     margin-bottom: 0;
     padding: calc(env(safe-area-inset-top, 0px) + 0px) 12px 0;
     z-index: 45;
@@ -1934,7 +1934,7 @@ button{
     align-items: stretch;
     gap: 5px;
     min-height: auto;
-    padding: 14px 0 8px;
+    padding: 16px 0 8px;
   }
 
   .hg-publicUtility__brand{
@@ -1985,7 +1985,7 @@ button{
     grid-template-columns: 1fr;
     align-items: center;
     gap: 4px;
-    padding: 12px 0 0;
+    padding: 14px 0 0;
   }
 
   .hg-publicNav__menu{
@@ -2343,7 +2343,7 @@ button{
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
     position: relative;
     inset: auto;
-    margin-top: -8px;
+    margin-top: 4px;
     padding: 0 10px 0;
     z-index: 50;
   }
@@ -2353,7 +2353,7 @@ button{
     flex-direction: column;
     align-items: stretch;
     gap: 6px;
-    padding: 14px 0 6px;
+    padding: 16px 0 6px;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__brand{
@@ -2389,7 +2389,7 @@ button{
     position: relative;
     grid-template-columns: 1fr;
     gap: 8px;
-    padding: 12px 0 0;
+    padding: 14px 0 0;
     border-radius: 0;
     background: transparent;
   }
@@ -2446,14 +2446,14 @@ button{
   .hg-publicHeader{
     position: absolute;
     inset: 0 0 auto 0;
-    margin-top: -6px;
+    margin-top: 2px;
     margin-bottom: 0;
     padding: calc(env(safe-area-inset-top, 0px) + 0px) 10px 0;
   }
 
   .hg-publicUtility{
     gap: 4px;
-    padding: 12px 0 6px;
+    padding: 14px 0 6px;
   }
 
   .hg-publicUtility__brand{
@@ -2476,7 +2476,7 @@ button{
 
   .hg-publicNav{
     gap: 4px;
-    padding-top: 10px;
+    padding-top: 12px;
   }
 
   .hg-publicNav__menu{
@@ -2689,13 +2689,13 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
-    margin-top: -6px;
+    margin-top: 2px;
     padding: 0 8px 0;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
     gap: 4px;
-    padding: 12px 0 4px;
+    padding: 14px 0 4px;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility__logo{
@@ -2707,7 +2707,7 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
-    padding: 10px 0 0;
+    padding: 12px 0 0;
     border-radius: 0;
   }
 
