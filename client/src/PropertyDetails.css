@@ -99,7 +99,7 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 640px) minmax(340px, 390px);
-  justify-content: center;
+  justify-content: space-between;
   gap: 30px;
   align-items: start;
 }
@@ -280,6 +280,8 @@
   gap: 14px;
   padding-top: 2px;
   align-content: start;
+  justify-self: stretch;
+  padding-right: 0;
 }
 
 .hg-productDetailsHeader {
