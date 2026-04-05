@@ -98,10 +98,10 @@
   width: min(100%, 1180px);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 550px) minmax(340px, 390px);
-  justify-content: space-between;
-  gap: 14px;
+  grid-template-columns: auto 1fr; /* снимка + съдържание */
+  gap: 24px; /* разстояние между снимка и текст */
   align-items: start;
+  justify-content: start;
 }
 
 .hg-productDetailsGallery {
@@ -274,14 +274,11 @@
 
 .hg-productDetailsContent {
   min-width: 0;
-  max-width: 390px;
+  max-width: none; /* вместо фиксирани 390px */
   width: 100%;
   display: grid;
   gap: 14px;
-  padding-top: 2px;
-  align-content: start;
-  justify-self: stretch;
-  padding-right: -100;
+  padding-top: 0;
 }
 
 .hg-productDetailsHeader {
