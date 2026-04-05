@@ -379,7 +379,7 @@
   min-height: 46px;
   height: 46px;
   width: fit-content;      /* бутонът да е само толкова широк, колкото текста */
-  padding: 0 20px;         /* от двете страни да има малко въздух */
+  padding: 0 20px;         /* от двете страни малко въздух */
   border-radius: 999px;
   font-size: 12px;
   font-weight: 800;
@@ -399,17 +399,13 @@
   box-shadow: none;
 }
 
-.hg-productDetailsActionPrimary,
-.hg-productDetailsActions .hg-btn.hg-btn--primary {
-  width: 100%;
+.hg-productDetailsActionPrimary {
   border: none;
   background: linear-gradient(135deg, #2b1711, #5b3024);
   color: #fff8f3;
 }
 
-.hg-productDetailsActionSecondary,
-.hg-productDetailsActions .hg-btn:not(.hg-btn--primary) {
-  width: 100%;
+.hg-productDetailsActionSecondary {
   border: 1px solid rgba(53, 33, 25, 0.08);
   background: rgba(255, 255, 255, 0.82);
   color: #241915;
@@ -417,7 +413,7 @@
 
 .hg-productDetailsBottom {
   width: min(100%, 1180px);
-  margin: -10px auto 0;
+  margin: -20px auto 0;
 }
 
 .hg-productDetailsBottomGrid {
