@@ -390,6 +390,8 @@
     opacity 0.16s ease,
     box-shadow 0.16s ease;
   box-shadow: none;
+  min-width: 220px;        /* и двата бутона ще са поне толкова широки */
+  text-align: center;
 }
 
 .hg-productDetailsActions .hg-btn:hover,
