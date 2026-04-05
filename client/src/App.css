@@ -289,7 +289,7 @@ button{
 .hg-publicHeader{
   position: relative;
   z-index: 40;
-  margin-top: -6px;
+  margin-top: -18px;
   margin-bottom: -120px;
   padding: 0 28px 0;
   pointer-events: none;
