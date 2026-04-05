@@ -98,7 +98,7 @@
   width: min(100%, 1180px);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 640px) minmax(340px, 390px);
+  grid-template-columns: minmax(0, 550px) minmax(340px, 390px);
   justify-content: space-between;
   gap: 30px;
   align-items: start;
@@ -106,7 +106,7 @@
 
 .hg-productDetailsGallery {
   min-width: 0;
-  max-width: 640px;
+  max-width: 550px;
   width: 100%;
   display: grid;
   gap: 10px;
@@ -125,7 +125,7 @@
 .hg-productDetailsHeroImage {
   width: 100%;
   min-height: 340px;
-  max-height: 390px;
+  max-height: 340px;
   aspect-ratio: 1 / 1;
   border-radius: 26px;
   background-size: cover;
