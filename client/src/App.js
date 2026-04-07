@@ -119,7 +119,7 @@ function toNum(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function formatPrice(v, currency = "EU") {
+function formatPrice(v, currency = "€") {
   const n = Number(v);
   if (!Number.isFinite(n)) return "—";
   return `${n.toFixed(2)} ${currency}`;
@@ -366,7 +366,7 @@ function buildProductDescription(product) {
       .trim() || "";
   const categoryLabel = categoryLabelFromValue(product?.category);
   const priceText = Number.isFinite(Number(productPrice(product)))
-    ? `Цена: ${formatPrice(productPrice(product), product?.currency || "EU")}.`
+    ? `Цена: ${formatPrice(productPrice(product), product?.currency || "€")}.`
     : "";
   const stockText =
     product?.stockStatus === "in_stock"
@@ -684,7 +684,7 @@ function AppShell() {
         offers: {
           "@type": "Offer",
           url: currentUrl,
-          priceCurrency: productPage?.currency || "EU",
+          priceCurrency: productPage?.currency || "€",
           price:
             Number.isFinite(Number(price)) && Number(price) >= 0
               ? Number(price).toFixed(2)
@@ -1040,7 +1040,7 @@ function AppShell() {
           _id: product._id,
           title: product.title,
           price: productPrice(product),
-          currency: product.currency || "EU",
+          currency: product.currency || "€",
           imageUrl: productImage(product),
           qty: 1,
         },
@@ -1316,7 +1316,7 @@ function AppShell() {
       markupType: product?.markupType || "none",
       markupValue: product?.markupValue ?? "",
       finalPrice: product?.finalPrice ?? "",
-      currency: product?.currency || "EU",
+      currency: product?.currency || "€",
       shippingPrice: product?.shippingPrice ?? 0,
       shippingToBG:
         typeof product?.shippingToBG === "boolean" ? product.shippingToBG : true,
@@ -1488,7 +1488,7 @@ function AppShell() {
           productForm.markupValue === "" ? 0 : toNum(productForm.markupValue),
         finalPrice:
           productForm.finalPrice === "" ? null : toNum(productForm.finalPrice),
-        currency: String(productForm.currency || "EU").trim(),
+        currency: String(productForm.currency || "€").trim(),
 
         shippingPrice:
           productForm.shippingPrice === "" ? 0 : toNum(productForm.shippingPrice),
@@ -2618,7 +2618,7 @@ function AppShell() {
                             {ADMIN_ORDER_STATUS_LABELS[order.status] || order.status}
                           </span>
                           <span className="hg-pill">
-                            общо: {formatPrice(order.total, order.currency || "EU")}
+                            общо: {formatPrice(order.total, order.currency || "€")}
                           </span>
                           <span className="hg-pill">
                             артикули:{" "}
@@ -2757,14 +2757,14 @@ function AppShell() {
                                         Ед. цена:{" "}
                                         {formatPrice(
                                           price,
-                                          order.currency || "EU"
+                                          order.currency || "€"
                                         )}
                                       </span>
                                       <span className="hg-pill">
                                         Общо ред:{" "}
                                         {formatPrice(
                                           lineTotal,
-                                          order.currency || "EU"
+                                          order.currency || "€"
                                         )}
                                       </span>
                                     </div>
@@ -3083,7 +3083,7 @@ function AppShell() {
 
                       <div className="hg-cartFooter">
                         <div className="hg-cartTotal">
-                          Общо: <b>{formatPrice(cartTotal, "EU")}</b>
+                          Общо: <b>{formatPrice(cartTotal, "€")}</b>
                         </div>
 
                         <form className="hg-checkoutForm" onSubmit={submitOrder}>
