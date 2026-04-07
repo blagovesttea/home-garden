@@ -256,7 +256,7 @@ function emptyProductForm() {
     markupType: "none",
     markupValue: "",
     finalPrice: "",
-    currency: "EU",
+    currency: "€",
     shippingPrice: "0",
     shippingToBG: true,
     shippingDays: "",
