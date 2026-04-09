@@ -1731,89 +1731,78 @@ function AppShell() {
     <div className={`hg ${view === "public" ? "hg--public" : "hg--admin"}`}>
       {view === "public" ? (
         <header className="hg-publicHeader">
-          <div className="hg-publicHeader__inner">
-            <div className="hg-publicUtility">
-              <div className="hg-publicUtility__brand">
-                <button
-                  className="hg-publicUtility__logoBtn"
-                  onClick={clearPublicFilters}
-                  type="button"
-                >
-                  <span className="hg-publicUtility__logo">Кафе Маркет</span>
-                </button>
+          <div className="hg-publicUtility">
+            <div className="hg-publicUtility__brand">
+              <button
+                className="hg-publicUtility__logoBtn"
+                onClick={clearPublicFilters}
+                type="button"
+              >
+                <span className="hg-publicUtility__logo">Кафе Маркет</span>
+              </button>
 
-                <div className="hg-publicUtility__copy">
-                  Премиум кафе продукти, кафемашини, капсули и аксесоари за дома,
-                  офиса и професионалната среда.
-                </div>
-              </div>
-
-              <div className="hg-publicUtility__info">
-                <span>☎ +359889388113</span>
-                <span>Доставка в България</span>
-                <span>Онлайн поръчки</span>
+              <div className="hg-publicUtility__copy">
+                Премиум кафе продукти, кафемашини, капсули и аксесоари за дома,
+                офиса и професионалната среда.
               </div>
             </div>
 
-            <div className="hg-publicNavWrap">
-              <div className="hg-publicNav">
-                <div className="hg-publicNav__bar">
-                  <div className="hg-publicNav__left">
-                    <button
-                      className={`hg-publicNavToggle ${
-                        mobileNavOpen ? "is-open" : ""
-                      }`}
-                      type="button"
-                      onClick={toggleMobileNav}
-                      aria-label={
-                        mobileNavOpen
-                          ? "Затвори навигацията"
-                          : "Отвори навигацията"
-                      }
-                      aria-expanded={mobileNavOpen}
-                      aria-controls="hg-mobile-nav-panel"
-                    >
-                      <span
-                        className="hg-publicNavToggle__icon"
-                        aria-hidden="true"
-                      >
-                        ☰
-                      </span>
-                      <span className="hg-publicNavToggle__text">Меню</span>
-                    </button>
+            <div className="hg-publicUtility__info">
+              <span>☎ +359889388113</span>
+              <span>Доставка в България</span>
+              <span>Онлайн поръчки</span>
+            </div>
+          </div>
 
-                    <div className="hg-publicNav__menu hg-publicNav__menu--desktop">
-                      {renderPublicNavButtons()}
-                    </div>
-                  </div>
-
-                  <div className="hg-publicNav__actions">
-                    <button
-                      className="hg-btn hg-btn--primary"
-                      onClick={() => {
-                        closeMobileNav();
-                        setCartOpen(true);
-                      }}
-                      aria-label="Отвори количката"
-                      title="Количка"
-                      type="button"
-                    >
-                      <span aria-hidden="true">🛒</span>
-                      <span className="hg-cartCount">{cartCount}</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  id="hg-mobile-nav-panel"
-                  className={`hg-publicNav__mobilePanel ${
-                    mobileNavOpen ? "is-open" : ""
-                  }`}
+          <div className="hg-publicNav">
+            <div className="hg-publicNav__bar">
+              <div className="hg-publicNav__left">
+                <button
+                  className={`hg-publicNavToggle ${mobileNavOpen ? "is-open" : ""}`}
+                  type="button"
+                  onClick={toggleMobileNav}
+                  aria-label={
+                    mobileNavOpen ? "Затвори навигацията" : "Отвори навигацията"
+                  }
+                  aria-expanded={mobileNavOpen}
+                  aria-controls="hg-mobile-nav-panel"
                 >
-                  <div className="hg-publicNav__mobileMenu">
-                    {renderPublicNavButtons("hg-navLink--mobile")}
-                  </div>
+                  <span className="hg-publicNavToggle__icon" aria-hidden="true">
+                    ☰
+                  </span>
+                  <span className="hg-publicNavToggle__text">Меню</span>
+                </button>
+
+                <div className="hg-publicNav__menu hg-publicNav__menu--desktop">
+                  {renderPublicNavButtons()}
                 </div>
+              </div>
+
+              <div className="hg-publicNav__actions">
+                <button
+                  className="hg-btn hg-btn--primary"
+                  onClick={() => {
+                    closeMobileNav();
+                    setCartOpen(true);
+                  }}
+                  aria-label="Отвори количката"
+                  title="Количка"
+                  type="button"
+                >
+                  <span aria-hidden="true">🛒</span>
+                  <span className="hg-cartCount">{cartCount}</span>
+                </button>
+              </div>
+            </div>
+
+            <div
+              id="hg-mobile-nav-panel"
+              className={`hg-publicNav__mobilePanel ${
+                mobileNavOpen ? "is-open" : ""
+              }`}
+            >
+              <div className="hg-publicNav__mobileMenu">
+                {renderPublicNavButtons("hg-navLink--mobile")}
               </div>
             </div>
           </div>
@@ -2873,59 +2862,53 @@ function AppShell() {
                 <section className="hg-hero">
                   <div className="hg-hero__overlay" />
 
-                  <div className="hg-hero__inner">
-                    <div className="hg-hero__content">
-                      <div className="hg-hero__eyebrow">
-                        Онлайн магазин за кафе продукти
-                      </div>
+                  <div className="hg-hero__content">
+                    <div className="hg-hero__eyebrow">Онлайн магазин за кафе продукти</div>
 
-                      <h2 className="hg-hero__title">
-                        Премиум кафе атмосфера за твоя дом, офис или бизнес
-                      </h2>
+                    <h2 className="hg-hero__title">
+                      Премиум кафе атмосфера за твоя дом, офис или бизнес
+                    </h2>
 
-                      <p className="hg-hero__text">
-                        Подбрани продукти, силна визия и лесна поръчка в стил модерен
-                        специализиран магазин за кафе.
-                      </p>
+                    <p className="hg-hero__text">
+                      Подбрани продукти, силна визия и лесна поръчка в стил модерен
+                      специализиран магазин за кафе.
+                    </p>
 
-                      <div className="hg-hero__cta">
-                        <button
-                          className="hg-btn hg-btn--primary"
-                          onClick={() => {
-                            const section = document.getElementById("hg-products-section");
-                            if (section) section.scrollIntoView({ behavior: "smooth" });
-                          }}
-                        >
-                          Разгледай продуктите
-                        </button>
+                    <div className="hg-hero__cta">
+                      <button
+                        className="hg-btn hg-btn--primary"
+                        onClick={() => {
+                          const section = document.getElementById("hg-products-section");
+                          if (section) section.scrollIntoView({ behavior: "smooth" });
+                        }}
+                      >
+                        Разгледай продуктите
+                      </button>
 
-                        <button
-                          className="hg-btn"
-                          onClick={() => applyQuickSearch("премиум кафе")}
-                        >
-                          Премиум селекция
-                        </button>
-                      </div>
+                      <button
+                        className="hg-btn"
+                        onClick={() => applyQuickSearch("премиум кафе")}
+                      >
+                        Премиум селекция
+                      </button>
                     </div>
+                  </div>
 
-                    <div className="hg-heroCategoriesWrap">
-                      <div className="hg-heroCategories">
-                        {HERO_LINKS.map((item) => (
-                          <button
-                            key={item.label}
-                            type="button"
-                            className="hg-heroCategory"
-                            onClick={() => applyCategoryFilter(item.category)}
-                          >
-                            <div className="hg-heroCategoryIcon" aria-hidden="true">
-                              {item.icon}
-                            </div>
-                            <div className="hg-heroCategoryTitle">{item.label}</div>
-                            <div className="hg-heroCategoryLine" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                  <div className="hg-heroCategories">
+                    {HERO_LINKS.map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        className="hg-heroCategory"
+                        onClick={() => applyCategoryFilter(item.category)}
+                      >
+                        <div className="hg-heroCategoryIcon" aria-hidden="true">
+                          {item.icon}
+                        </div>
+                        <div className="hg-heroCategoryTitle">{item.label}</div>
+                        <div className="hg-heroCategoryLine" />
+                      </button>
+                    ))}
                   </div>
                 </section>
               </section>
