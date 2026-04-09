@@ -31,6 +31,12 @@
   --danger: #a11d1d;
   --warning: #9a5a16;
 
+  --coffee-mobile-1: #2e2119;
+  --coffee-mobile-2: #4e3829;
+  --coffee-mobile-3: #7b5a3f;
+  --coffee-mobile-gold: #d1a15b;
+  --coffee-mobile-gold-2: #f0d2a0;
+
   --shadow-xs: 0 2px 6px rgba(31,23,18,.04);
   --shadow-sm: 0 8px 20px rgba(31,23,18,.08);
   --shadow-md: 0 16px 38px rgba(31,23,18,.10);
@@ -373,10 +379,7 @@ button{
 }
 
 .hg-publicNav{
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
-  align-items: center;
+  display: block;
   padding: 20px 0 0;
   background: transparent;
   color: #fff;
@@ -387,12 +390,79 @@ button{
   margin-bottom: 0;
 }
 
+.hg-publicNav__bar{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.hg-publicNav__left{
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hg-publicNavToggle{
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.98);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  transition:
+    background .18s ease,
+    border-color .18s ease,
+    transform .18s ease,
+    box-shadow .18s ease,
+    color .18s ease;
+  text-shadow: 0 2px 12px rgba(0,0,0,.26);
+}
+
+.hg-publicNavToggle:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.22);
+}
+
+.hg-publicNavToggle__icon{
+  font-size: 14px;
+  line-height: 1;
+}
+
+.hg-publicNavToggle__text{
+  line-height: 1;
+}
+
 .hg-publicNav__menu{
   display: flex;
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
   min-width: 0;
+}
+
+.hg-publicNav__menu--desktop{
+  display: flex;
+}
+
+.hg-publicNav__mobilePanel{
+  display: none;
+}
+
+.hg-publicNav__mobileMenu{
+  display: grid;
+  gap: 8px;
 }
 
 .hg-navLink{
@@ -1085,8 +1155,6 @@ button{
 
 /* =========================================================
    PRODUCT DETAILS PAGE SHELL OVERRIDES
-   САМО SHELL / HEADER / NAV
-   НЕ ПИПА ВЪТРЕШНИЯ LAYOUT НА PROPERTYDETAILS.CSS
 ========================================================= */
 
 .hg--public:has(.hg-productDetailsPage){
@@ -1155,10 +1223,6 @@ button{
   text-shadow: none;
 }
 
-/* ВАЖНО:
-   App.css вече НЕ управлява размерите/spacing-а на самата detail page.
-   Това остава изцяло за PropertyDetails.css.
-*/
 .hg--public .hg-publicShell.hg-productDetailsPage{
   display: grid;
   width: 100%;
@@ -1174,7 +1238,6 @@ button{
   padding-top: 0;
 }
 
-/* НЕУТРАЛИЗИРАНЕ НА ГЛОБАЛНИ WRAPPERS ЗА PRODUCT DETAILS */
 .hg--public .hg-productDetailsPage .hg-toolbarWrap,
 .hg--public .hg-productDetailsPage .hg-toolbar,
 .hg--public .hg-productDetailsPage .hg-panel{
@@ -1685,7 +1748,7 @@ button{
     justify-content: flex-start;
   }
 
-  .hg-publicNav{
+  .hg-publicNav__bar{
     grid-template-columns: 1fr;
     justify-items: start;
     gap: 10px;
@@ -1709,7 +1772,7 @@ button{
     justify-content: flex-start;
   }
 
-  .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__bar{
     grid-template-columns: 1fr;
     gap: 10px;
     justify-items: start;
@@ -1974,7 +2037,7 @@ button{
     white-space: nowrap;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding-right: 36px;
+    padding-right: 0;
     max-width: 100%;
   }
 
@@ -1990,63 +2053,158 @@ button{
 
   .hg-publicNav{
     position: relative;
-    grid-template-columns: 1fr;
+    padding: 10px 0 0;
+  }
+
+  .hg-publicNav__bar{
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
     align-items: center;
-    gap: 4px;
-    padding: 14px 0 0;
+    padding: 10px 12px;
+    border-radius: 18px;
+    background:
+      linear-gradient(135deg, rgba(46,33,25,.96), rgba(78,56,41,.94));
+    border: 1px solid rgba(240,210,160,.18);
+    box-shadow:
+      0 18px 42px rgba(0,0,0,.24),
+      inset 0 1px 0 rgba(255,255,255,.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
-  .hg-publicNav__menu{
-    width: 100%;
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    gap: 2px;
-    padding: 0 34px 3px 0;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    -webkit-overflow-scrolling: touch;
+  .hg-publicNav__left{
+    gap: 0;
+    min-width: 0;
   }
 
-  .hg-publicNav__menu::-webkit-scrollbar{
+  .hg-publicNavToggle{
+    display: inline-flex;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(240,210,160,.24);
+    background:
+      linear-gradient(135deg, rgba(209,161,91,.18), rgba(123,90,63,.22));
+    color: #f8ead2;
+    text-shadow: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 10px 22px rgba(0,0,0,.16);
+  }
+
+  .hg-publicNavToggle:hover{
+    background:
+      linear-gradient(135deg, rgba(209,161,91,.26), rgba(123,90,63,.28));
+    border-color: rgba(240,210,160,.34);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.08),
+      0 14px 24px rgba(0,0,0,.18);
+  }
+
+  .hg-publicNavToggle.is-open{
+    background:
+      linear-gradient(135deg, rgba(209,161,91,.28), rgba(123,90,63,.34));
+    border-color: rgba(240,210,160,.42);
+    color: #fff4e4;
+  }
+
+  .hg-publicNav__menu--desktop{
     display: none;
   }
 
-  .hg-navLink{
-    flex: 0 0 auto;
-    height: 26px;
-    padding: 0 10px;
-    font-size: 8px;
-    letter-spacing: .04em;
-    white-space: nowrap;
+  .hg-publicNav__mobilePanel{
+    display: block;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+    transition:
+      max-height .26s ease,
+      opacity .22s ease,
+      transform .22s ease,
+      margin-top .22s ease;
+    margin-top: 0;
   }
 
-  .hg-navLink::after{
-    left: 10px;
-    right: 10px;
-    bottom: 1px;
+  .hg-publicNav__mobilePanel.is-open{
+    max-height: 520px;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    margin-top: 10px;
+  }
+
+  .hg-publicNav__mobileMenu{
+    padding: 12px;
+    border-radius: 18px;
+    background:
+      linear-gradient(180deg, rgba(57,40,29,.97), rgba(39,28,21,.97));
+    border: 1px solid rgba(240,210,160,.16);
+    box-shadow:
+      0 20px 44px rgba(0,0,0,.22),
+      inset 0 1px 0 rgba(255,255,255,.04);
+  }
+
+  .hg-navLink--mobile,
+  .hg-publicNav__mobileMenu .hg-navLink{
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 14px;
+    color: rgba(255,244,228,.95);
+    background: rgba(255,255,255,.02);
+    text-shadow: none;
+    font-size: 11px;
+    letter-spacing: .06em;
+  }
+
+  .hg-navLink--mobile::after,
+  .hg-publicNav__mobileMenu .hg-navLink::after{
+    left: 14px;
+    right: auto;
+    width: 26px;
+    bottom: 7px;
+    height: 2px;
+  }
+
+  .hg-navLink--mobile:hover,
+  .hg-publicNav__mobileMenu .hg-navLink:hover{
+    background: rgba(209,161,91,.10);
+    color: #fff7eb;
   }
 
   .hg-publicNav__actions{
-    position: absolute;
-    right: 0;
-    top: -24px;
-    z-index: 10;
-    width: auto;
+    padding-top: 0;
     justify-content: flex-end;
-    background: transparent;
-    padding-left: 0;
   }
 
   .hg-publicNav__actions .hg-btn{
     min-width: 0;
-    width: 28px;
-    height: 28px;
+    width: 38px;
+    height: 38px;
     padding: 0;
-    font-size: 15px;
+    font-size: 18px;
     gap: 0;
     position: relative;
+    border-radius: 999px;
+    background:
+      linear-gradient(135deg, rgba(209,161,91,.18), rgba(123,90,63,.22));
+    color: #fff4e3;
+    text-shadow: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 10px 22px rgba(0,0,0,.18);
+  }
+
+  .hg-publicNav__actions .hg-btn:hover{
+    background:
+      linear-gradient(135deg, rgba(209,161,91,.26), rgba(123,90,63,.28));
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.08),
+      0 14px 24px rgba(0,0,0,.20);
   }
 
   .hg-publicNav__actions .hg-counter,
@@ -2055,14 +2213,17 @@ button{
   .hg-publicNav__actions .hg-badge,
   .hg-publicNav__actions .hg-btn sup,
   .hg-publicNav__actions .hg-btn .count{
-    min-width: 15px;
-    height: 15px;
+    min-width: 16px;
+    height: 16px;
     font-size: 8px;
     font-weight: 800;
     padding: 0 4px;
     position: absolute;
     top: -3px;
-    right: -5px;
+    right: -4px;
+    background: linear-gradient(135deg, #d5a25d, #b27a3c);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(178,122,60,.34);
   }
 
   .hg-hero{
@@ -2073,7 +2234,7 @@ button{
   }
 
   .hg-hero__content{
-    padding: 146px 16px 112px;
+    padding: 160px 16px 112px;
     max-width: 100%;
   }
 
@@ -2248,69 +2409,69 @@ button{
   }
 
   .hg--public .hg-grid{
-  grid-template-columns: repeat(2, minmax(0, 145px));
-  justify-content: center;
-  gap: 12px;
-}
+    grid-template-columns: repeat(2, minmax(0, 145px));
+    justify-content: center;
+    gap: 12px;
+  }
 
-.hg--public .hg-card{
-  max-width: 145px;
-  padding: 0 0 12px;
-  border-radius: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  overflow: visible;
-}
+  .hg--public .hg-card{
+    max-width: 145px;
+    padding: 0 0 12px;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: visible;
+  }
 
-.hg--public .hg-thumb{
-  min-height: 125px;
-  max-height: 125px;
-  border-radius: 16px;
-  border: none;
-  background-color: transparent;
-  box-shadow: none;
-}
+  .hg--public .hg-thumb{
+    min-height: 125px;
+    max-height: 125px;
+    border-radius: 16px;
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+  }
 
-.hg--public .hg-cardBody{
-  padding: 8px 2px 0;
-  gap: 5px;
-}
+  .hg--public .hg-cardBody{
+    padding: 8px 2px 0;
+    gap: 5px;
+  }
 
-.hg--public .hg-cardTitle{
-  min-height: auto;
-  font-size: 12px;
-  line-height: 1.1;
-  font-weight: 900;
-  letter-spacing: -0.03em;
-}
+  .hg--public .hg-cardTitle{
+    min-height: auto;
+    font-size: 12px;
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
 
-.hg--public .hg-price{
-  font-size: 16px;
-  line-height: 1;
-  margin-top: 0;
-}
+  .hg--public .hg-price{
+    font-size: 16px;
+    line-height: 1;
+    margin-top: 0;
+  }
 
-.hg--public .hg-cardBody .hg-actions{
-  margin-top: 6px;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 5px;
-  flex-wrap: initial;
-}
+  .hg--public .hg-cardBody .hg-actions{
+    margin-top: 6px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    flex-wrap: initial;
+  }
 
-.hg--public .hg-cardBody .hg-actions .hg-btn:first-child,
-.hg--public .hg-cardBody .hg-actions .hg-btn--primary{
-  width: 100%;
-  min-width: 0;
-  flex: initial;
-  height: 34px;
-  padding: 0 6px;
-  font-size: 7px;
-  letter-spacing: .02em;
-}
+  .hg--public .hg-cardBody .hg-actions .hg-btn:first-child,
+  .hg--public .hg-cardBody .hg-actions .hg-btn--primary{
+    width: 100%;
+    min-width: 0;
+    flex: initial;
+    height: 34px;
+    padding: 0 6px;
+    font-size: 7px;
+    letter-spacing: .02em;
+  }
 
   .hg--public .hg-productDetailsPage{
     padding-top: 0;
@@ -2382,41 +2543,127 @@ button{
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
     position: relative;
-    grid-template-columns: 1fr;
-    gap: 8px;
-    padding: 14px 0 0;
-    border-radius: 0;
-    background: transparent;
+    padding: 12px 0 0;
   }
 
-  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__menu{
-    width: 100%;
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    gap: 4px;
-    padding: 0 36px 2px 0;
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__bar{
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 18px;
+    background:
+      linear-gradient(135deg, rgba(46,33,25,.96), rgba(78,56,41,.94));
+    border: 1px solid rgba(240,210,160,.18);
+    box-shadow:
+      0 18px 42px rgba(0,0,0,.20),
+      inset 0 1px 0 rgba(255,255,255,.04);
   }
 
-  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions{
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    justify-content: flex-end;
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNavToggle{
+    display: inline-flex;
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(240,210,160,.24);
+    background:
+      linear-gradient(135deg, rgba(209,161,91,.18), rgba(123,90,63,.22));
+    color: #fff4e4;
+    text-shadow: none;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__menu--desktop{
+    display: none;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__mobilePanel{
+    display: block;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+    transition:
+      max-height .26s ease,
+      opacity .22s ease,
+      transform .22s ease,
+      margin-top .22s ease;
+    margin-top: 0;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__mobilePanel.is-open{
+    max-height: 520px;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    margin-top: 10px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__mobileMenu{
+    padding: 12px;
+    border-radius: 18px;
+    background:
+      linear-gradient(180deg, rgba(57,40,29,.97), rgba(39,28,21,.97));
+    border: 1px solid rgba(240,210,160,.16);
+    box-shadow: 0 20px 44px rgba(0,0,0,.18);
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-navLink{
-    flex: 0 0 auto;
-    height: 32px;
-    padding: 0 12px;
-    font-size: 9px;
-    white-space: nowrap;
+    text-shadow: none;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__mobileMenu .hg-navLink{
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 14px;
+    color: rgba(255,244,228,.95);
+    background: rgba(255,255,255,.02);
+    font-size: 10px;
+    letter-spacing: .06em;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__mobileMenu .hg-navLink::after{
+    left: 14px;
+    right: auto;
+    width: 24px;
+    bottom: 7px;
+    height: 2px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions{
+    padding-top: 0;
+    justify-content: flex-end;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-btn{
-    width: 28px;
-    height: 28px;
-    font-size: 16px;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    border-radius: 999px;
+    background:
+      linear-gradient(135deg, rgba(209,161,91,.18), rgba(123,90,63,.22));
+    color: #fff4e3;
+    text-shadow: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 10px 22px rgba(0,0,0,.18);
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-counter,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-cartCount,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-count,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-badge,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-btn sup,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-btn .count{
+    min-width: 15px;
+    height: 15px;
+    font-size: 8px;
+    top: -3px;
+    right: -4px;
+    background: linear-gradient(135deg, #d5a25d, #b27a3c);
   }
 
   .hg--admin .hg-grid{
@@ -2462,7 +2709,7 @@ button{
 
   .hg-publicUtility__info{
     gap: 6px;
-    padding-right: 34px;
+    padding-right: 0;
   }
 
   .hg-publicUtility__info span{
@@ -2471,29 +2718,53 @@ button{
 
   .hg-publicNav{
     gap: 4px;
-    padding-top: 12px;
+    padding-top: 10px;
   }
 
-  .hg-publicNav__menu{
-    gap: 2px;
-    padding-right: 32px;
+  .hg-publicNav__bar{
+    padding: 9px 10px;
+    border-radius: 16px;
   }
 
-  .hg-navLink{
-    height: 25px;
-    padding: 0 9px;
-    font-size: 7.5px;
-    letter-spacing: .04em;
+  .hg-publicNavToggle{
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 10px;
+    letter-spacing: .08em;
   }
 
-  .hg-publicNav__actions{
-    top: -22px;
+  .hg-publicNavToggle__icon{
+    font-size: 13px;
+  }
+
+  .hg-publicNav__mobilePanel.is-open{
+    margin-top: 8px;
+  }
+
+  .hg-publicNav__mobileMenu{
+    padding: 10px;
+    border-radius: 16px;
+    gap: 6px;
+  }
+
+  .hg-publicNav__mobileMenu .hg-navLink,
+  .hg-navLink--mobile{
+    height: 40px;
+    padding: 0 12px;
+    font-size: 9.5px;
+    letter-spacing: .05em;
+  }
+
+  .hg-publicNav__mobileMenu .hg-navLink::after,
+  .hg-navLink--mobile::after{
+    left: 12px;
+    width: 20px;
   }
 
   .hg-publicNav__actions .hg-btn{
-    width: 26px;
-    height: 26px;
-    font-size: 14px;
+    width: 34px;
+    height: 34px;
+    font-size: 17px;
   }
 
   .hg-publicNav__actions .hg-counter,
@@ -2516,7 +2787,7 @@ button{
   }
 
   .hg-hero__content{
-    padding: 138px 14px 98px;
+    padding: 134px 14px 98px;
   }
 
   .hg-hero__eyebrow{
@@ -2702,24 +2973,35 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
-    padding: 12px 0 0;
+    padding: 10px 0 0;
     border-radius: 0;
   }
 
-  .hg--public:has(.hg-productDetailsPage) .hg-navLink{
-    height: 30px;
-    padding: 0 10px;
-    font-size: 8px;
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__bar{
+    padding: 9px 10px;
+    border-radius: 16px;
   }
 
-  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions{
-    right: 8px;
-    top: 8px;
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNavToggle{
+    min-height: 35px;
+    padding: 0 12px;
+    font-size: 9.5px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__mobileMenu{
+    padding: 10px;
+    border-radius: 16px;
+  }
+
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__mobileMenu .hg-navLink{
+    height: 38px;
+    padding: 0 12px;
+    font-size: 9px;
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicNav__actions .hg-btn{
-    width: 26px;
-    height: 26px;
-    font-size: 14px;
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
   }
 }

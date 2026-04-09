@@ -453,6 +453,8 @@ function AppShell() {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
 
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
   /* =========================
      ADMIN IMAGE UPLOAD
   ========================== */
@@ -465,6 +467,10 @@ function AppShell() {
     const nextView = location.pathname.startsWith("/admin") ? "admin" : "public";
     setView(nextView);
   }, [location.pathname]);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname, view]);
 
   function goPublic() {
     setView("public");
@@ -1621,6 +1627,7 @@ function AppShell() {
     setQ(value);
     setSelectedCategory("all");
     setPage(1);
+    setMobileNavOpen(false);
     navigate("/");
   }
 
@@ -1628,6 +1635,7 @@ function AppShell() {
     setSelectedCategory(categoryValue || "all");
     setQ("");
     setPage(1);
+    setMobileNavOpen(false);
     navigate("/");
   }
 
@@ -1635,7 +1643,24 @@ function AppShell() {
     setQ("");
     setSelectedCategory("all");
     setPage(1);
+    setMobileNavOpen(false);
     navigate("/");
+  }
+
+  function handleHomeClick() {
+    clearPublicFilters();
+  }
+
+  function handleCategoryClick(categoryValue) {
+    applyCategoryFilter(categoryValue);
+  }
+
+  function toggleMobileNav() {
+    setMobileNavOpen((prev) => !prev);
+  }
+
+  function closeMobileNav() {
+    setMobileNavOpen(false);
   }
 
   const isHomeActive = !isProductPage && selectedCategory === "all" && !q;
@@ -1645,6 +1670,62 @@ function AppShell() {
   const isMachinesActive = selectedCategory === "machines";
   const isAccessoriesActive = selectedCategory === "accessories";
   const isGiftSetsActive = selectedCategory === "gift-sets";
+
+  function renderPublicNavButtons(extraClassName = "") {
+    const className = extraClassName ? `hg-navLink ${extraClassName}` : "hg-navLink";
+
+    return (
+      <>
+        <button
+          className={`${className} ${isHomeActive ? "is-active" : ""}`}
+          onClick={handleHomeClick}
+          type="button"
+        >
+          Начало
+        </button>
+
+        <button
+          className={`${className} ${isCoffeeActive ? "is-active" : ""}`}
+          onClick={() => handleCategoryClick("coffee-beans")}
+          type="button"
+        >
+          Кафе
+        </button>
+
+        <button
+          className={`${className} ${isCapsulesActive ? "is-active" : ""}`}
+          onClick={() => handleCategoryClick("capsules")}
+          type="button"
+        >
+          Капсули
+        </button>
+
+        <button
+          className={`${className} ${isMachinesActive ? "is-active" : ""}`}
+          onClick={() => handleCategoryClick("machines")}
+          type="button"
+        >
+          Машини
+        </button>
+
+        <button
+          className={`${className} ${isAccessoriesActive ? "is-active" : ""}`}
+          onClick={() => handleCategoryClick("accessories")}
+          type="button"
+        >
+          Аксесоари
+        </button>
+
+        <button
+          className={`${className} ${isGiftSetsActive ? "is-active" : ""}`}
+          onClick={() => handleCategoryClick("gift-sets")}
+          type="button"
+        >
+          Подаръчни комплекти
+        </button>
+      </>
+    );
+  }
 
   return (
     <div className={`hg ${view === "public" ? "hg--public" : "hg--admin"}`}>
@@ -1674,67 +1755,55 @@ function AppShell() {
           </div>
 
           <div className="hg-publicNav">
-            <div className="hg-publicNav__menu">
-              <button
-                className={`hg-navLink ${isHomeActive ? "is-active" : ""}`}
-                onClick={clearPublicFilters}
-                type="button"
-              >
-                Начало
-              </button>
+            <div className="hg-publicNav__bar">
+              <div className="hg-publicNav__left">
+                <button
+                  className={`hg-publicNavToggle ${mobileNavOpen ? "is-open" : ""}`}
+                  type="button"
+                  onClick={toggleMobileNav}
+                  aria-label={
+                    mobileNavOpen ? "Затвори навигацията" : "Отвори навигацията"
+                  }
+                  aria-expanded={mobileNavOpen}
+                  aria-controls="hg-mobile-nav-panel"
+                >
+                  <span className="hg-publicNavToggle__icon" aria-hidden="true">
+                    ☰
+                  </span>
+                  <span className="hg-publicNavToggle__text">Меню</span>
+                </button>
 
-              <button
-                className={`hg-navLink ${isCoffeeActive ? "is-active" : ""}`}
-                onClick={() => applyCategoryFilter("coffee-beans")}
-                type="button"
-              >
-                Кафе
-              </button>
+                <div className="hg-publicNav__menu hg-publicNav__menu--desktop">
+                  {renderPublicNavButtons()}
+                </div>
+              </div>
 
-              <button
-                className={`hg-navLink ${isCapsulesActive ? "is-active" : ""}`}
-                onClick={() => applyCategoryFilter("capsules")}
-                type="button"
-              >
-                Капсули
-              </button>
-
-              <button
-                className={`hg-navLink ${isMachinesActive ? "is-active" : ""}`}
-                onClick={() => applyCategoryFilter("machines")}
-                type="button"
-              >
-                Машини
-              </button>
-
-              <button
-                className={`hg-navLink ${isAccessoriesActive ? "is-active" : ""}`}
-                onClick={() => applyCategoryFilter("accessories")}
-                type="button"
-              >
-                Аксесоари
-              </button>
-
-              <button
-                className={`hg-navLink ${isGiftSetsActive ? "is-active" : ""}`}
-                onClick={() => applyCategoryFilter("gift-sets")}
-                type="button"
-              >
-                Подаръчни комплекти
-              </button>
+              <div className="hg-publicNav__actions">
+                <button
+                  className="hg-btn hg-btn--primary"
+                  onClick={() => {
+                    closeMobileNav();
+                    setCartOpen(true);
+                  }}
+                  aria-label="Отвори количката"
+                  title="Количка"
+                  type="button"
+                >
+                  <span aria-hidden="true">🛒</span>
+                  <span className="hg-cartCount">{cartCount}</span>
+                </button>
+              </div>
             </div>
 
-            <div className="hg-publicNav__actions">
-              <button
-                className="hg-btn hg-btn--primary"
-                onClick={() => setCartOpen(true)}
-                aria-label="Отвори количката"
-                title="Количка"
-                type="button"
-              >
-                <span aria-hidden="true">🛒</span>
-                <span className="hg-cartCount">{cartCount}</span>
-              </button>
+            <div
+              id="hg-mobile-nav-panel"
+              className={`hg-publicNav__mobilePanel ${
+                mobileNavOpen ? "is-open" : ""
+              }`}
+            >
+              <div className="hg-publicNav__mobileMenu">
+                {renderPublicNavButtons("hg-navLink--mobile")}
+              </div>
             </div>
           </div>
         </header>
