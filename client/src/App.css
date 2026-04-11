@@ -1989,12 +1989,15 @@ button{
   }
 
   .hg-publicHeader{
-    position: absolute;
-    inset: 0 0 auto 0;
-    margin-top: 4px;
-    margin-bottom: 0;
-    padding: calc(env(safe-area-inset-top, 0px) + 0px) 12px 0;
-    z-index: 45;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  inset: auto;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: calc(env(safe-area-inset-top, 0px) + 0px) 0 0;
+  z-index: 9999;
   }
 
   .hg-publicUtility{
@@ -2051,26 +2054,28 @@ button{
     color: rgba(255,255,255,.76);
   }
 
-  .hg-publicNav{
-    position: relative;
-    padding: 10px 0 0;
-  }
+ .hg-publicNav{
+  position: relative;
+  padding: 0;
+  width: 100%;
+}
 
   .hg-publicNav__bar{
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: center;
-    padding: 10px 12px;
-    border-radius: 18px;
-    background:
-      linear-gradient(135deg, rgba(46,33,25,.96), rgba(78,56,41,.94));
-    border: 1px solid rgba(240,210,160,.18);
-    box-shadow:
-      0 18px 42px rgba(0,0,0,.24),
-      inset 0 1px 0 rgba(255,255,255,.04);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 0;
+  width: 100%;
+  background:
+    linear-gradient(135deg, rgba(46,33,25,.96), rgba(78,56,41,.94));
+  border: none;
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.22),
+    inset 0 1px 0 rgba(255,255,255,.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
 
   .hg-publicNav__left{
     gap: 0;
