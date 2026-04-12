@@ -2496,12 +2496,15 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
-    position: relative;
-    inset: auto;
-    margin-top: 4px;
-    padding: 0 10px 0;
-    z-index: 50;
-  }
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  inset: auto;
+  margin: 0;
+  padding: 0;
+  z-index: 9999;
+}
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
     display: flex;
@@ -2685,12 +2688,15 @@ button{
 
 @media (max-width: 480px){
   .hg-publicHeader{
-    position: absolute;
-    inset: 0 0 auto 0;
-    margin-top: 2px;
-    margin-bottom: 0;
-    padding: calc(env(safe-area-inset-top, 0px) + 0px) 10px 0;
-  }
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  inset: auto;
+  margin: 0;
+  padding: 0;
+  z-index: 9999;
+}
 
   .hg-publicUtility{
     gap: 4px;
@@ -2716,14 +2722,26 @@ button{
   }
 
   .hg-publicNav{
-    gap: 4px;
-    padding-top: 10px;
-  }
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+.hg-publicUtility{
+  display: none;
+}
 
-  .hg-publicNav__bar{
-    padding: 9px 10px;
-    border-radius: 16px;
-  }
+.hg-publicShell{
+  padding-top: 58px;
+}
+
+ .hg-publicNav__bar{
+  width: 100%;
+  margin: 0;
+  padding: 9px 10px;
+  border-radius: 0;
+  border: none;
+}
 
   .hg-publicNavToggle{
     min-height: 36px;
@@ -2954,9 +2972,14 @@ button{
   }
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
-    margin-top: 2px;
-    padding: 0 8px 0;
-  }
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  z-index: 9999;
+}
 
   .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
     gap: 4px;
@@ -3002,5 +3025,93 @@ button{
     width: 34px;
     height: 34px;
     font-size: 16px;
+  }
+}
+@media (max-width: 680px){
+  .hg-publicHeader,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    z-index: 9999;
+  }
+
+  .hg-publicUtility,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
+    display: none;
+  }
+
+  .hg-publicNav,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  .hg-publicNav__bar,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__bar{
+    width: 100%;
+    margin: 0;
+    padding: 12px;
+    border-radius: 0;
+    border: none;
+  }
+
+  .hg-publicShell{
+    padding-top: 64px;
+  }
+
+  .hg-hero__content{
+    padding: 96px 16px 112px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px){
+  .hg-publicHeader,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicHeader{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    inset: auto;
+    margin: 0;
+    padding: 0;
+    z-index: 9999;
+  }
+
+  .hg-publicUtility,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicUtility{
+    display: none;
+  }
+
+  .hg-publicNav,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav{
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  .hg-publicNav__bar,
+  .hg--public:has(.hg-productDetailsPage) .hg-publicNav__bar{
+    width: 100%;
+    margin: 0;
+    padding: 9px 10px;
+    border-radius: 0;
+    border: none;
+  }
+
+  .hg-publicShell{
+    padding-top: 58px;
+  }
+
+  .hg-hero__content{
+    padding: 92px 14px 98px;
   }
 }
