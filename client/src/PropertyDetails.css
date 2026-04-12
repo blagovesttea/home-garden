@@ -707,7 +707,7 @@
 @media (max-width: 640px) {
   .hg-productDetailsPage {
     gap: 8px;
-    padding: 2px 0 14px;
+    padding: 74px 0 14px;
   }
 
   .hg-productDetailsLayout,
@@ -883,8 +883,9 @@
 
 @media (max-width: 420px) {
   .hg-productDetailsPage {
-    padding-bottom: 12px;
-  }
+  padding-top: 70px;
+  padding-bottom: 12px;
+}
 
   .hg-productDetailsHeroImage {
     min-height: 220px;
