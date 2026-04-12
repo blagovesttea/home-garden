@@ -707,8 +707,11 @@
 @media (max-width: 640px) {
   .hg-productDetailsPage {
     gap: 8px;
-    padding: 74px 0 14px;
+    padding: 96px 0 14px;
   }
+  .hg-productDetailsBreadcrumbs__inner {
+  padding: 6px 0 0 0;
+}
 
   .hg-productDetailsLayout,
   .hg-productDetailsBottom,
