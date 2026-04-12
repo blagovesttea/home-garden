@@ -3115,3 +3115,58 @@ button{
     padding: 92px 14px 98px;
   }
 }
+@media (max-width: 680px){
+  .hg-publicHeader,
+  .hg-publicNav,
+  .hg-publicNav__bar{
+    width: 100%;
+    max-width: none;
+  }
+
+  .hg-publicHeader{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    z-index: 9999;
+  }
+
+  .hg-publicNav{
+    margin: 0;
+    padding: 0;
+  }
+
+  .hg-publicNav__bar{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px;
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    justify-items: stretch;
+  }
+}
+@media (max-width: 480px){
+  .hg-publicHeader,
+  .hg-publicNav,
+  .hg-publicNav__bar{
+    width: 100%;
+    max-width: none;
+  }
+
+  .hg-publicNav__bar{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 10px;
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    justify-items: stretch;
+  }
+}
